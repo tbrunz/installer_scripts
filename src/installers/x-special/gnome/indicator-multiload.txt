@@ -1,0 +1,6 @@
+
+'indicator-multiload' does not work in Gnome (Ubuntu 17.10+).  Alternatives:
+
+https://github.com/paradoxxxzero/gnome-shell-system-monitor-applet
+
+

@@ -1,0 +1,131 @@
+
+Configure Ubuntu 12.04/14.04/16.04 for LDAP Authentication with 'sssd' 
+================================================================================
+
+1.  Install 'ldap' and 'sssd' packages: 
+
+        # apt-get install ldap-utils libnss-sss libpam-sss sssd sssd-tools 
+        
+
+2.  Add the following to '/etc/ldap/ldap.conf': 
+
+        URI     ldap://ldap.example.com/ 
+        
+        BASE    ou=${GROUP},ou=projects,dc=dir,dc=example,dc=com 
+
+    ...replacing ${GROUP} with the actual LDAP group name. 
+    
+
+3.  Create 'sssd.conf': 
+
+        # cp /usr/share/doc/sssd*/examples/sssd-example.conf /etc/sssd/sssd.conf 
+        
+        # chmod 0600 /etc/sssd/sssd.conf 
+
+    Then add the following at the end of the 'sssd' section: 
+
+        domains = GROUP_LDAP
+         
+        [domain/GROUP_LDAP] 
+        id_provider = ldap 
+        auth_provider = ldap 
+        ldap_schema = rfc2307 
+        ldap_uri = ldap://ldap.example.com 
+        ldap_search_base = ou=${GROUP},ou=projects,dc=dir,dc=example,dc=com 
+        cache_credentials = true 
+        entry_cache_timeout = 18000 
+        ldap_id_use_start_tls = True 
+        ldap_tls_cacertdir = /etc/ssl/certs 
+
+    ...replacing ${GROUP} with the actual LDAP group name. 
+    
+
+4.  Fix 'nsswitch.conf' for netgroups, sudoers: 
+
+        # sed -e 's/netgroup.*$/netgroup:      files sss/' \
+              -e 's/sudoers.*$/sudoers:        files/' -i /etc/nsswitch.conf 
+          
+
+5.  Enable login access control: 
+
+        # sed -e 's/.*pam_access.so.*/account     required    pam_access.so/' \
+            -i /etc/pam.d/login 
+            
+        # sed -e 's/.*pam_access.so.*/account     required    pam_access.so/' \
+            -i /etc/pam.d/sshd 
+            
+
+6.  Edit '/etc/security/access.conf' to enable access for selected users and 
+    netgroups. 
+
+    Example: 
+
+          + : root : cron crond :0 tty1 tty2 tty3 tty4 tty5 tty6 
+          + : root : 127.0.0.1 172.30.4. 172.30.5. chuckles.example.com 
+          + : @sa : ALL 
+          + : @users : ALL 
+          + : maint : ALL
+          - : ALL : ALL 
+          
+
+7.  Restart 'sssd': 
+
+          # service sssd restart 
+          
+
+8.  Install and configure 'nscd' for host caching only: 
+
+          # apt-get install nscd 
+          
+          # sed -e '/enable-cache.*passwd/s/yes/no/' \
+                -e '/enable-cache.*group/s/yes/no/' \
+                -e '/enable-cache.*services/s/yes/no/' -i /etc/nscd.conf 
+          
+          # service nscd restart 
+
+
+9.  To automatically create local home directories for users on a client system:
+
+    Edit '/etc/pam.d/common-session' and add
+    
+        session required            pam_mkhomedir.so skel=/etc/skel/ umask=0022
+    
+    ahead of the 'pam_sss.so' line.
+
+
+10. To manually create local home directories for users on a client system:
+
+        # for USER in ${USER1} ${USER2} ${USER3}; do 
+        > mkdir /home/${USER}
+        > cp /etc/skel/.bash* /home/${USER}
+        > chown -R ${USER}:${GROUP} /home/${USER}
+        > chmod 0750 /home/${USER}
+        > done
+
+    ...replacing USER1/2/3 with a list of actual usernames. 
+
+    The ${GROUP} users' group in the chown command would be replaced by 
+    whatever you use as the primary group for the users in question 
+    (assuming they are all the same).
+
+
+11. A local autofs map can be set up for shared home directory mounts:
+
+        # /sbin/chkconfig autofs on
+        # echo "/home     /etc/auto.home" >> /etc/auto.master
+        # echo "*         homedirserver:/export/home/&" >> /etc/auto.home
+
+    ...replacing "homedirserver" with the server exporting home directories.
+
+
+12. Autofs maps can also be maintained in LDAP, which is particularly useful 
+    if the home directory server or export path varies for different users, 
+    in which case we configure 'autofs' to look to ldap for the map:
+
+        # echo "/home   ldap:ldap.example.com:nismapname=auto.home,\ 
+            ou=Services,ou=${GROUP},ou=Projects,dc=dir,dc=example,dc=com \
+            --ghost" >> /etc/auto.master
+
+    ...replacing ${GROUP} with the actual LDAP project name.
+
+

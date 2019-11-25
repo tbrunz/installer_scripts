@@ -1,0 +1,86 @@
+
+HOW TO set up Trac-SVN
+=====================================================================
+
+-----
+
+Use svn:// protocol with 'svnserve' in daemon mode; install Trac & SVN as 'maint', create an 'svn' group.
+
+For authentication & encryption over the internet, install/config SASL.
+
+-----
+
+To run 'svnserve' you can add this line to /etc/inetd.conf:
+
+    svn stream tcp nowait svnowner /usr/bin/svnserve svnserve -i
+
+Make sure 'svnowner' is a user which has appropriate permissions to access your repositories. Now, when a client connection comes into your server on port 3690, inetd will spawn an svnserve process to service it.  Of course, you may also want to add '-r' to the configuration line as well, to restrict which repositories are exported (see below).
+
+A second option is to run svnserve as a standalone 'daemon' process. Use the -d option for this:
+
+    $ svnserve -d
+    $               # svnserve is now running, listening on port 3690
+
+When running svnserve in daemon mode, you can use the '--listen-port=' and '--listen-host=' options to customize the exact port and hostname to bind to.
+
+When configuring svnserve, Apache httpd, or any other server process, keep in mind that you might not want to launch the server process as the user root (or as any other user with unlimited permissions). Depending on the ownership and permissions of the repositories you're exporting, it's often prudent to use a different --perhaps custom-- user. For example, many administrators create a new user named svn, grant that user exclusive ownership and rights to the exported Subversion repositories, and only run their server processes as that user.
+
+Note that once the 'svnserve' program is running, it makes *every* repository on your system available to the network. And that an SVN client needs to specify an absolute path in the repository URL. 
+
+For example, if a repository is located at '/usr/local/repositories/project1', then a client would reach it via "svn://host.example.com/usr/local/repositories/project1". To increase security, you can pass the '-r' option to 'svnserve', which restricts it to exporting only repositories below that path:
+
+    $ svnserve -d -r /usr/local/repositories
+
+Using the '-r' option effectively modifies the location that the program treats as the root of the remote filesystem space. Clients then use URLs that have that path portion removed from them, leaving much shorter (and much less revealing) URLs:
+
+    $ svn checkout svn://host.example.com/project1
+
+-----
+
+[msigroup@msi-server svnroot]$ ps -ef | grep svn
+
+msigroup  3282     1  0 Sep24 ?        00:00:00 svnserve -d -r /home/msigroup/svnroot
+
+msigroup 12552     1  0 Oct02 ?        00:00:00 /home/msigroup/trac-1.0-0/subversion/bin/.svnserve.bin -d --listen-port=3999 --pid-file=/home/msigroup/trac-1.0-0/subversion/tmp/svnserve.pid
+
+
+maint@d915gv:/srv/repositories/svn$ ps -ef | grep svn
+999      12379     1  0 11:38 ?        00:00:00 /opt/trac-1.0-0/subversion/bin/.svnserve.bin -d --listen-port=3690 --pid-file=/opt/trac-1.0-0/subversion/tmp/svnserve.pid
+
+-----
+
+http://www.linuxtopia.org/online_books/programming_tool_guides/version_control_with_subversion/svn.serverconfig.svnserve.html
+
+http://trac.edgewall.org/wiki/TracStandalone#UsingAuthentication
+
+http://stackoverflow.com/questions/2282123/setting-up-authentication-in-trac
+
+-----
+
+Q: I’m new to Trac. I installed Bitnami TRAC Stack on my machine but I can’t configure users. My intention is for users to connect to the TRAC system using the browser and authenticate to gain control. Is it necessary to configure authentication using Apache tools? Is there any procedure for that somewhere?
+
+A: I suggest that you can manage the access using the Apache “htpasswd” tool. For example:
+
+> cd your_installation_directory/apache2/bin
+> htpasswd -cb “your_installation_directory/apache2/users” user password
+
+-----
+
+The svn+ssh:// Server Checklist -- DON'T USE THIS METHOD!!
+
+It can be quite tricky to get a bunch of users with existing SSH accounts to share a repository without permissions problems. If you're confused about all the things that you (as an administrator) need to do on a Unix-like system, here's a quick checklist that resummarizes some of the topics discussed in this section:
+
+    All of your SSH users need to be able to read and write to the repository, so put all the SSH users into a single group.
+
+    Make the repository wholly owned by that group.
+
+    Set the group permissions to read/write.
+
+    Your users need to use a sane umask when accessing the repository, so make sure svnserve (/usr/bin/svnserve, or wherever it lives in $PATH) is actually a wrapper script that runs umask 002 and executes the real svnserve binary.
+
+    Take similar measures when using svnlook and svnadmin. Either run them with a sane umask or wrap them as just described.
+
+-----
+
+
+

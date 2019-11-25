@@ -1,0 +1,364 @@
+
+Bitnami TracSVN Stack v1.0-0 - Customizations & Fixups
+==================================================================================
+
+----------------------------------------------------------------------------------
+
+* "Bad" Subversion version:  When installing the BitNami Trac Stack, it will install 
+
+    svn, version 1.7.5 (r1336830)
+    compiled Sep  3 2012, 06:54:43
+
+However, when installing Subversion in Ubuntu "Precise" (12.04) --including RabbitVCS-- it will install
+
+    svn, version 1.6.17 (r1128011)
+    compiled Dec 17 2011, 16:23:37
+
+which will drop '.svn' folders in EVERY subfolder in your project...  ::GAG::  You need version 1.7+, which is included in Ubuntu "Quantal" (12.10).
+
+To upgrade v1.6 in Ubuntu 12.04 and earlier to v1.7, do this:
+
+    # cd /etc/apt/apt.conf.d
+    # touch 01ubuntu
+
+    Edit "01ubuntu" to contain
+
+        APT::Default-Release "precise";
+
+    # cd ../sources.list.d
+    # touch svn17.list
+
+    Edit "svn17.list" to contain
+
+        deb http://archive.ubuntu.com/ubuntu/ quantal main universe
+        deb-src http://archive.ubuntu.com/ubuntu/ quantal main universe
+
+    # apt-get update
+    # apt-get install -V subversion -t quantal
+
+You will end up with 
+
+    svn, version 1.7.5 (r1336830)
+    compiled Sep 28 2012, 11:18:54
+
+which is the *same* build as the BitNami Trac Stack v1.0-0 installs.  :^)
+
+----------------------------------------------------------------------------------
+
+* Error message: 
+
+     "/usr/bin/ssh: ~trac-1.0-0/common/lib/libcrypto.so.1.0.0: No version information available (required by SSH)"
+
+
+----------------------------------------------------------------------------------
+
+* Error message:
+
+    "/usr/bin/ssh: ~trac-1.0-0/common/lib/libssl.so: No version information available (required by SSH)"
+
+
+----------------------------------------------------------------------------------
+
+* Apache is set up to listen to Port 80 (if installed as 'root') or Port 8080 (otherwise).  It may be desireable to have it listen to more than one port, so that Trac can be accessed from more than one port (such as in cases where it is desireable to block firewall ports from access, while still allowing those behind the firewall on the local LAN to access 'svnserve' without restrictions). 
+
+  --> Edit the Apache configuration file to add a second 'Listen' port (example for Apache run as 'root'):
+
+    # cd ~trac-1.0-0/apache2/conf
+
+  --> Edit "httpd.conf":
+
+    Locate & change
+
+        #Listen 12.34.56.78:80
+        Listen 80
+to
+        #Listen 12.34.56.78:80
+        Listen 80
+        Listen 8080
+
+    so that Apache will listen to both ports, allowing one to be selectively blocked (from Internet access attempts).
+
+
+----------------------------------------------------------------------------------
+
+* Note regarding use of path-based access control with SVN:
+
+This feature allows fine-grained control over which user is allowed what permissions for accessing/modifying which tree or file in the repository.  It is disabled by default, and enabled by uncommenting and configuring the "authz-db =" line in the 'conf/svnserve.conf' file.  When disabled, no path-based access control will be performed.
+
+Note that by default, SVN does not grant any access permissions to any user.  That means that if starting with an empty repository, no one can get access to the repository without at least read permission being given; this is typically done by explicitly granting read access to all users at the root of the repository.
+
+The Bitnami TracSVN Stack, when told to create an initial SVN repository during installation, does *not* configure the SVN "authz-db", and does not configure the "authz" file to allow global read or write access to anyone.  As a result, none of the users listed in the "passwd" file will be able to access the repository, and therefore cannot import an initial project's files.  To avoid this, edit the indicated "authz" file in the "conf" directory in the project's repository directory, and add
+
+    [/]
+    * = r
+
+which will then allow anyone connecting with 'svn://' to access the repository (read-only).  Adding more permissions on a repository-by-repository basis, and on a user-by-user basis will allow checkins & modifications of the repository as well.
+
+
+----------------------------------------------------------------------------------
+
+* 'svnserve' is launched in daemon mode ('-d'), but when Bitnami installs the stack, it does *not* add the '-r' switch and the path to the SVN repository to limit the path naming requirements when accessing the repository.
+
+  --> Edit the SVN control script, '~trac-1.0-0/subversion/scripts/ctl.sh':
+
+    Find the variable definition section near the top:
+
+        SVN_PIDFILE=/opt/trac-1.0-0/subversion/tmp/svnserve.pid
+        SVN_START="/opt/trac-1.0-0/subversion/bin/svnserve -d --listen-port=3690 --pid-file=$SVN_PIDFILE"
+
+    and change 
+
+        .../svnserve -d --listen-port=3690 ...
+    to
+        .../svnserve -d -r </path/to/repository> --listen-port=3690 ...
+
+    So that users need only specify 
+
+        svn://<svnhost>/<project-in-repo>
+    not
+        svn://<svnhost>/path/to/repository/<project-in-repo>
+
+    to access their project files in the repository -- and so that they're limited in *which* repositories they may access.  (I.e., only the ones in this daemon's restricted file system subtree.)
+
+
+----------------------------------------------------------------------------------
+
+* Installed as 'root', the Bitnami Trac Stack creates the following user & group (on Ubuntu):
+
+    subversion:x:999:999::/home/subversion:/bin/bash
+
+    subversion:x:999:
+
+  --> Change the names from "subversion" (too long) to "svn".
+  --> Add 'maint' (and any other admin accounts) to the 'svn' group.
+  --> Execute "# chown -R svn:svn <path to SVN repo(s)>".
+  --> Edit the SVN control script, '~trac-1.0-0/subversion/scripts/ctl.sh':
+
+    Find the 'start' section
+
+        if [ $SVN_ASROOT -eq 1 ]; then
+            su subversion -c "$SVN_START &"
+        else
+            $SVN_START &
+        fi
+
+    and change 
+
+        su subversion -c "$SVN_START &"
+    to
+        su svn -c "$SVN_START &"
+
+    So that the Bitnami control scripts will successfully start SVN as user 'svn'.
+
+
+----------------------------------------------------------------------------------
+
+* All SVN commands in '~trac-1.0-0/subversion/bin' are wrapped (good), but the wrapper scripts lack "umask 002", needed to ensure that users accessing via 'svn+ssh://' do not create "locked" files.
+
+  --> Edit each SVN wrapper and add "umask 002" just before exec'ing the real applet.
+  --> Follow the procedures regarding renaming the SVN "owner" & group, etc.
+
+  --> Edit '~trac-1.0-0/apache2/scripts/ctl.sh' to add "umask 002" when starting Apache.
+
+
+----------------------------------------------------------------------------------
+
+* The Bitnami Trac Stack installs with only one instance of the 'svnserve' daemon running, using (by default) the standard SVN port 3690.  It may be desireable to launch more than one instance, so that SVN will effectively serve more than one port (such as in cases where it is desireable to block firewall ports from access, while still allowing those behind the firewall on the local LAN to access 'svnserve' without restrictions).
+
+  --> Create a second instance of the 'svnserve' daemon to launch along with the default daemon.  Do this by copying and editing the SVN control script:
+
+    # cd ~trac-1.0-0/subversion/scripts
+
+    # cp -p ctl.sh ctl2.sh
+
+  --> Edit "ctl.sh":
+
+    and change, at the end
+
+        exit $ERROR
+    to
+        ./ctl2.sh "$@"
+        exit $ERROR
+
+    So that the script that Bitnami calls to start SVN will in turn call the script to launch a second instance of the daemon, but with a different port number (and PID file):
+
+  --> Edit "ctl2.sh":
+
+    Find the variable definition section near the top:
+
+        SVN_PIDFILE=/opt/trac-1.0-0/subversion/tmp/svnserve.pid
+        SVN_START="/opt/trac-1.0-0/subversion/bin/svnserve -d --listen-port=3690 --pid-file=$SVN_PIDFILE"
+
+    and change 
+
+        ... /svnserve.pid
+        ... --listen-port=3690 ...
+    to
+        ... /svnserve2.pid
+        ... --listen-port=33690 ...
+
+
+----------------------------------------------------------------------------------
+
+* Create an 'Trac/SVN administration' bash function to simplify administration (insert into '.bash_aliases' file, to be sourced by '.bashrc'):
+
+##################################################################
+
+# 
+# Set the base directory for Trac-SVN
+#
+# Edit this for this particular server's set-up!
+TRAC_BASE=/opt/trac-1.0-0
+
+#
+# If we're hosting, then set up the environment, too...
+#
+if [ -d ${TRAC_BASE} ]; then
+
+    TRAC_GUI=${TRAC_BASE}/manager-linux.run
+    TRAC_APPS=${TRAC_BASE}/apps/trac
+    TRAC_ADMIN=${TRAC_APPS}/bin/trac-admin
+
+    # These are NOT the defaults for Trac or the BitNami Stack,
+    # so edit them for this particular server's set-up!
+
+    TRAC_PROJECTS=/srv/trac
+    TRAC_REPOSITORIES=/srv
+
+    # Now source the Trac-SVN environment (for the BitNami Stack)
+
+    source ${TRAC_BASE}/scripts/setenv.sh
+fi
+
+# 
+# Execute a Trac-SVN command:
+#
+# trac base		= 'cd' to the Trac Stack base directory (in /opt)
+# trac gui              = Open the BitNami Trac Stack service 'start/stop' GUI
+# trac apps		= 'cd' to the Trac 'apps' directory
+# trac list             = List all the Trac projects in the Trac 'projects' directory
+# trac svn		= 'cd' to the SVN repository base directory
+# trac svn <project>    = 'cd' to the SVN repository directory (must exist)
+# trac proj             = 'cd' to the Trac 'projects' directory
+# trac proj <project>   = 'cd' to the Trac project's directory (must exist)
+# trac admin            = 'cd' to the Trac 'apps' dir & prompt w/ 'trac-admin' usage)
+# trac admin <project>  = Run 'trac-admin' using the given Trac project (must exist)
+#
+trac() {
+    if [ ! -d ${TRAC_BASE} ]; then
+
+        echo "This machine is not hosting Trac-SVN ! "
+
+    elif [ "${1}" == "base" ]; then
+
+            cd ${TRAC_BASE}; ll
+
+    elif [ "${1}" == "gui" ]; then
+
+        if [ -x ${TRAC_GUI} ]; then sudo ${TRAC_GUI}
+
+        elif [ -e ${TRAC_GUI} ]; then
+
+            echo "trac: File '${TRAC_GUI}' is not executable ! "
+        else
+            echo "trac: Cannot find GUI executable '${TRAC_GUI}' ! "
+        fi
+
+    elif [ "${1}" == "apps" ]; then
+
+        if [ -d ${TRAC_APPS} ]; then
+
+            cd ${TRAC_APPS}; ll
+        else
+            echo "trac: Cannot find the Trac applications directory ! "
+        fi
+
+    elif [ "${1}" == "list" ]; then
+
+        if [ -d ${TRAC_PROJECTS} ]; then
+
+            ll ${TRAC_PROJECTS}
+        else
+            echo "trac: Cannot find the Trac projects directory ! "
+        fi
+
+    elif [ "${1}" == "svn" ]; then
+
+        if [ ! -d ${TRAC_REPOSITORIES} ]; then
+
+            echo "trac: Cannot find the SVN repository directory ! "
+            return
+        fi
+
+        if [ "${2}" == "" ]; then
+
+            cd ${TRAC_REPOSITORIES}; ll
+
+        elif [ -d ${TRAC_REPOSITORIES}/${2} ]; then
+
+            cd ${TRAC_REPOSITORIES}/${2}; ll
+
+        else
+            echo "trac: Cannot find the SVN repository '${TRAC_REPOSITORIES}/${2}' ! "
+        fi
+
+    elif [ "${1}" == "proj" ]; then
+
+        if [ ! -d ${TRAC_PROJECTS} ]; then
+
+            echo "trac: Cannot find the Trac projects directory ! "
+            return
+        fi
+
+        if [ "${2}" == "" ]; then
+
+            cd ${TRAC_PROJECTS}; ll
+
+        elif [ -d ${TRAC_PROJECTS}/${2} ]; then
+
+            cd ${TRAC_PROJECTS}/${2}; ll
+
+        else 
+            echo "trac: Cannot find Trac projects directory '${TRAC_PROJECTS}/${2}' ! "
+        fi
+
+    elif [ "${1}" == "admin" ]; then
+
+        if [ ! -d ${TRAC_APPS} ]; then
+
+            echo "trac: Cannot find the Trac applications directory ! "
+
+        elif [ ! -e ${TRAC_ADMIN} ]; then
+
+            echo "trac: Cannot find Trac admin executable '${TRAC_ADMIN}' ! "
+
+        elif [ ! -x ${TRAC_ADMIN} ]; then
+
+            echo "trac: File '${TRAC_ADMIN}' is not executable ! "
+
+        elif [ "${2}" == "" ]; then
+
+            cd ${TRAC_APPS}
+            sudo ${TRAC_ADMIN}; ll
+
+        elif [ -d ${TRAC_PROJECTS}/${2} ]; then
+
+            sudo ${TRAC_ADMIN} ${TRAC_PROJECTS}/${2}
+            cd ${TRAC_PROJECTS}/${2}; ll
+
+        else 
+            echo "trac: Cannot find Trac projects directory '${TRAC_PROJECTS}/${2}' ! "
+        fi
+
+    else
+        echo "usage: trac ( list | apps | gui | ( svn | proj | admin [ <project> ] ) ) "
+    fi
+}
+
+##################################################################
+
+
+----------------------------------------------------------------------------------
+
+
+

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<!-- Xmodulo uses HeatMap AdAptive v1.4.8 by heatmaptheme.com -->
+<!-- render.php --><html lang="en-US" prefix="og: http://ogp.me/ns#">
+<!-- Beginning of <head> -->
+<head>
+<!-- heatmapthemead_pre_wp_head hook -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+<title>How to manage VirtualBox VMs on a remote headless server - Linux FAQ</title>
+<link rel="profile" href="http://gmpg.org/xfn/11" /><link rel="pingback" href="http://xmodulo.com/xmlrpc.php" />
+<link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css"><!-- end of heatmapthemead_pre_wp_head hook -->
+<!-- wp_head()-->
+<!-- This site is optimized with the Yoast WordPress SEO plugin v1.4.17 - http://yoast.com/wordpress/seo/ -->
+<link rel="canonical" href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html" />
+<link rel="author" href="115769503924233918974"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:type" content="article"/>
+<meta property="og:title" content="How to manage VirtualBox VMs on a remote headless server - Linux FAQ"/>
+<meta property="og:description" content="Most VirtualBox users may think that VirtualBox is only intended for use in a desktop environment, where virtual machine (VM) management is done via VirtualBox GUI. However, VirtualBox can in fact run on headless servers, and VirtualBox VMs launched in headless mode can be managed remotely from an external VirtualBox front-end client. In this tutorial, [&hellip;]Continue reading..."/>
+<meta property="og:url" content="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html"/>
+<meta property="og:site_name" content="Xmodulo"/>
+<meta property="og:image" content="http://farm6.staticflickr.com/5340/9221301260_a26e8e61e8.jpg"/>
+<meta property="og:image" content="http://farm3.staticflickr.com/2860/9221465228_2849eb51a0.jpg"/>
+<meta property="og:image" content="http://farm4.staticflickr.com/3752/9218525995_5bf0e5dc04.jpg"/>
+<meta property="og:image" content="http://farm6.staticflickr.com/5323/9218525967_41f72225c5.jpg"/>
+<meta property="og:image" content="http://farm6.staticflickr.com/5441/9218525957_b416819ee7.jpg"/>
+<meta property="og:image" content="http://farm8.staticflickr.com/7311/9221301192_2b94b70305.jpg"/>
+<meta property="og:image" content="http://farm4.staticflickr.com/3791/9221301158_4165eae2d9.jpg"/>
+<!-- / Yoast WordPress SEO plugin. -->
+
+<link rel="alternate" type="application/rss+xml" title="Xmodulo &raquo; Feed" href="http://xmodulo.com/feed" />
+<link rel="alternate" type="application/rss+xml" title="Xmodulo &raquo; Comments Feed" href="http://xmodulo.com/comments/feed" />
+<link rel="alternate" type="application/rss+xml" title="Xmodulo &raquo; How to manage VirtualBox VMs on a remote headless server Comments Feed" href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html/feed" />
+<link rel="stylesheet" href="http://xmodulo.com/wp-content/plugins/oiopub-direct/images/style/output.css" type="text/css" />
+<link rel='stylesheet' id='jetpack_likes-css'  href='http://xmodulo.com/wp-content/plugins/jetpack/modules/likes/style.css?ver=2.5' type='text/css' media='all' />
+<link rel='stylesheet' id='jetpack-widgets-css'  href='http://xmodulo.com/wp-content/plugins/jetpack/modules/widgets/widgets.css?ver=20121003' type='text/css' media='all' />
+<link rel='stylesheet' id='style-css'  href='http://xmodulo.com/wp-content/themes/heatmap-adaptive/style.css?ver=20130606' type='text/css' media='all' />
+<link rel='stylesheet' id='sharedaddy-css'  href='http://xmodulo.com/wp-content/plugins/jetpack/modules/sharedaddy/sharing.css?ver=2.5' type='text/css' media='all' />
+<script type='text/javascript' src='https://apis.google.com/js/plusone.js'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-includes/js/jquery/jquery.js?ver=1.10.2'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/plugins/anti-spam/js/anti-spam.js?ver=1.8'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/plugins/jetpack/_inc/postmessage.js?ver=2.5'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/plugins/jetpack/_inc/jquery.inview.js?ver=2.5'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/plugins/jetpack/_inc/jquery.jetpack-resize.js?ver=2.5'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/themes/heatmap-adaptive/js/small-menu.js?ver=3.6.1'></script>
+<script type='text/javascript' src='http://xmodulo.com/wp-includes/js/comment-reply.min.js?ver=3.6.1'></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://xmodulo.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://xmodulo.com/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 3.6.1" />
+<link rel='shortlink' href='http://wp.me/p2ZLjm-130' />
+
+<!--Plugin WP Missed Schedule 2013.0730.7777 Active - Tag d76ca983e4e0b1146b8511f40cd66015-->
+
+		<style>
+			/* Link color */
+			a {
+				color: #1b8be0;
+			}
+		</style>
+			<style>
+			/* Max Width */
+			#heatmapthemead-leaderboard,
+			nav.main-navigation,
+			nav.secondary-navigation,
+			#heatmapthemead-branding-container,
+			.heatmapthemead-layout-both-sidebars #heatmapthemead-main,
+			.heatmapthemead-layout-primary-sidebar-content #heatmapthemead-main,
+			.heatmapthemead-layout-content-secondary-sidebar #heatmapthemead-main,
+			.heatmapthemead-layout-content #heatmapthemead-main
+			{
+				max-width: 1160px;
+			}
+		</style>
+		
+				<style>
+				#heatmapthemead-header, #heatmapthemead-footer { 
+					max-width: 1160px; 
+				} 
+			</style>
+					
+					<style>
+					/* Font Style */
+					h1,h2,h3,h4,h5,h6,
+					#heatmapthemead-header-text p#site-title,
+					#heatmapthemead-header-text p#site-description { font-family: 'Open Sans', Arial, Helvetica, sans-serif; }
+					.heatmapthemead-menu { font-family: 'Open Sans', Arial, Helvetica, sans-serif; }
+					body { font-size: 1.7em; }
+					body, button, input, select, textarea { font-family:  Arial, Helvetica, sans-serif; }
+				</style> 
+				<style type="text/css">
+			#site-title a,
+		#site-description {
+			color: #000000 !important;
+		}
+		</style>
+	<style type="text/css" id="syntaxhighlighteranchor"></style>
+<!-- End of wp_head() -->
+<!-- heatmapthemead_post_wp_head hook -->
+<!-- end of heatmapthemead_post_wp_head hook -->
+</head>
+<!-- End of <head> -->
+<body class="single single-post postid-4030 single-format-standard heatmapthemead-layout-both-sidebars  heatmapthemead-max-width-1160">
+<!-- heatmapthemead_start_body hook -->
+<!-- end of heatmapthemead_start_body hook -->
+<!-- The Header Bars -->
+<div id="heatmapthemead-header-wipe">
+<div id="heatmapthemead-header">
+<div id="heatmapthemead-header-container">
+  
+		<div id="heatmapthemead-primary-menu" class="heatmapthemead-menu">
+			<nav role="navigation" class="site-navigation main-navigation">
+				<p class="primary-small-nav-text">	
+					Sections				</p>
+				<div class="menu"><ul><li class="page_item page-item-5032"><a href="http://xmodulo.com/about">About</a></li><li class="page_item page-item-3805"><a href="http://xmodulo.com/advertise">Advertise</a></li><li class="page_item page-item-574"><a href="http://xmodulo.com/contact">Contact</a></li></ul></div>
+			</nav>
+		</div>
+			<div id="heatmapthemead-header-branding">
+		<div id="heatmapthemead-branding-container">
+							<header id="branding" role="banner">
+							<div id="heatmapthemead-header-text">
+			<aside>
+				<p id="site-title"><a href="http://xmodulo.com/" title="Xmodulo" rel="home">Xmodulo</a></p>
+				<p id="site-description">Linux FAQs, tips and tutorials</p>
+			</aside>
+		</div>
+					</header><!-- #branding -->
+			<div id="heatmapthemead-widget-position-header" class="heatmapthemead-widget-position heatmapthemead-homeheader widget-area heatmapthemead-static-header-widget" role="complementary"><aside class="widget"><div class="heatmapthemead-social-icons"><a id="heatmapthemead-fb-social-icon" class="heatmapthemead-social-icon" href="https://www.facebook.com/xmodulo" target="_blank"><img src="http://xmodulo.com/wp-content/themes/heatmap-adaptive/images/facebook.png" alt="" /></a><a id="heatmapthemead-twitter-social-icon" class="heatmapthemead-social-icon"  href="https://twitter.com/xmodulo" target="_blank"><img src="http://xmodulo.com/wp-content/themes/heatmap-adaptive/images/twitter.png" alt="" /></a><a id="heatmapthemead-googleplus-social-icon" class="heatmapthemead-social-icon"  href="https://plus.google.com/113402205121279785792" target="_blank"><img src="http://xmodulo.com/wp-content/themes/heatmap-adaptive/images/googleplus.png" alt="" /></a><a id="heatmapthemead-rss-social-icon" class="heatmapthemead-social-icon" href="http://xmodulo.com/feed" target="_blank"><img src="http://xmodulo.com/wp-content/themes/heatmap-adaptive/images/rss-feed.png" alt="" /></a></div> <!--.heatmapthemead-social-icons --></aside></div> <!-- id="heatmapthemead-widget-position-header" -->
+		</div><!-- #heatmapthemead-branding-container -->
+	</div><!-- #heatmapthemead-header-branding -->		
+</div> <!-- id="heatmapthemead-header-container" -->
+</div> <!-- id="heatmapthemead-header" -->
+</div> <!-- id="heatmapthemead-header-wipe" -->
+<!-- The main part of the page (with content and sidebars) -->
+<div id="heatmapthemead-main-wipe">
+<div id="heatmapthemead-main">
+<div id="heatmapthemead-widget-position-leaderboard" class="heatmapthemead-widget-position heatmapthemead-leaderboard widget-area" role="complementary"><aside id="heatmapthemead_ad-3" class="widget heatmapthemead_ad_widget">				<div class="heatmapthemead_ad_widget"><script type="text/javascript"><!--
+google_ad_client = "ca-pub-7245163904660683";
+/* xmodulo-navlinks */
+google_ad_slot = "3936448789";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div>
+			</aside></div> <!-- id="heatmapthemead-widget-position-leaderboard" -->
+<div id="heatmapthemead-content">
+<div id="heatmapthemead-the-content" class="site-content">
+<div id="heatmapthemead-the-content-container" role="main">
+	
+	
+		<article id="post-4030" class="post-4030 post type-post status-publish format-standard hentry category-virtualbox tag-remote-desktop">
+		
+					<header class="entry-header">
+			<h1 class="entry-title"><a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html" title="Permalink to How to manage VirtualBox VMs on a remote headless server" rel="bookmark">How to manage VirtualBox VMs on a remote headless server</a></h1>
+		</header> <!-- heatmapthemead-entry-header -->
+	<div class="heatmapthemead-header-entry-meta entry-meta"><span class="heatmapthemead-post-details">Posted on <a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html" title="10:00 am" rel="bookmark"><time class="entry-date" datetime="2013-07-12T10:00:13+00:00">July 12, 2013</time></a><span class="byline"> by <span class="author vcard"><a class="url fn n" href="http://xmodulo.com/author/nanni" title="View all posts by Dan Nanni" rel="author">Dan Nanni</a></span></span></span>					<span class="comments-link"><a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html#comments" title="Comment on How to manage VirtualBox VMs on a remote headless server">3 Comments</a></span>
+								</div><!-- .heatmapthemead-entry-meta -->
+			<div class="entry-content">
+<!--Ad Injection mfunc mode ad include code--><!--mfunc include_once('/home/kimchido/public_html/wp-content/plugins/ad-injection/adshow.php') --><!--/mfunc-->
+<p>Most VirtualBox users may think that VirtualBox is only intended for use in a desktop environment, where virtual machine (VM) management is done via VirtualBox GUI. However,  VirtualBox can in fact run on headless servers, and VirtualBox VMs launched in headless mode can be managed remotely from an external VirtualBox front-end client.</p>
+<p>In this tutorial, I will explain <strong>how to manage VirtualBox VMs on a remote headless server</strong>.</p>
+<p>For remote management of VirtualBox, you can use <a href="http://knobgoblin.org.uk/" target="_blank"><tt>RemoteBox</tt></a>, which is an open-source VirtualBox client software.  <tt>RemoteBox</tt> allows you to connect to a remote headless server where VirtualBox is installed, and to manage and interact with VirtualBox VMs.</p>
+<p>For this setup, you need at least one headless server host where VirtualBox is installed.  You also need a separate Linux desktop host as a VirtualBox client host. <tt>RemoteBox</tt> will be installed on the client host.</p>
+<h3>Configure VirtualBox Server</h3>
+<p>On the headless server side, you need to <a href="http://xmodulo.com/2013/03/how-to-install-or-upgrade-virtualbox-on-ubuntu-or-debian.html" target="_blank">install VirtualBox 4.2.0 and higher</a>.</p>
+<p>Besides VirtualBox, you also need to install VirtualBox extension pack on the server.  The extension pack is needed for remote desktop display and PXE booting.</p>
+<p>Assuming that the version of the installed VirtualBox is 4.2.16, you can install the corresponding VirtualBox extension pack on the server as follows.</p>
+<div class="console">
+$ wget http://download.virtualbox.org/virtualbox/4.2.16/Oracle_VM_VirtualBox_Extension_Pack-4.2.16-86992.vbox-extpack<br />
+$ sudo VBoxManage extpack install ./Oracle_VM_VirtualBox_Extension_Pack-4.2.12-84980.vbox-extpack
+</div>
+</p>
+<p>Finally, you need to set up VirtualBox web service on the server, so that VirtualBox clients such as <tt>RemoteBox</tt> can communicate with VirtualBox remotely.</p>
+<p>Before doing that, first determine which Linux user VirtualBox web service will run as.  If you run VirtualBox web service as a particular Linux user, you can only control VMs run by the same user.</p>
+<p>Here I will create a new user (e.g., vbox), and a new group (e.g., vboxusers) dedicated to VirtualBox web service.</p>
+<div class="console">
+$ sudo groupadd vboxusers<br />
+$ sudo useradd -g vboxusers vbox
+</div>
+</p>
+<p>To configure VirtualBox web service on the server, proceed as follows.</p>
+<p>First, create a configuration file for the web service at /etc/default/virtualbox.</p>
+<div class="console">
+$ sudo vi /etc/default/virtualbox
+</div>
+<pre>
+VBOXWEB_USER="vbox"
+VBOXWEB_TIMEOUT=0
+VBOXWEB_LOGFILE="/var/log/vboxwebservice.log"
+VBOXWEB_HOST="10.0.0.121"
+</pre>
+<p>In the configuration file, VBOXWEB_USER is set to the Linux user that you will run VirtualBox web service as, and VBOXWEB_HOST corresponds to the IP address of the server.</p>
+<p>Next, initialize and set the ownership of the log file:</p>
+<div class="console">
+$ sudo touch /var/log/vboxwebservice.log<br />
+$ sudo chown vbox:vboxusers /var/log/vboxwebservice.log
+</div>
+</p>
+<p>Create VirtualBox configuration directory:</p>
+<div class="console">
+$ sudo mkdir /home/vbox/.VirtualBox<br />
+$ sudo chown vbox:vboxusers /home/vbox/.VirtualBox
+</div>
+</p>
+<p>Start VirtualBox web service:</p>
+<div class="console">
+$ sudo service vboxweb-service start
+</div>
+</p>
+<p>Check the status of VirtualBox web service:</p>
+<div class="console">
+$ sudo service vboxweb-service status
+</div>
+<pre>
+Checking for VBox Web Service ...running
+</pre>
+<p>Also, verify that VirtualBox web service is listening on port 18083.</p>
+<!--Ad Injection mfunc mode ad code--><!--mfunc adshow_display_ad_file_v2(array('ad_random_1.txt'), array(100), array('align' => '', 'clear' => '', 'margin_top' => '10', 'margin_bottom' => '10', 'padding_top' => '', 'padding_bottom' => ''), array(), array()) -->
+
+<div style='margin-top:10px;margin-bottom:10px;'><script type="text/javascript"><!--
+google_ad_client = "ca-pub-7245163904660683";
+/* xmodulo-post-bottom */
+google_ad_slot = "5804090714";
+google_ad_width = 336;
+google_ad_height = 280;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div><!--/mfunc-->
+
+<div class="console">
+$ sudo netstat -nap | grep vboxwebsrv
+</div>
+<pre>
+tcp        0      0 10.0.0.121:18083        0.0.0.0:*               LISTEN      15855/vboxwebsrv
+unix  3      [ ]         STREAM     CONNECTED     152848   15855/vboxwebsrv
+</pre>
+<p>This completes VirtualBox server configuration.  Next, proceed to install <tt>RemoteBox</tt> on a client host.</p>
+<h3>Requirements for Installing RemoteBox on Client Host</h3>
+<p>For <tt>RemoteBox</tt> to communicate with the server properly, the server and client hosts are NOT required to run the same operating system.</p>
+<p>Prior to running <tt>RemoteBox</tt> on a client host, there are several prerequisite packages that you must install first.</p>
+<p>To install prerequisites on Ubuntu, Mint or Debian based client host:</p>
+<div class="console">
+$ sudo apt-get install libgtk2-perl libsoap-lite-perl rdesktop
+</div>
+</p>
+<p>To install prerequisites on <a href="http://xmodulo.com/go/fedora_guide" style="" target="_blank" rel="nofollow" >Fedora</a>, CentOS or RHEL based client host:</p>
+<div class="console">
+$ sudo yum install perl-Gtk2 perl-SOAP-Lite rdesktop
+</div>
+</p>
+<h3>Install and Configure RemoteBox on Client Host</h3>
+<p>To run <tt>RemoteBox</tt> on a client host, download its binary package from its official website, and simply run <tt>remotebox</tt> command.</p>
+<div class="console">
+$ wget http://knobgoblin.org.uk/downloads/RemoteBox-1.5.tar.gz<br />
+$ tar xvfvz RemoteBox-1.5.tar.gz<br />
+$ cd RemoteBox-1.5<br />
+$ ./remotebox
+</div>
+</p>
+<p>The screenshot of <tt>Remotebox</tt> looks like the following. To connect to a VirtualBox server, click on &#8220;Connect&#8221; button in the tool bar.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9221301260/"><img src="http://farm6.staticflickr.com/5340/9221301260_a26e8e61e8.jpg"></a></p>
+<p>Fill in the server information:</p>
+<ul>
+<li>URL: http://&lt;IP address of the server&gt;:18083
+<li>Username/password: Linux user for VirtualBox web service, and its password
+</ul>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9221465228/"><img src="http://farm3.staticflickr.com/2860/9221465228_2849eb51a0.jpg"></a></p>
+<p>Once you successfully logged in to the server, you can view a list of VMs that are created on VirtualBox.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9218525995/"><img src="http://farm4.staticflickr.com/3752/9218525995_5bf0e5dc04.jpg"></a></p>
+<p>Before launching a guest VM, edit its settings in order to enable remote display for the VM.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9218525967/"><img src="http://farm6.staticflickr.com/5323/9218525967_41f72225c5.jpg"></a></p>
+<p>Click on the checkbox for enabling remote display server.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9218525957/"><img src="http://farm6.staticflickr.com/5441/9218525957_b416819ee7.jpg"></a></p>
+<p>Start the guest VM by clicking on &#8220;Start&#8221; button.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9221301192/"><img src="http://farm8.staticflickr.com/7311/9221301192_2b94b70305.jpg"></a></p>
+<p>Upon VM&#8217;s launch, <tt>RemoteBox</tt> will automatically start <tt>rdesktop</tt> to show the VM&#8217;s console via a remote desktop session.</p>
+<p><a target=_blank rel="nofollow" href="http://www.flickr.com/photos/xmodulo/9221301158/"><img src="http://farm4.staticflickr.com/3791/9221301158_4165eae2d9.jpg"></a></p>
+
+<!--Ad Injection mfunc mode ad code--><!--mfunc adshow_display_ad_file_v2(array('ad_bottom_1.txt'), array(100), array('align' => '', 'clear' => '', 'margin_top' => '', 'margin_bottom' => '', 'padding_top' => '', 'padding_bottom' => '15'), array(), array()) -->
+
+<div style='padding-bottom:15px;'><script type="text/javascript"><!--
+google_ad_client = "ca-pub-7245163904660683";
+/* xmodulo-post-bottom */
+google_ad_slot = "5804090714";
+google_ad_width = 336;
+google_ad_height = 280;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div><!--/mfunc-->
+<div class="sharedaddy sd-sharing-enabled"><div class="robots-nocontent sd-block sd-social sd-social-official sd-sharing"><h3 class="sd-title">Share this FAQ:</h3><div class="sd-content"><ul><li class="share-google-plus-1"><div class="googleplus1_button"><div class="g-plus" data-action="share" data-annotation="bubble" data-href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html"></div></div></li><li class="share-facebook"><div class="like_button"><iframe src="http://www.facebook.com/plugins/like.php?href=http%3A%2F%2Fxmodulo.com%2F2013%2F07%2Fhow-to-manage-virtualbox-vms-on-remote-headless-server.html&amp;layout=button_count&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;height=21&amp;locale=en_US&amp;width=90" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:96px; height:21px;" allowTransparency="true"></iframe></div></li><li class="share-twitter"><div class="twitter_button"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/tweet_button.html?url=http%3A%2F%2Fxmodulo.com%2F2013%2F07%2Fhow-to-manage-virtualbox-vms-on-remote-headless-server.html&#038;counturl=http%3A%2F%2Fxmodulo.com%2F2013%2F07%2Fhow-to-manage-virtualbox-vms-on-remote-headless-server.html&#038;count=horizontal&#038;text=How%20to%20manage%20VirtualBox%20VMs%20on%20a%20remote%20headless%20server%3A" style="width:101px; height:20px;"></iframe></div></li><li class="share-reddit"><div class="reddit_button"><iframe src="http://www.reddit.com/static/button/button1.html?width=120&amp;url=http%3A%2F%2Fxmodulo.com%2F2013%2F07%2Fhow-to-manage-virtualbox-vms-on-remote-headless-server.html&amp;title=How%20to%20manage%20VirtualBox%20VMs%20on%20a%20remote%20headless%20server" height="22" width="120" scrolling="no" frameborder="0"></iframe></div></li><li class="share-end"></li></ul></div></div></div><div class='yarpp-related'>
+<br><h3>Related FAQs:</h3><ul>
+<li><a href='http://xmodulo.com/2013/05/how-to-create-and-start-virtualbox-vm-without-gui.html' rel='bookmark' title='How to create and start VirtualBox VM without GUI'>How to create and start VirtualBox VM without GUI</a></li>
+<li><a href='http://xmodulo.com/2013/05/how-to-check-if-file-exists-on-remote-server.html' rel='bookmark' title='How to check if a file exists on a remote server'>How to check if a file exists on a remote server</a></li>
+<li><a href='http://xmodulo.com/2012/06/how-to-allow-remote-access-to-mysql.html' rel='bookmark' title='How to allow remote access to MySQL server'>How to allow remote access to MySQL server</a></li>
+<li><a href='http://xmodulo.com/2012/11/how-to-start-vmware-server-remote-console-without-web-interface.html' rel='bookmark' title='How to start VMware server remote console without web interface'>How to start VMware server remote console without web interface</a></li>
+<li><a href='http://xmodulo.com/2013/07/how-to-install-virtualbox-guest-additions-for-linux.html' rel='bookmark' title='How to install VirtualBox Guest Additions for Linux'>How to install VirtualBox Guest Additions for Linux</a></li>
+</ul>
+</div>
+</div> <!-- .entry-content -->    
+    				<div class="heatmapthemead-footer-entry-meta">
+				<footer class="entry-meta">
+				
+										
+														<p class="heatmapthemead-cat-links">
+									Categories: <a href="http://xmodulo.com/category/virtualbox" title="View all posts in VirtualBox" rel="tag">VirtualBox</a>								</p>
+													
+													<p class="heatmapthemead-tag-links">
+								Tags: <a href="http://xmodulo.com/tag/remote-desktop" rel="tag">remote desktop</a>							</p>
+								
+								
+				</footer><!-- #heatmapthemead-article-meta -->    
+			</div><!-- #footer-entry-meta --> 
+    	<div id="comments" class="comments-area">
+	
+	
+			<h2 id="comments-title">
+			3 thoughts on &ldquo;<span>How to manage VirtualBox VMs on a remote headless server</span>&rdquo;		</h2>
+
+		
+		<ol class="commentlist">
+					<li class="comment even thread-even depth-1" id="li-comment-4009">
+			<div class="heatmapthemead-comment-article">
+				<article id="comment-4009" class="comment">
+					<footer class="comment-meta">
+						<div class="reply">
+							<a class='comment-reply-link' href='/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html?replytocom=4009#respond' onclick='return addComment.moveForm("comment-4009", "4009", "respond", "4030")'>Reply</a>						</div><!-- .reply -->
+						<div class="comment-author vcard">
+							<img alt='' src='http://1.gravatar.com/avatar/7e60d40581e490e67b040e9f10aaa7d7?s=68&amp;d=http%3A%2F%2F1.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D68&amp;r=G' class='avatar avatar-68 photo' height='68' width='68' /><span class="fn">Abhi</span> on <a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html#comment-4009"><time datetime="2013-08-14T01:59:06+00:00">August 14, 2013 at 1:59 am</time></a> <span class="says">said:</span>		
+													</div><!-- .comment-author .vcard -->
+		
+								
+					</footer>
+		
+					<div class="comment-content"><p>This is nice tutorial. I failed to connect to the web service at the virtualbox server.  I tried to login in the virtualbox server from terminal, and it worked fine. But, the removebox client gives the error message  &#8220;Credentials are incorrect or the VirtualBox Web Service is not running at the specified URL.&#8221;<br />
+Could you please  tell me what went wrong? </p>
+<p>Thanks,<br />
+Abhi</p>
+</div>
+				</article><!-- #comment-## -->
+			</div><!-- .heatmapthemead-comment-article -->
+	
+		<ul class="children">
+		<li class="comment byuser comment-author-nanni bypostauthor odd alt depth-2" id="li-comment-4010">
+			<div class="heatmapthemead-comment-article">
+				<article id="comment-4010" class="comment">
+					<footer class="comment-meta">
+						<div class="reply">
+							<a class='comment-reply-link' href='/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html?replytocom=4010#respond' onclick='return addComment.moveForm("comment-4010", "4010", "respond", "4030")'>Reply</a>						</div><!-- .reply -->
+						<div class="comment-author vcard">
+							<img alt='' src='http://1.gravatar.com/avatar/3a851be8f0817a4981056998f9f52562?s=39&amp;d=http%3A%2F%2F1.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D39&amp;r=G' class='avatar avatar-39 photo' height='39' width='39' /><span class="fn"><a href='http://xmodulo.com' rel='external nofollow' class='url'>Dan Nanni</a></span> on <a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html#comment-4010"><time datetime="2013-08-14T02:28:26+00:00">August 14, 2013 at 2:28 am</time></a> <span class="says">said:</span>		
+													</div><!-- .comment-author .vcard -->
+		
+								
+					</footer>
+		
+					<div class="comment-content"><p>As it says, VBox Web Service is not running apparently&#8230;  Make sure it is.</p>
+</div>
+				</article><!-- #comment-## -->
+			</div><!-- .heatmapthemead-comment-article -->
+	
+		<ul class="children">
+		<li class="comment even depth-3" id="li-comment-4013">
+			<div class="heatmapthemead-comment-article">
+				<article id="comment-4013" class="comment">
+					<footer class="comment-meta">
+						<div class="reply">
+							<a class='comment-reply-link' href='/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html?replytocom=4013#respond' onclick='return addComment.moveForm("comment-4013", "4013", "respond", "4030")'>Reply</a>						</div><!-- .reply -->
+						<div class="comment-author vcard">
+							<img alt='' src='http://1.gravatar.com/avatar/7e60d40581e490e67b040e9f10aaa7d7?s=39&amp;d=http%3A%2F%2F1.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D39&amp;r=G' class='avatar avatar-39 photo' height='39' width='39' /><span class="fn">Abhi</span> on <a href="http://xmodulo.com/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html#comment-4013"><time datetime="2013-08-14T04:24:53+00:00">August 14, 2013 at 4:24 am</time></a> <span class="says">said:</span>		
+													</div><!-- .comment-author .vcard -->
+		
+								
+					</footer>
+		
+					<div class="comment-content"><p>Actually, the web service is running. I checked both the service status and the netstat. The output is exactly as given above. Is there anything with remote desktop setting in the server side?</p>
+</div>
+				</article><!-- #comment-## -->
+			</div><!-- .heatmapthemead-comment-article -->
+	
+		</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+		</ol>
+
+		
+	
+	
+									<div id="respond" class="comment-respond">
+				<h3 id="reply-title" class="comment-reply-title">Leave a comment <small><a rel="nofollow" id="cancel-comment-reply-link" href="/2013/07/how-to-manage-virtualbox-vms-on-remote-headless-server.html#respond" style="display:none;">Cancel reply</a></small></h3>
+									<form action="http://xmodulo.com/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+																			<p class="comment-notes">Your email address will not be published. Required fields are marked <span class="required">*</span></p>							<p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" aria-required='true' /></p>
+<p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="text" value="" size="30" aria-required='true' /></p>
+<p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="text" value="" size="30" /></p>
+												<p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" aria-required="true"></textarea></p>												<p class="form-submit">
+							<input name="submit" type="submit" id="submit" value="Post Comment" />
+							<input type='hidden' name='comment_post_ID' value='4030' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+						</p>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="595dc2f8e8" /></p>
+	<p class="comment-form-anti-spam" style="clear:both;">
+		<strong>Current <span style="display:none;">month</span> <span style="display:inline;">ye@r</span> <span style="display:none;">day</span></strong> <span class="required">*</span>
+		<input type="hidden" name="anti-spam-a" id="anti-spam-a" value="2013" />
+		<input type="text" name="anti-spam-q" id="anti-spam-q" size="30" value="1980" />
+	</p>
+	
+	<p class="comment-form-anti-spam-2" style="display:none;">
+		<strong>Leave this field empty</strong> <span class="required">*</span>
+		<input type="text" name="anti-spam-e-email-url" id="anti-spam-e-email-url" size="30" value=""/>
+	</p>
+	<p class="comment-subscription-form"><input type="checkbox" name="subscribe_comments" id="subscribe_comments" value="subscribe" style="width: auto; -moz-appearance: checkbox; -webkit-appearance: checkbox;" /> <label class="subscribe-label" id="subscribe-label" for="subscribe_comments" style="display: inline;">Notify me of follow-up comments by email.</label></p><p class="comment-subscription-form"><input type="checkbox" name="subscribe_blog" id="subscribe_blog" value="subscribe" style="width: auto; -moz-appearance: checkbox; -webkit-appearance: checkbox;" /> <label class="subscribe-label" id="subscribe-blog-label" for="subscribe_blog" style="display: inline;">Notify me of new posts by email.</label></p>					</form>
+							</div><!-- #respond -->
+						
+</div><!-- #comments .comments-area -->		</article><!-- #post-4030 -->        
+			<div id="heatmapthemead-post-navigation">
+            <nav role="navigation" id="nav-below" class="site-navigation post-navigation">
+        
+                    
+                <div class="nav-previous"><a href="http://xmodulo.com/2013/07/how-to-launch-a-gui-based-desktop-program-from-command-line-in-linux.html" rel="prev"><span class="meta-nav">&laquo;</span> How to launch a GUI-based desktop program from command line in Linux</a></div>                <div class="nav-next"><a href="http://xmodulo.com/2013/07/how-to-install-xenserver-on-vmware-player.html" rel="next">How to install XenServer on VMware Player <span class="meta-nav">&raquo;</span></a></div>        
+                    
+            </nav><!-- .site-navigation post-navigation -->
+        </div><!-- #heatmapthemead-post-navigation -->
+		</div> <!-- id="heatmapthemead-the-content-container" --> 
+</div> <!-- id="heatmapthemead-the-content" --> 
+</div> <!-- id="heatmapthemead-content" --> 
+<!-- primary sidebar -->
+<div id="heatmapthemead-primary-sidebar">
+<div id="heatmapthemead-primary-sidebar-container" role="complementary">
+<div id="heatmapthemead-widget-position-primary" class="heatmapthemead-widget-position heatmapthemead-primary" role="complementary"><aside id="heatmapthemead_ad-2" class="widget heatmapthemead_ad_widget">				<div class="heatmapthemead_ad_widget"><script type="text/javascript"><!--
+google_ad_client = "ca-pub-7245163904660683";
+/* xmodulo-leftskyscraper */
+google_ad_slot = "9982982382";
+google_ad_width = 160;
+google_ad_height = 600;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div>
+			</aside></div> <!-- id="heatmapthemead-widget-position-primary" -->
+</div> <!-- id="heatmapthemead-primary-sidebar-container" -->
+</div> <!-- id="heatmapthemead-primary-sidebar" -->
+<!-- secondary sidebar -->
+<div id="heatmapthemead-secondary-sidebar">
+<div id="heatmapthemead-secondary-sidebar-container" role="complementary">
+<div id="heatmapthemead-widget-position-secondary" class="heatmapthemead-widget-position heatmapthemead-secondary widget-area" role="complementary"><aside id="feedburneremailwidget-2" class="widget FeedburnerEmailWidget"><h4 class="widget-title">Enter your email address to subscribe</h4><style type="text/css">#feedburner_email_widget_sbef {
+border:opx solid #ccc;
+padding:0px;
+text-align:center;
+}
+#feedburner_email_widget_sbef text{
+width:140px;
+display: block;
+}
+#feedburner_email_widget_sbef label{
+display:block;
+}</style><form id="feedburner_email_widget_sbef" action="http://feedburner.google.com/fb/a/mailverify" method="post" onsubmit="window.open('http://feedburner.google.com/fb/a/mailverify?uri=linuxfaq', 'popupwindow', 'scrollbars=yes,width=550,height=520');return true;" target="popupwindow"><input id="feedburner_email_widget_sbef_email" name="email" type="text" /><input type="hidden" value="linuxfaq" name="uri"/><input type="hidden" value="en_US" name="loc"/><input id="feedburner_email_widget_sbef_submit" type="submit" value="Subscribe" /></form></aside><aside id="text-11" class="widget widget_text">			<div class="textwidget"><!-- Place this tag where you want the widget to render. -->
+<div class="g-page" data-width="280" data-href="//plus.google.com/113402205121279785792" data-layout="landscape" data-rel="publisher"></div>
+
+<!-- Place this tag after the last widget tag. -->
+<script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script></div>
+		</aside><aside id="search-4" class="widget widget_search"><form role="search" method="get" id="searchform" class="searchform" action="http://xmodulo.com/">
+				<div>
+					<label class="screen-reader-text" for="s">Search for:</label>
+					<input type="text" value="" name="s" id="s" />
+					<input type="submit" id="searchsubmit" value="Search" />
+				</div>
+			</form></aside><aside id="oio-widget-2" class="widget oio">
+<ul class="oio-banner-zone" id="oio-banner-1" style="width:275px; height:125px; float:left;">
+<li style="width:125px; height:125px; margin:0 25px 0 0;"><a rel="nofollow" target="_blank" href="http://xmodulo.com/wp-content/plugins/oiopub-direct/modules/tracker/go.php?id=2" title="SSD Cloud Server"><img src="http://xmodulo.com/wp-content/plugins/oiopub-direct/uploads/MrdM05_digitalocean.jpg" alt="SSD Cloud Server" style="width:125px; height:125px; border:0px;" /></a></li>
+<li style="width:125px; height:125px; margin:0 0 0 0;"><a rel="nofollow" target="_blank" href="http://xmodulo.com/advertise#banner" title="Advertise Here"><img src="http://xmodulo.com/images/ad.png" alt="Advertise Here" style="width:125px; height:125px; border:0px;" /></a></li>
+</ul>
+<hr class="oio-clear-left" />
+</aside><aside id="heatmapthemead_ad-4" class="widget heatmapthemead_ad_widget">				<div class="heatmapthemead_ad_widget"><script type="text/javascript"><!--
+google_ad_client = "ca-pub-7245163904660683";
+/* xmodulo-side-links */
+google_ad_slot = "2515372787";
+google_ad_width = 200;
+google_ad_height = 90;
+//-->
+</script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script></div>
+			</aside><aside id="relatedpoststhumbnailswidget-2" class="widget widget_relatedpoststhumbnailswidget"><h4 class="widget-title">Related Linux FAQs</h4><div style="clear: both"></div><div style="border: 0pt none ; margin: 0pt; padding: 0pt;"><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/04/how-to-clone-or-copy-virtual-machine-on-virtualbox.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm9.staticflickr.com/8240/8664665870_1f1b4935a0_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">How to clone or copy a virtual machine on VirtualBox</div></div></a><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/04/vmware-player-vs-virtualbox-feature-comparison.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm8.staticflickr.com/7357/9417314211_e69c949171_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">VMware Player vs. VirtualBox: feature comparison</div></div></a><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/05/how-to-install-and-run-android-x86-on-virtualbox.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm9.staticflickr.com/8274/8711906365_3f4418ce4d_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">How to install and run Android x86 on VirtualBox</div></div></a><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/06/how-to-set-up-dual-monitors-for-ubuntu-guest-on-virtualbox.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm4.staticflickr.com/3674/8914707498_441a50b7c1_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">How to set up dual monitors for Ubuntu Guest on VirtualBox</div></div></a><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/07/vmware-player-vs-virtualbox-performance-comparison.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm4.staticflickr.com/3819/9341313478_0f82bc6b86_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">VMware Player vs. VirtualBox: performance comparison</div></div></a><a onmouseout="this.style.backgroundColor='#FFFFFF'" onmouseover="this.style.backgroundColor='#EEEEEF'" style="background-color: #FFFFFF; border-right: 1px solid #DDDDDD; border-bottom: medium none; margin: 0pt; padding: 6px; display: block; float: left; text-decoration: none; text-align: left; cursor: pointer;" href="http://xmodulo.com/2013/07/how-to-install-and-run-microsoft-windows-for-free-on-linux.html"><div style="border: 0pt none ; margin: 0pt; padding: 0pt; width: 130px; height: 280px;"><div style="border: 1pt solid #000000; margin: 0pt; padding: 0pt; background: transparent url(http://farm6.staticflickr.com/5524/9389927996_ce0dc376d5_q.jpg) no-repeat scroll 0% 0%; -moz-background-clip: border; -moz-background-origin: padding; -moz-background-inline-policy: continuous; width: 130px; height: 130px;"></div><div style="border: 0pt none; margin: 3px 0pt 0pt; padding: 0pt; font-family: ; font-style: normal; font-variant: normal; font-weight: normal; font-size: px; line-height: normal; font-size-adjust: none; font-stretch: normal; -x-system-font: none; color: #333333;">How to install and run Microsoft Windows for free on Linux</div></div></a></div><div style="clear: both"></div></aside><aside id="image-2" class="widget widget_image"><div class="jetpack-image-container"><a href="http://creativecommons.org/licenses/by-sa/3.0/deed.en_US"><img src="/images/cc-by-sa.jpg" alt="All content on Xmodulo.com is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License." title="All content on Xmodulo.com is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License." class="alignnone" /></a></div>
+</aside></div> <!-- id="heatmapthemead-widget-position-secondary" -->
+</div> <!-- id="heatmapthemead-secondary-sidebar-container" -->
+</div> <!-- id="heatmapthemead-secondary-sidebar" -->
+</div> <!-- id="heatmapthemead-main" -->
+</div> <!-- id="heatmapthemead-main-wipe" -->
+<!-- Footer -->
+<div id="heatmapthemead-footer-wipe">
+<div id="heatmapthemead-footer">
+<div id="heatmapthemead-footer-container" role="complementary">
+				<div id="heatmapthemead-footer-menu" class="heatmapthemead-menu">
+					<nav role="navigation" class="site-navigation footer-navigation">
+						<div class="menu"><ul><li class="page_item page-item-5032"><a href="http://xmodulo.com/about">About</a></li><li class="page_item page-item-3805"><a href="http://xmodulo.com/advertise">Advertise</a></li><li class="page_item page-item-574"><a href="http://xmodulo.com/contact">Contact</a></li></ul></div>
+					</nav>
+				</div>
+	</div> <!-- id="heatmapthemead-footer-container" -->
+</div> <!-- id="heatmapthemead-footer" -->
+</div> <!-- id="heatmapthemead-footer-wipe" -->
+<!-- wp_footer() -->
+<img id="oio-pixel" src="http://xmodulo.com/wp-content/plugins/oiopub-direct/modules/tracker/tracker.php?pids=2|0" alt="" />
+
+<!--Plugin WP Missed Schedule 2013.0730.7777 Active - Tag d76ca983e4e0b1146b8511f40cd66015-->
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-31255384-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+	<div style="display:none">
+	<div class="grofile-hash-map-7e60d40581e490e67b040e9f10aaa7d7">
+	</div>
+	<div class="grofile-hash-map-3a851be8f0817a4981056998f9f52562">
+	</div>
+	</div>
+			<script type="text/javascript">
+			  (function() {
+			    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+			    po.src = 'https://apis.google.com/js/plusone.js';
+			    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+			  })();
+			</script>
+					<script type="text/javascript">
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-facebook' ).on( 'click', function() {
+				window.open( jQuery(this).attr( 'href' ), 'wpcomfacebook', 'menubar=1,resizable=1,width=600,height=400' );
+				return false;
+			});
+		});
+		</script>
+				<script type="text/javascript">
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-twitter' ).on( 'click', function() {
+				window.open( jQuery(this).attr( 'href' ), 'wpcomtwitter', 'menubar=1,resizable=1,width=600,height=350' );
+				return false;
+			});
+		});
+		</script>
+		<script type='text/javascript' src='http://s0.wp.com/wp-content/js/devicepx-jetpack.js?ver=201338'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var recaptcha_options = {"lang":"en"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='http://xmodulo.com/wp-content/plugins/jetpack/modules/sharedaddy/sharing.js?ver=20121205'></script>
+
+	<script src="http://stats.wordpress.com/e-201338.js" type="text/javascript"></script>
+	<script type="text/javascript">
+	st_go({v:'ext',j:'1:2.5',blog:'44272548',post:'4030',tz:'0'});
+	var load_cmc = function(){linktracker_init(44272548,4030,2);};
+	if ( typeof addLoadEvent != 'undefined' ) addLoadEvent(load_cmc);
+	else load_cmc();
+	</script><!-- End of wp_footer() -->
+<!-- Number of Queries:36   Seconds: 0.413-->
+<!-- heatmapthemead_end_body hook -->
+<!-- END BODY Scripts -->
+
+
+<!-- end of heatmapthemead_end_body hook -->
+</body>
+</html>
+<!-- End of render.php -->
+
+<!-- Performance optimized by W3 Total Cache. Learn more: http://www.w3-edge.com/wordpress-plugins/
+
+Page Caching using disk: enhanced
+Database Caching 1/37 queries in 0.013 seconds using disk
+Object Caching 1891/1947 objects using disk
+
+ Served from: xmodulo.com @ 2013-09-20 23:01:19 by W3 Total Cache -->

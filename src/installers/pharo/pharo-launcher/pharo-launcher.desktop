@@ -1,0 +1,10 @@
+[Desktop Entry]
+Comment=Pharo Smalltalk environment
+Terminal=false
+Name=Pharo Smalltalk
+Exec=${INSTALL_DIR}/pharo
+Type=Application
+Icon=${INSTALL_DIR}/icons/Pharo.png
+X-Desktop-File-Install-Version=0.22
+GenericName=Programming
+Categories=Application;Development;

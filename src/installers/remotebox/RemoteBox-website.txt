@@ -1,0 +1,87 @@
+
+RemoteBox
+================================================================
+
+http://knobgoblin.org.uk/
+
+http://knobgoblin.org.uk/downloads.cgi
+
+
+RemoteBox Version       Required VirtualBox Version
+------------------      ----------------------------
+        v2.0                    v5.0.x
+    v1.6 - v1.9                 v4.3.x
+    v1.4 - v1.5                 v4.2.x
+    v1.0 - v1.3                 v4.1.x
+    v0.6 - v0.9                 v4.0.x
+    v0.1 - v0.5                 v3.2.x
+        NONE            v3.1.x and earlier editions
+
+
+RemoteBox Version         Minimum GTK2 Version
+------------------      ----------------------------
+    v1.6 and newer              v2.24
+    v1.2 - v1.5                 v2.22
+    v0.1 - v1.1                 v2.16
+
+
+Old versions of RemoteBox are downloadable from the website, 
+but are no longer supported or maintained.
+
+
+
+RemoteBox - Manage VirtualBox on Servers
+================================================================
+
+What is RemoteBox?
+
+RemoteBox is a VirtualBox client. In essence, you can remotely administer (i.e., 
+over the network) an installation of VirtualBox on a server, including its 
+guests, and interact with them as if they were running locally.  VirtualBox is 
+installed on 'the server' machine and RemoteBox runs on 'the client' machine. 
+RemoteBox provides a complete GTK graphical interface with a look and feel very 
+similar to that of VirtualBox's native GUI.  If you're familiar with other 
+virtualization software, such as VMWare ESX, then think of RemoteBox as the 
+"poor man's" VI client.
+
+Why is this useful?
+
+VirtualBox is intended to be used as a desktop virtualization solution.  That 
+is, you install it on a machine and use VirtualBox locally.  This means that the 
+guests on the local machine will consume resources, taking them away from other 
+tasks.  Additionally, the guests will not be available to other machines or will 
+be unavailable if the local machine is shut down.  
+
+RemoteBox changes this by allowing you to run the guests on another machine 
+(i.e., the server) but still interact with them as if they were installed 
+locally.  This frees up resources on your local machine, allows you to interact 
+with the same guests from multiple machines (e.g., a desktop and a laptop), and 
+the guests can continue to run even when the client machine is shut down. 
+
+The guests can also take advantage of the additonal CPU, memory, and storage 
+that servers tend to have.  As VirtualBox and RemoteBox are both cross-platform, 
+it allows you to use different operating systems for the client and server.  For 
+example, you may prefer to use VirtualBox on a Linux server, but wish to 
+interact with the guests from a Mac OS X client machine.
+
+How does it work?
+
+VirtualBox includes a special web service which exposes its API over the network 
+using a protocol called SOAP. RemoteBox also speaks SOAP and communicates with 
+VirtualBox to perform the various tasks such as creating or powering on guests, 
+etc.  When guests are 'powered on', they are started up in a mode called 
+headless. This essentially means the guest's display is 'hidden' but is 
+accessible using the Remote Desktop Protocol (RDP). RemoteBox uses an RDP client 
+to show the display of a guest, locally on the client machine and is completely 
+interactive.
+
+What does RemoteBox run on?
+
+The RemoteBox client is known to run on Linux, Solaris, Mac OS X, and various 
+modern flavors of BSD.  VirtualBox offically runs on Linux, Solaris, Mac OS X, 
+and Windows as well as 'unofficially' on FreeBSD.  The client and server 
+machines do not need to be running the same operating system.  For example, you 
+may have VirtualBox installed on a Linux server but interfact with the guests 
+from a Mac OS X client. 
+
+

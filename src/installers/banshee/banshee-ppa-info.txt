@@ -1,0 +1,29 @@
+
+Banshee PPA 
+===================================
+
+https://launchpad.net/~banshee-team/+archive/ppa
+
+This PPA contains the latest stable debs of Banshee for Ubuntu. 
+To install Banshee, you must first enable the PPA on your system:
+
+1. Open Software Sources (System->Administration->Software Sources)
+2. Navigate to the "Third Party Sources" tab. 
+3. Click "Add"
+4. Enter the APT line below that corresponds to your Ubuntu version that starts with "deb".
+5. Click "Add Source"
+6. Click "Close"
+7. It will prompt you to reload your software cache. Click "Reload".
+8. Now install the package "banshee" from Synaptic, or using the command:
+     sudo apt-get install banshee
+
+For those who wish to compile from trunk, add the deb-src line and then run 
+"sudo apt-get build-dep" to install all required dependencies before starting to compile.
+
+Unstable (version which have odd minor version numbers) debs of Banshee can be found here:
+    https://launchpad.net/~banshee-team/+archive/banshee-unstable
+
+More info: https://launchpad.net/~banshee-team/+archive/ppa
+
+
+

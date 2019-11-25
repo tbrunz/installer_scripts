@@ -1,0 +1,27 @@
+
+Tasks to be performed after installing 'mdadm'
+===========================================================================
+
+* Reconfigure 'mdadm' so that it will send emails on device failure:
+
+   $ sudo dpkg-reconfigure mdadm
+   
+   It will ask to run a redundancy check once per month (Y);
+   It will ask to run a monitor daemon and be allowed to send email (Y);
+   It will ask for the email recipient; choose the 'root' default;
+   It will ask if it should allow booting if an array is degraded (Y);
+   Will rewrite '/boot/initrd.img-3.XX.0-YY-generic';
+
+It should run 'sudo update-grub' afterwards (automatically).
+
+
+* Also, configure 'ssmtp' to email failure notifications.
+
+   Test by entering
+   
+   $ sudo mdadm --monitor --scan --test --oneshot
+   
+   then check your email to verify that you receive one email per array.
+   
+
+

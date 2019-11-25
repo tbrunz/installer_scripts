@@ -1,0 +1,312 @@
+
+Using 'fwknop' (Firewall Knock Operator) v2.0 for remote access
+================================================================================
+
+http://www.cipherdyne.org/fwknop/
+
+FWKNOP uses SPA (Single Packet Authorization) to send a packet over the Internet 
+to a remote host ('server') that, upon verification of credentials, will open a 
+port of your choosing for (by default) 30 seconds to allow access.
+
+
+FWKNOP has the following advantages as a "port knocker":
+
+* The port to receive the SPA packet can be configured on the Server; when 
+  invoking the Client, this 'knock port' can be specified or defaulted.
+
+* The SPA packet is sent via UDP and can be received even if the Server is 
+  blocking the SPA port.  TCP can also be used, in which case it can be accepted 
+  by a dummy TCP server.
+
+* The Server that receives the SPA packet never responds to it.
+
+* The SPA packet is encrypted, and is immune to interception/replay attacks.
+
+* The client can use either a password or GPG (PKI) crypto-keys to authenticate 
+  with the Server.
+
+* When FWKNOP authenticates a request, it opens the firewall for access only by 
+  the Client machine (filtering by source IP number).
+
+* The Server can open a default port upon authentication; the Client can request 
+  which port & type (udp/tcp) to open.
+
+* The duration the port remains open, etc. can be configured on the Server; the 
+  Client can request a specific time-out as well.
+
+* The Client can be behind a NAT firewall/router, using a non-routeable IP 
+  number.  The Server can be behind a NAT firewall/router, using a non-routeable 
+  IP number.
+
+* The Client can request NAT translation for Server port access, and can request 
+  IP Table forwarding; the Server can optionally perform Source NAT translation 
+  as well as Destination NAT translation.
+
+* The Client can define customized "access stanzas" to define default values for 
+  particular knock scenarios referred to by name.
+
+
+FWKNOP works for a machine that's directly on the Internet, as well as those 
+behind firewall/routers.  My scheme (below) takes this further by allocating a 
+range of ports, 2 per Server host, on the server-side firewall/router.  By 
+choosing which port combination the Client uses to connect, the SPA packet and 
+the subsequent SSH connection request can be directed at will to any host on 
+the Server's LAN.  All that's needed by the Client is the WAN IP of the Server's 
+router and the last IP octet of the particular machine you want to make a 
+direct connection to.  (The router, of course, must be a typical modern router 
+capable of user-defined NAT translation.)
+
+For example, suppose there are three machines behind a firewall/router with a 
+WAN IP of 75.171.45.216.  The three machines have IPs of 192.168.1.100, .101, 
+and .102.  Starting from a client machine, also behind a firewall/router, this 
+scheme makes it possible to establish an SSH connection with any or all of these 
+machines at will, individually or simultaneously -- all without any assistance 
+on the server side, without any reconfiguration on the server side, and most 
+significantly, without any ports on the server side being open to port scanning 
+attacks, etc.
+
+This scheme works for any number of machines behind a firewall/router -- it can 
+cover an entire Class C range (and could be extended for a larger network).  
+
+Continuing the example, to connect via SSH (for a shell session or a tunneled 
+application) to the machine with IP 192.168.1.102, a user would use the fwknop 
+client to send an SPA packet to [75.171.45.216:57102]; then, within 30 seconds 
+(the default access time), the user would need to enter (for a shell session) 
+'ssh -p 58102 useracct@75.171.45.216' and would be granted access.  (A similar 
+command can be used to create a tunnel.)  
+
+An attacker running a port scan on 75.171.45.216 would see no response from any 
+port, at any time -- even if he runs his scan during the entire log-in process!  
+Each time a client is granted access, a custom-tailored port specific only to 
+the client machine is opened in the server's firewall.  Packet-sniffing would be 
+as useless to the attacker, since replay attacks will not succeed (and wouldn't 
+grant access to the attacker's IP anyway, even if it did).
+
+
+
+Configuring 'fwknop' (Firewall Knock Operator) in Ubuntu
+================================================================================
+
+On the Client host:
+----------------------------------------------------------------
+
+* Install the FWKNOP client package on each client machine, using the command 
+  'sudo apt-get install fwknop-client'.
+
+* For each account that will use the client, run 'fwknop' in a terminal (as that 
+  user) so that it will create the '.fwknoprc' file for the account.
+  
+* Edit each '.fwknoprc' file (see 'man fwknop' for details):
+    - Edit the defaults in the '[default]' stanza, as desired.  Likely global 
+      defaults (to override the client app) are: 
+          FW_TIMEOUT                300
+          ALLOW_IP                  resolve   [equivalent to the '-R' switch]
+          ACCESS                    tcp/62202 [equivalent to the '-A' switch]
+          
+    - Add stanzas for each server, as desired, to set their default values.  
+      (These are invoked by the client by including the '-n' switch.)  Likely 
+      defaults (to override the '[default]' stanza) are:
+          SPA_SERVER_PORT           57xyz     [equivalent to the '-p' switch]
+
+
+On the Server host (behind a firewall/router):
+----------------------------------------------------------------
+
+* It is assumed that the Server is behind a firewall/router that performs NAT 
+  translation and port-forwarding.  (See below if the Server host has a direct 
+  internet connection.)
+
+* It is assumed that the Server has a static Class C IP number similar to 
+  '192.168.1.xyz'.  (The last octet is the significant part.)
+
+* Configure the firewall/router to forward UDP (only) packets for port 57xyz to 
+  port 62201 on the Server host; this will route incoming SPA packets addressed 
+  to the server (using the 57xyz port number) to the SPA port on the Server.
+
+* Configure the firewall/router to forward TCP (only) packets for port 58xyz to 
+  port 62202 on the Server host; this will route incoming SSH packets addressed 
+  to the server (using the 58xyz port number) to the SSH port on the Server.
+
+* Install the Ubuntu Firewall (UFW) GUI tool on the Server (to ease configuring 
+  the firewall) using the Terminal command 'sudo apt-get install gufw'.
+
+* Launch the 'gufw' application' on the Server and configure its UFW rules:
+    - Unlock GUFW by clicking the 'Unlock' button and authenticating.
+
+    - Enable the UFW by clicking the 'Status' slider to 'ON'.
+
+    - Pull down the 'Incoming' pull-down to read "Allow".  (This will turn the 
+      top part of the shield red, which is okay; doing this allows the other 
+      [trusted] hosts on the local network to access the Server's services.)
+
+    - Pull down the 'Outgoing' pull-down to read "Allow".  (This will turn the 
+      bottom part of the shield red, which is okay; doing this allows the server 
+      to access the network.)
+
+    - Under the Rules listbox, click '+', then click the 'Simple' tab in the 
+      dialog box that appears.  
+
+    - Pull down the "Allow" pull-down to make it read "Deny" instead, leave the 
+      'in' & 'TCP' pull-downs alone, and enter "62202" in the textbox.
+
+    - Click 'Add', then 'Close'.  There should be one or two new green entries 
+      in the Rules listbox that read "62202/tcp | DENY IN | Anywhere".  (This 
+      confirms that the custom SSH port the router is NAT'ing will remain 
+      unresponsive unless a valid SPA packet is received.)
+
+    - At this point, only port 62202 is blocked on the Server.  If there are 
+      other ports that need to be blocked, add new rules for them as well.
+
+    - Close the 'gufw' window.
+
+* Install the FWKNOP server package on the Server using the Terminal command 
+  'sudo apt-get install fwknop-server'.
+
+* Edit '/etc/fwknop/fwknop.conf' as follows:
+    - If needed, change PCAP_INTF from "eth0" to the network device receiving 
+      packets from the internet via the NAT router.
+
+* Edit '/etc/fwknop/access.conf' as follows:
+    - Find the stanza "SOURCE: ANY;" and make the following changes to it:
+
+    - Edit KEY to make it a reasonably complex password.  Note that this line 
+      must end with ';' (implying that you cannot have a ';' in the password).
+  
+    - Add the line "REQUIRE_SOURCE_ADDRESS: Y;" to force all SPA packets to 
+      contain a real IP address (requiring the client to use the '-R' switch).
+
+* Restart the 'fwknop' service by entering 'sudo service fwknop-server restart'
+  in a terminal.
+
+* Edit '/etc/ssh/sshd_config' to add "Port 62202" after "Port 22"; this will 
+  cause the Server to service both port 22 and port 62202 using SSH.  Port 22 
+  will remain open at all times for unrestricted use by (trusted) hosts on the 
+  local network.  Port 62202 will normally be closed and only temporarily opened 
+  for access by 'fwknop' for WAN-side connections by authorized users.
+
+* Restart the SSH server by entering 'sudo service ssh restart' in a terminal.
+
+
+
+On the Server host with a direct Internet connection:
+----------------------------------------------------------------
+
+* It is assumed that the Server is NOT behind a firewall/router (which is a bad  
+  idea to begin with).
+
+* Install the Ubuntu Firewall (UFW) GUI tool on the Server (to ease configuring 
+  the firewall) using the Terminal command 'sudo apt-get install gufw'.
+
+* Launch the 'gufw' application' on the Server and configure its UFW rules:
+    - Unlock GUFW by clicking the 'Unlock' button and authenticating.
+
+    - Enable the UFW by clicking the 'Status' slider to 'ON'.
+
+    - Pull down the 'Incoming' pull-down to read "Deny".  (This will turn the 
+      top part of the shield green, which will deny all access to the Server's 
+      services.  This provides needed security for the Server host, since it 
+      does not have a firewall/router between it and the Internet.)
+
+    - Pull down the 'Outgoing' pull-down to read "Allow".  (This will turn the 
+      bottom part of the shield red, which is okay; doing this allows the server 
+      to access the network.)
+
+    - At this point, all ports are blocked on the Server.  If there are other  
+      ports that need to be blocked, add new rules for them using the '+' button 
+      beneath the Rules listbox.
+
+    - Close the 'gufw' window.
+
+* Install the FWKNOP server package on the Server using the Terminal command 
+  'sudo apt-get install fwknop-server'.
+
+* Edit '/etc/fwknop/fwknop.conf' as follows:
+    - If needed, change PCAP_INTF from "eth0" to the network device receiving 
+      packets from the internet.
+
+* Edit '/etc/fwknop/access.conf' as follows:
+    - Find the stanza "SOURCE: ANY;" and make the following changes to it:
+
+    - Edit KEY to make it a reasonably complex password.  Note that this line 
+      must end with ';' (implying that you cannot have a ';' in the password).
+  
+    - Add the line "REQUIRE_SOURCE_ADDRESS: Y;" to force all SPA packets to 
+      contain a real IP address (requiring the client to use the '-R' switch).
+
+* Restart the 'fwknop' service by entering 'sudo service fwknop-server restart'
+  in a terminal.
+
+* Edit '/etc/ssh/sshd_config' to add "Port 62202" after "Port 22"; this will 
+  cause the Server to service both port 22 and port 62202 using SSH.  Both ports 
+  will normally be closed and only temporarily opened for access by 'fwknop' for 
+  WAN-side connections by authorized users.
+
+* Restart the SSH server by entering 'sudo service ssh restart' in a terminal.
+
+
+
+To unlock the Server's SSH port & log in from the Client:
+================================================================================
+
+Enter the following command in a terminal window (does not have to be 'root'):
+
+    * If the Client is behind a hardware firewall/router that performs NAT translation, use this form:
+
+$ fwknop -A tcp/58xyz -D <Server's IP> --Server-port 57xyz -R --URL http://ip4.me
+
+    * If the Client is NOT behind a hardware firewall/router, use this form:
+
+$ fwknop -A tcp/58xyz -D <Server's IP> --Server-port 57xyz -s
+
+    * 'fwknop' will respond with:
+
+[+] Starting fwknop client (SPA mode)...
+    Resolving external IP via: http://ip4.me   <-- Only if first form used
+    Got external address: <Client's IP>
+
+[+] Enter an encryption key. This key must match a key in the file
+    /etc/fwknop/access.conf on the remote system.
+
+Encryption Key: [Enter the Server's password]
+
+[+] Building encrypted Single Packet Authorization (SPA) message...
+[+] Packet fields:
+
+        Random data:    4430094876597667
+        Username:       <username on client>
+        Timestamp:      1268881775
+        Version:        1.9.11
+        Type:           1 (access mode)
+        Access:         <Client's IP>,tcp/58xyz
+        SHA256 digest:  /2lBIMwqzR6j/0LyTu6GuQNmS7NxJTFPNHNz3Zg9SHI
+
+[+] Sending 182 byte message to <Server's IP> over udp/57xyz...
+
+    * Finally, log into the Server host.  You have 30 seconds to complete this step before the Server's firewall will be closed again.
+
+$ ssh -p 58xyz <user>@<Server's IP>
+
+    * Use this next form if you wish to log in with trusted X11 forwarding (i.e., you want GUI applications you launch on the Server to send their windows to the client's display):
+
+$ ssh -Y -p 58xyz <user>@<Server's IP>
+
+    * Use this last form if you wish to also tunnel Remote Desktop (VNC) over SSH:
+
+$ ssh -Y -p 58xyz -L 5900:localhost:5900 <user>@<Server's IP>
+
+To create a Remote Desktop session using the Client as the viewer, start the RD viewer app and attempt to connect to 'localhost:5900'.  (Port 5900 is the default port for the VNC protocol.)  Although it will look as though you're attempting to connect to your own machine, the request will instead be tunneled over your SSH connection and attempt to connect to port 5900 on the Server machine.  This technique hides and encrypts your RD session, and eliminates the need to expose other ports on the Server side.
+
+
+
+Yet to do:
+----------------------------------------------------------------
+
+* This HOW-TO needs to be updated with instructions on how to use 'fwknop' with 
+  GPG public-private keys.  (This method is more secure than using a password on 
+  the Server.)
+
+* This HOW-TO needs to be updated to cover the packages and commands used in 
+  other Linux distros.
+
+================================================================================
+

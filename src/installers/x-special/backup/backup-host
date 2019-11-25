@@ -1,0 +1,676 @@
+#! /usr/bin/env bash
+#
+# ----------------------------------------------------------------------------
+# Create a full or incremental backup of the entire system,
+# with an option of copying the backups to a remote server for storage.
+# ----------------------------------------------------------------------------
+#
+
+BACKUP_DIR=/backup
+REMOTE_DIR=/home/myself/Nearspace/myhost/Backup_RHEL
+
+LVSNAP_NAME=rootsnap
+LVSNAP_DIR=${BACKUP_DIR}/${LVSNAP_NAME}
+
+SNAPSHOT_MIN_PE=25000
+SNAPSHOT_MAX_PE=32000
+
+THIS_HOST=$( hostname -s )
+THIS_YEAR=$( date +%Y )
+THIS_WEEK=$( date +%U )
+THIS_DAY=$( date +%w )
+
+BASE_NAME="${THIS_HOST}_${THIS_YEAR}-${THIS_WEEK}"
+
+FULL_TGZ="${BASE_NAME}-0.tgz"
+FULL_SNAR="${BASE_NAME}-0.snar"
+
+LOG_DIR=/var/log/backup
+LOG_FILE="${LOG_DIR}/${BASE_NAME}_backup.log"
+
+
+############################################################################
+#
+# Manage the 'excludes' list to add "--exclude=" to each item
+#
+Make_Excludes() {
+
+EXCLUDES=( 
+	"/proc"  "./proc"
+	"/dev"   "./dev"
+	"/sys"   "./sys"
+	"/run"   "./run"
+	"/tmp"   "./tmp"
+)
+
+local EXCLUDES_IDX
+
+local NUM_EXCLUDES=${#EXCLUDES[@]}
+
+if (( NUM_EXCLUDES > 0 )); then
+
+    for (( EXCLUDES_IDX=--NUM_EXCLUDES; EXCLUDES_IDX>=0; EXCLUDES_IDX-- )); do
+    
+        EXCLUDES[$EXCLUDES_IDX]="--exclude=${EXCLUDES[$EXCLUDES_IDX]}"
+    done
+fi
+}
+
+############################################################################
+#
+# Log message
+#
+Log_Message() {
+    
+    # Tag the log file with date/time & message:
+    #
+    THIS_DATE=$( date )
+    echo "${THIS_DATE}: ${1}" >> ${LOG_FILE}
+}
+
+############################################################################
+#
+# Check to see if an LVM logical volume exists.
+#     Returns string in form of "volgrpname-logvolname" + VG + LV strings
+#     Returns empty strings for all if the LV does not exist.
+#
+Check_If_LV_Exists() {
+    
+    # Use 'lvs' to get the existing LVs, then return ${1} if it's there:
+    #
+    VG_LV_NAME=$( lvs | awk '
+        { 
+            if ( $1 == TargetLV ) print $2 "|" $1
+        }
+        ' TargetLV="${1}" - )
+    
+    # Chop the "volgrpname-logvolname" apart to get the VG & LV:
+    #
+    VG_NAME=$( printf %s "${VG_LV_NAME}" | cut -d'|' -f 1 )
+    LV_NAME=$( printf %s "${VG_LV_NAME}" | cut -d'|' -f 2 )
+}
+
+############################################################################
+#
+# Check to see if an LVM logical volume is mounted.
+#     Returns string in form of "volgrpname-logvolname" + VG + LV strings
+#     Returns empty strings for all if the LV is not mounted.
+#
+Check_If_LV_Mounted() {
+    
+    # Use 'df' to get the name of the VG containing ${1}:
+    #
+    VG_LV_NAME=$( df | awk '
+        NF == 1 { 
+            Path = $1 
+        }
+        NF == 5 { 
+            if ( $NF == TargetMount ) exit 
+            else Path = ""
+        }
+        NF == 6 { 
+            Path = $1
+            if ( $NF == TargetMount ) exit 
+            else Path = ""
+        }
+        END { 
+            if ( Path == "" ) print ""
+            else {
+                split( Path, PathAry, "/" )
+                print PathAry[4]
+            }
+        }
+        ' TargetMount="${1}" - )
+        
+    # Chop the "volgrpname-logvolname" apart to get the VG & LV:
+    #
+    VG_NAME=$( printf %s "${VG_LV_NAME}" | cut -d'-' -f 1 )
+    LV_NAME=$( printf %s "${VG_LV_NAME}" | cut -d'-' -f 2 )
+}
+
+############################################################################
+#
+# Delete the used snapshot of the file system
+#     Note that we can't call "Log_Error_and_Exit" (endless loop)
+#
+Delete_Filesystem_Snapshot() {
+    
+    # First, try to umount the snapshot -- if it's mounted:
+    #
+    Check_If_LV_Mounted "${LVSNAP_DIR}"
+    
+    # If it is, then we have non-empty strings...
+    #
+    if [ -n "${VG_NAME}" ]; then
+        cd /
+        Log_Message "Unmounting snapshot '/dev/${VG_NAME}/${LVSNAP_NAME}'"
+        
+        RESULT=$( umount -f /dev/${VG_NAME}/${LVSNAP_NAME} 2>&1 )
+                
+        if [ $? -ne 0 ]; then 
+            Log_Message "Failed to unmount snapshot LV !"
+        
+            if [ -n "${RESULT}" ]; then
+                echo "${RESULT}" >> ${LOG_FILE}
+            fi
+        fi
+    fi
+    
+    # Next, try to forcibly remove it -- if it exists:
+    #
+    Check_If_LV_Exists "${LVSNAP_NAME}"
+    
+    # If it is, then we have non-empty strings...
+    #
+    if [ -n "${VG_NAME}" ]; then
+        cd /
+        Log_Message "Removing snapshot '/dev/${VG_NAME}/${LVSNAP_NAME}'"
+        
+        RESULT=$( lvremove -f /dev/${VG_NAME}/${LVSNAP_NAME} 2>&1 )
+        
+        if [ $? -ne 0 ]; then 
+            Log_Message "Failed to remove snapshot LV !"
+        
+            if [ -n "${RESULT}" ]; then
+                echo "${RESULT}" >> ${LOG_FILE}
+            fi
+        fi
+    fi
+}
+
+############################################################################
+#
+# Log error and exit
+#
+Log_Error_and_Exit() {
+    
+    # Tag the log file with date/time & message:
+    #
+    Log_Message "${1}"
+    
+    # If there was an error message generated by the system, include it:
+    #
+    if [ -n "${RESULT}" ]; then
+        echo "${RESULT}" >> ${LOG_FILE}
+    fi
+    
+    # Do what we can to umount & remove the LVM snapshot volume:
+    #
+    Delete_Filesystem_Snapshot
+    
+    # Go quietly into the silent night...
+    #
+    exit 1
+}
+
+############################################################################
+#
+# Create a snapshot of the file system.
+#
+Create_Filesystem_Snapshot() {
+    
+    # Use 'df' to get the name of the VG containing '/':
+    #
+    Check_If_LV_Mounted "/"
+    
+    # If a VG for '/' couldn't be found, then it returns ''.
+    # But we also need the available PE count, which we get from 
+    # 'vgdisplay'.  If the first fails, so will passing its results  
+    # to 'vgdisplay', so combine both operations & test only once:
+    #
+    RESULT=$( vgdisplay ${VG_NAME} 2>&1 )
+    
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Failed to find a VG for '/' !"
+    fi
+    
+    # Use 'vgdisplay' to get the number of free PEs in the VG, 
+    # then extract that value and bracket between max & min:
+    #
+    LVSNAP_PE=$( printf %s "${RESULT}" | awk '
+        /Free *PE.*Size/ {
+            if ($5 > ss_min) {
+                if ($5 > ss_max) print ss_max
+                else print $5
+            } else print 0
+        }
+        ' ss_min=${SNAPSHOT_MIN_PE} ss_max=${SNAPSHOT_MAX_PE} - )
+
+    # If the VG has insufficient space for a snapshot, then it returns '0':
+    #
+    if [ ${LVSNAP_PE} -eq 0 ]; then
+        Log_Error_and_Exit "Insufficient space for LV snapshot !"
+    fi
+    
+    Log_Message "Creating snapshot '/dev/${VG_NAME}/${LVSNAP_NAME}'"
+    
+    RESULT=$( lvcreate -s -l ${LVSNAP_PE} -n ${LVSNAP_NAME}               \
+                    /dev/${VG_NAME}/${LV_NAME} 2>&1 )
+    
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Failed to create snapshot LV !"
+    fi
+    
+    Log_Message "Mounting snapshot '/dev/${VG_NAME}/${LVSNAP_NAME}'"
+    
+    RESULT=$( mount /dev/${VG_NAME}/${LVSNAP_NAME} ${LVSNAP_DIR} 2>&1 )
+    
+    if [ $? -ne 0 ]; then 
+        Delete_Filesystem_Snapshot
+        Log_Error_and_Exit "Failed to mount snapshot LV !"
+    fi
+}
+
+############################################################################
+#
+# Create the directories needed.
+#
+Create_Directories() {
+    
+    RESULT=$( mkdir -p -m 770 ${BACKUP_DIR} 2>&1 )
+    if [ $? -ne 0 ]; then
+        Log_Error_and_Exit "Can't make '${BACKUP_DIR}' directory!"
+    fi
+    
+    RESULT=$( mkdir -p ${LVSNAP_DIR} 2>&1 )
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Can't make '${LVSNAP_DIR}' directory!"
+    fi
+
+    RESULT=$( mkdir -p ${LOG_DIR} 2>&1 )
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Can't make '${LOG_DIR}' directory!"
+    fi
+
+    RESULT=$( mkdir -p ${REMOTE_DIR} 2>&1 )
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Can't make '${REMOTE_DIR}' directory!"
+    fi
+}
+
+############################################################################
+#
+# Create the directories needed; add $1 if we need an incremental dir, too.
+#
+List_Backup_Directories() {
+    
+    # Make sure all the expected directories are there:
+    #
+    Create_Directories
+    
+    # Show the user...
+    #
+    echo
+    echo "Contents of ${LOG_DIR}:"
+    ls -alF "${LOG_DIR}"
+
+    echo
+    echo "Contents of ${BACKUP_DIR}:" 
+    ls -aF "${BACKUP_DIR}"
+    
+    echo
+    echo "Contents of ${REMOTE_DIR}:"
+    ls -aF "${REMOTE_DIR}"
+
+    echo
+    df -hT
+}
+
+############################################################################
+#
+# Display the contents of the most recent backup log.
+#
+List_Backup_Log() {
+ 
+    if [[ -z "${1}" && -e "${LOG_FILE}" ]]; then
+        less "${LOG_FILE}"
+
+    elif [ -e "${LOG_DIR}/${THIS_HOST}_${THIS_YEAR}-${1}_backup.log" ]; then
+        less "${LOG_DIR}/${THIS_HOST}_${THIS_YEAR}-${1}_backup.log"
+    
+    else
+        ls -alF "${LOG_DIR}"
+    fi
+}
+
+############################################################################
+#
+# Transfer the backup files to the remote location.
+#     Takes an argument list of files to be copied: $1, $2, etc.
+#
+Transfer_Files_to_Remote() {
+
+    for THIS_FILE in "$@"; do
+
+        Log_Message "Copying '${THIS_FILE}' to '${REMOTE_DIR}'... "
+
+        RESULT=$( cp -f "${THIS_FILE}" "${REMOTE_DIR}/" 2>&1 )
+               
+        if [ $? -ne 0 ]; then 
+            Log_Error_and_Exit "Failed to copy tarball to '${REMOTE_DIR}' !"
+        fi
+    done
+
+    Log_Message "... Completed copying backup files to remote storage. "
+}
+
+############################################################################
+#
+# Perform a full (Level-0) backup.
+#
+Perform_Full_Backup() {
+    
+    # Make sure all the expected directories are there:
+    #
+    Log_Message "...Checking/creating needed directories..."
+    Create_Directories
+    
+    # Tag the log file to note our starting date/time:
+    #
+    Log_Message "Beginning Level-0 backup of ${THIS_HOST}... "
+
+    # To backup everything under '/', we must make & mount a snapshot:
+    #
+    Create_Filesystem_Snapshot
+    
+    # Remove any files with matching names; i.e., overwrite:
+    #
+    cd ${BACKUP_DIR}
+    
+    if [[ -e ${FULL_TGZ} || -e ${FULL_SNAR} ]]; then
+        Log_Message "Replacing existing Level-0 backup files. "
+        
+        if [[ -e ${FULL_TGZ}.bak || -e ${FULL_SNAR}.bak ]]; then
+            rm -f ${FULL_TGZ}.bak ${FULL_SNAR}.bak
+        fi
+        
+        mv ${FULL_TGZ} ${FULL_TGZ}.bak
+        mv ${FULL_SNAR} ${FULL_SNAR}.bak
+    fi
+    
+    # Remove the backup directory from the snapshot -- DON'T back it up!
+    # (Note: There's no '/' separating the path parts; it's already there.)
+    #
+    rm -rf ${LVSNAP_DIR}${BACKUP_DIR}
+    
+    # Tar up the snapshot using the incremental feature to make a SNAR file:
+    #
+    cd ${LVSNAP_DIR}
+    Log_Message "...Creating Level-0 backup tar file '${FULL_TGZ}'... "
+    
+    RESULT=$( tar --listed-incremental ${BACKUP_DIR}/${FULL_SNAR}         \
+            "${EXCLUDES[@]}" -zcf ${BACKUP_DIR}/${FULL_TGZ} . )
+            
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Failed to create tarball of snapshot LV !"
+    fi
+    
+    # Remember the file we generated so we can copy it to Nearspace:
+    #
+    BACKUP_FILE_LIST="${BACKUP_DIR}/${FULL_SNAR} ${BACKUP_DIR}/${FULL_TGZ}"
+    
+    # Tag the log file to note our ending date/time:
+    #
+    Log_Message "...Completed Level-0 backup of ${THIS_HOST}. "
+}   
+
+############################################################################
+#
+# Perform an incremental (Level-1) backup.
+#
+Perform_Incremental_Backup() {
+    
+    # Make sure all the expected directories are there:
+    #
+    Log_Message "...Checking/creating needed directories..."
+    Create_Directories
+
+    # Tag the log file to note our starting date/time:
+    #
+    Log_Message "Beginning Level-1 backup of ${THIS_HOST}... "
+
+    # To backup everything under '/', we must make & mount a snapshot:
+    #
+    Create_Filesystem_Snapshot
+    
+    # Remove any files with matching names; i.e., overwrite:
+    #
+    INC_TGZ=${THIS_HOST}_${THIS_YEAR}-${THIS_WEEK}-${THIS_DAY}.tgz
+    INC_SNAR=${THIS_HOST}_${THIS_YEAR}-${THIS_WEEK}-${THIS_DAY}.snar
+
+    cd ${BACKUP_DIR}
+    
+    if [[ -e ${INC_TGZ} || -e ${INC_SNAR} ]]; then
+        Log_Message "Replacing existing Level-1 backup files. "
+        rm -f ${INC_TGZ} ${INC_SNAR}
+    fi
+    
+    # Copy the Level-0 SNAR file to be the Level-1 SNAR file; 
+    # When this file is present, 'tar' will create a Level-1.
+    #
+    cp -f ${FULL_SNAR} ${INC_SNAR}
+    
+    # Remove the backup directory from the snapshot -- DON'T back it up!
+    # (Note: There's no '/' separating the path parts; it's already there.)
+    #
+    rm -rf ${LVSNAP_DIR}${BACKUP_DIR}
+    
+    # Tar up the snapshot using the incremental feature to make a SNAR file:
+    #
+    cd ${LVSNAP_DIR}
+    Log_Message "...Creating Level-1 backup tar file '${INC_TGZ}'... "
+    
+    RESULT=$( tar --listed-incremental ${BACKUP_DIR}/${INC_SNAR}          \
+            "${EXCLUDES[@]}" -zcf ${BACKUP_DIR}/${INC_TGZ} . )
+            
+    if [ $? -ne 0 ]; then 
+        Log_Error_and_Exit "Failed to create tarball of snapshot LV !"
+    fi
+    
+    # Remember the file we generated so we can copy it to Nearspace:
+    #
+    BACKUP_FILE_LIST="${BACKUP_DIR}/${INC_SNAR} ${BACKUP_DIR}/${INC_TGZ}"
+    
+    # Tag the log file to note our ending date/time:
+    #
+    Log_Message "...Completed Level-1 backup of ${THIS_HOST}. "
+}
+
+############################################################################
+#
+# Verify that the user has launched us using 'sudo':
+#
+Check_Run_As_Root() {
+
+    ls /root > /dev/null 2>&1
+
+    if [ $? -ne 0 ]; then
+        echo -n  "This script must be run as 'root'; "
+        echo     "try \"sudo ${THIS_SCRIPT}\". "
+        exit
+    fi
+}
+
+############################################################################
+#
+# Get the name of this script (for 'usage' prompts).
+#
+Get_Script_Name() {
+    SCRIPT="${BASH_SOURCE[0]}"
+    
+    # If the name of the script is a symlink, de-reference it:
+    #
+    while [ -h "${SCRIPT}" ] ; do SCRIPT="$(readlink "${SCRIPT}")" ; done
+    
+    # Extract just the name of the script from the path (sans '.sh')
+    # and get the name of the directory the script is in:
+    #
+    THIS_SCRIPT=$( basename ${SCRIPT} .sh )
+    SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+}
+
+############################################################################
+#
+# Display the script version.
+#
+Display_Script_Version() {
+    echo "${THIS_SCRIPT}, version ${VERSION} "
+    exit
+}
+
+############################################################################
+#
+# Display the one-line 'usage' prompt.
+#
+usage() {
+    echo -n "usage: ${THIS_SCRIPT} [ -f | -i | -l | -L ] ; "
+    echo    "use -h for help... "
+}
+
+############################################################################
+#
+# Display the help information (-h).
+#
+Display_Help_Summary() {
+    echo
+    echo "${THIS_SCRIPT} -f = Create a full backup "
+    echo "${THIS_SCRIPT} -i = Create an incremental backup "
+    echo "${THIS_SCRIPT} -l = List contents of backup directories "
+    echo "${THIS_SCRIPT} -L = List this week's backup logfile "
+    echo "${THIS_SCRIPT} -V = Show script version "
+    echo "${THIS_SCRIPT} -H = Display the man page "
+    echo
+    exit
+}
+
+############################################################################
+#
+# Display the man page (-H).
+#
+Display_Man_Page() {
+    echo 
+    echo "NAME "
+    echo "  ${THIS_SCRIPT} - Perform full/incremental system backups "
+    echo
+    echo "SYNOPSIS "
+    echo "  ${THIS_SCRIPT} -f | -i | -l | -L "
+    echo "  ${THIS_SCRIPT} -V | -h | -H "
+    echo
+    echo "DESCRIPTION "
+    echo "  This script does the following: "
+    echo "  * Creates a full system backup, tagged with week-of-year. "
+    echo "  * Creates an incremental backup based on the recent full. "
+    echo
+    echo "    -f "
+    echo "      Perform a full backup for the week "
+    echo
+    echo "    -i "
+    echo "      Perform an incremental backup for the week "
+    echo
+    echo "    -l "
+    echo "      List the contents of the backup directories "
+    echo
+    echo "    -L "
+    echo "      List the contents of this week's backup logfile "
+    echo
+    echo "    -V "
+    echo "      Display the script version "
+    echo
+    echo "    -h "
+    echo "      Display the help synopsis "
+    echo
+    echo "    -H "
+    echo "      Display this man page "
+    echo
+    echo "Blah, blah, blah... "
+    echo
+    
+    exit
+}
+
+############################################################################
+#
+# This is the program:
+#
+Get_Script_Name
+
+# Check for no parameters:
+#
+if [[ -z "${1}" || $( printf %s "${1}" | cut -c 1 ) != "-"                \
+            || -n $( printf %s "${1}" | cut -c 3- )                       \
+            || -z $( printf %s "${1}" | grep "[VhHLltfi]" ) ]]; then
+    usage
+    exit
+fi
+
+# Check for -V, -h, -H, -L switches:
+#
+if [ "${1}" = "-V"  ]; then
+    Display_Script_Version
+    exit
+fi
+
+if [ "${1}" = "-h"  ]; then
+    Display_Help_Summary
+    exit
+fi
+
+if [ "${1}" = "-H"  ]; then
+    Display_Man_Page
+    exit
+fi
+
+if [ "${1}" = "-L"  ]; then
+    shift
+    List_Backup_Log "$@"
+    exit
+fi
+
+# Anything else requires being superuser:
+#
+Check_Run_As_Root
+
+if [ "${1}" = "-l"  ]; then
+    List_Backup_Directories
+    exit
+fi
+
+if [ "${1}" = "-t"  ]; then
+    shift
+    Transfer_Files_to_Remote "$@"
+    exit
+fi
+
+# At this point, everything falls through to the end of the script, 
+# so that the snapshot will be deleted & the tarballs copied remotely.
+#
+Make_Excludes
+
+if [ "${1}" = "-f"  ]; then
+    Perform_Full_Backup
+fi
+
+if [ "${1}" = "-i"  ]; then
+    
+    # We can only do an incremental backup if BOTH this week's Level-0 
+    # 'tgz' and 'snar' files exist; if not, we'll have to do a full...
+    #
+    cd ${BACKUP_DIR}
+    
+    if [[ -e ${FULL_TGZ} && -e ${FULL_SNAR} ]]; then
+        Perform_Incremental_Backup
+    else
+        Perform_Full_Backup
+    fi
+fi    
+
+# The backup was successful -- Now remove the snapshot:
+#
+Delete_Filesystem_Snapshot
+
+# Finally, copy the tarballs to the remote archive:
+#
+#Transfer_Files_to_Remote ${BACKUP_FILE_LIST}
+
+############################################################################
+

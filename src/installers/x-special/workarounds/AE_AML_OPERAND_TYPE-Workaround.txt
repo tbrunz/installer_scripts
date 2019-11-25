@@ -1,0 +1,83 @@
+
+ACPI Exception: AE_AML_OPERAND_TYPE firmware bug - Workaround
+================================================================================
+
+NOTE: Installing package "intel-microcode" and rebooting (twice) did not fix this.
+
+
+Since Kernel 4.14 I have during boot these errors:
+
+[    0.221047] ACPI Error: Needed type [Reference], found [Integer] 00000000c0662e95 (20170831/exresop-103)
+[    0.221058] ACPI Exception: AE_AML_OPERAND_TYPE, While resolving operands for [Store] (20170831/dswexec-461)
+[    0.221066] ACPI Error: Method parse/execution failed \_PR.CPU0._PDC, AE_AML_OPERAND_TYPE (20170831/psparse-550)
+
+-----
+
+Comment 1 Erik Schmauss 2018-02-14 18:54:54 UTC
+
+I've attached a test case here. What happened was that this passed through the compiler due to a method being declared as an external of an unknown type.
+
+Method (_PDC, 1, NotSerialized)  // _PDC: Processor Driver Capabilities
+{
+    \_PR.CPU0._PPC = CPPC /* \_PR_.CPPC */
+    Local0 = CPDC (Arg0)
+    GCAP (Local0)
+    Return (Local0)
+}
+
+The issue with this _PDC method is the assignment on the first line. _PPC is declared as an external as an unknown type and CPPC is an integer. When all names are loaded in AML namespace, it is known that _PPC is a method that returns a reference...
+
+-----
+
+Comment 6 Erik Schmauss 2018-02-15 19:25:14 UTC
+
+Here's what's going on: we have confirmed that executing ASL/AML code like the one I've listed in comment #1 results in an error on windows. Also, we have confirmed that we were allowing this code to execute without error in older versions (20160831) but we have made this into an error in more recent versions to match the behavior on windows. Basically, this is a firmware issue...
+
+Comment 7 Erik Schmauss 2018-02-15 20:42:31 UTC
+
+So from our perspective, the two possible next steps are to contact the firmware vendor to correct the firmware or check to see if there are updates for this firmware
+
+-----
+
+Comment 8 fin4478 2018-02-20 05:16:07 UTC
+
+According to intel kernel developer your hardware is buggy unless is not from intel and latest model with latest acpi compiler. So long as intel is developing the kernel, many bugs are not fixed. Disabling acpi errors is the solution:
+
+--- a/include/acpi/platform/acenv.h	(date 1512400986000)
++++ b/include/acpi/platform/acenv.h	(date 1512400986000)
+@@ -107,7 +107,7 @@
+ #ifdef ACPI_HELP_APP
+ #define ACPI_NO_ERROR_MESSAGES
+ #endif
+-
++#define ACPI_NO_ERROR_MESSAGES
+ /* acpi_names configuration. Debug output enabled. */
+ 
+ #ifdef ACPI_NAMES_APP
+
+-----
+Comment 9 fademind 2018-03-15 19:02:22 UTC
+
+WORKAROUND
+
+Edit '/etc/default/grub' and add in 'GRUB_CMDLINE_LINUX_DEFAULT' line AFTER 'quiet': 
+
+  vga=current loglevel=3 rd.systemd.show_status=auto rd.udev.log_priority=3
+
+Next update grub: 
+
+  sudo update-grub
+
+Last thing is to create a SYSCTL rule:
+
+  sudo bash -c "echo 'kernel.printk = 3 3 3 3' > /etc/sysctl.d/20-quiet-printk.conf"
+
+and reboot. This will just HIDE error msgs during boot, still exists in dmesg results.
+
+-----
+
+Comment 10 Erik Schmauss 2018-04-02 23:11:41 UTC
+
+Closing, this is a firmware bug. Please contact your firmware vendor for a fix.
+
+-----

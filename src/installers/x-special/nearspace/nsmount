@@ -1,0 +1,1148 @@
+#! /usr/bin/env bash
+#
+# ----------------------------------------------------------------------------
+# Script to manage NearSpace share mounts
+# ----------------------------------------------------------------------------
+#
+
+DEFAULT_NS_SVR_NUM=my_share
+
+LOCAL_MOUNT=Nearspace
+
+NS_SVR_USER=nearspace
+NS_SVR_GROUP=ns-server
+
+MOUNT_TYPE=cifs
+#MOUNT_TYPE=smbfs
+
+NS_SVR_FQDN=example.com
+NS_DOMAIN=example
+
+NS_SECURITY=ntlmssp
+
+
+############################################################################
+############################################################################
+#
+# ERROR HANDLING
+#
+############################################################################
+############################################################################
+
+############################################################################
+#
+# Script Error Exit Codes:
+#
+ERR_PARSING=1
+ERR_PARAMETER=2
+ERR_FILESYS=4
+ERR_MOUNTING=8
+ERR_NO_SUDO=16
+ERR_USER_ABORT=32
+
+############################################################################
+#
+# Display parsing error: Given switch must be the only cmd line argument.
+#
+DisplayErrParsing_OnlyArg() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "Cannot include '-${SWITCH}' with other arguments. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: A switch is followed by a parameter starting 
+# with a hyphen... It's either a missing parameter or an invalid one.
+#
+DisplayErrParsing_ArgWithLeadHyphen() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "'-${SWITCH}' argument, '${VALUE}', cannot start with '-'. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: A (second) instance was found of a non-switch 
+# token (value) which is not preceded by a switch; can only have one.
+#
+DisplayErrParsing_ArgHasNoSwitch() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "No switch for unmatched argument '${VALUE}'. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: Both the '-g' and '-d' switch are present as 
+# command line arguments; can only specify one of them at a time.
+#
+DisplayErrParsing_BothGandD() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo -n "Cannot include '-${SWITCH}' if a user/group is "
+    echo    "already specified. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: Unknown switch on command line.
+#
+DisplayErrParsing_UnknownSwitch() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "Unrecognized switch, '-${SWITCH}'. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: A switch is specified twice.
+#
+DisplayErrParsing_DuplicateSwitch() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "Duplicate '-${SWITCH}' argument, '${VALUE}'. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parsing error: A switch is specified without a parameter.
+#
+DisplayErrParsing_DanglingSwitch() {
+    echo -n "${THIS_SCRIPT}: Parsing error: "
+    echo    "Switch '-${SWITCH}' has no parameter value. "
+    
+    exit ${ERR_PARSING}
+}
+
+############################################################################
+#
+# Display parameter error: Can't find the specified local account.
+#
+DisplayErrParam_BadLocalAcct() {
+    echo -n "${THIS_SCRIPT}: Parameter error: "
+    echo    "Local account '${LOCAL_ACCT}' does not exist ! "
+    
+    exit ${ERR_PARAMETER}
+}
+
+############################################################################
+#
+# Display file system error: Can't find/make the mounts directory.
+#
+DisplayErrFileSys_BadMountDirectory() {
+    echo -n "${THIS_SCRIPT}: File error: "
+    echo -n "Cannot find/make mount directory "
+    echo    "'${LOCAL_HOME}/${LOCAL_MOUNT}'. "
+    
+    exit ${ERR_FILESYS}
+}
+
+############################################################################
+#
+# Display mounting error: Can't unmount; not mounted'
+#
+DisplayErrMounting_NotMounted() {
+    echo -n "${THIS_SCRIPT}: Dismount: "
+    echo    "Can't unmount '${MOUNT_POINT}': not mounted. "
+    
+    exit ${ERR_MOUNTING}
+}
+
+############################################################################
+#
+# Display mounting error: Can't mount; already mounted'
+#
+DisplayErrMounting_AlreadyMounted() {
+    echo -n "${THIS_SCRIPT}: Mount: "
+    echo    "Can't mount '${MOUNT_POINT}': already mounted. "
+    
+    exit ${ERR_MOUNTING}
+}
+
+############################################################################
+#
+# Display mounting error: Failed to match a '-g' or '-d' command.
+#
+DisplayErrMounting_CantDetermine() {
+    echo -n "${THIS_SCRIPT}: Mount: "
+    echo    "Internal failure: Can't determine action to take. "
+    
+    exit ${ERR_MOUNTING}
+}
+
+
+############################################################################
+############################################################################
+#
+# COMMON UTILITY ROUTINES
+#
+############################################################################
+############################################################################
+
+############################################################################
+#
+# Get the name of this script (for 'usage' prompts).
+#
+GetScriptName() {
+    SCRIPT="${BASH_SOURCE[0]}"
+    
+    # If the name of the script is a symlink, de-reference it:
+    #
+    while [ -h "${SCRIPT}" ] ; do SCRIPT="$(readlink "${SCRIPT}")" ; done
+    
+    # Extract just the name of the script from the path (sans '.sh')
+    # and get the name of the directory the script is in:
+    #
+    THIS_SCRIPT=$( basename ${SCRIPT} .sh )
+    SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+}
+
+############################################################################
+#
+# Display a prompt asking a Yes/No question, repeat until a valid input.
+# Allow for a blank input to be defaulted.  Automatically appends "(y/n)"
+# to the prompt, capitalized according to the value of DEF_INPUT.
+#
+# INPUTS:  PROMPT, DEF_INPUT
+# OUTPUTS: UINPUT (1 char, lowercase)
+#
+GetYesNo_Defaulted() {
+    unset UINPUT
+    
+    if [ $( echo "${DEF_INPUT}" | tr [:upper:] [:lower:] ) = 'y' ]; then
+        YES_NO="Y/n"
+    else
+        YES_NO="y/N"
+    fi 
+    XPROMPT=${PROMPT}" ("${YES_NO}")"
+    
+    while [ "${UINPUT}" != "y" -a "${UINPUT}" != "n" ]; do
+    
+        echo ${XPROMPT}
+        read UINPUT
+    
+        if [ -z "${UINPUT}" ]; then UINPUT="${DEF_INPUT}"; fi
+    
+        UINPUT=$( echo "${UINPUT}" | cut -c 1 | tr [:upper:] [:lower:] )
+    done
+}
+
+############################################################################
+#
+# Verify that the user can obtain sudo privileges; bail if not.
+#
+CheckSudo() {
+    #
+    # Simple, silent test to see if 'sudo' has already been obtained.
+    # Serves two purposes, as it also gains 'sudo', if eligible.
+    #
+    sudo ls /root > /dev/null 2>&1
+    
+    if [ $? != 0 ]; then
+        echo -n "${THIS_SCRIPT}: Cannot run this script "
+        echo    "without 'sudo' privileges. "
+        
+        exit ${ERR_NO_SUDO}
+    fi
+}
+
+############################################################################
+#
+# Display the script version.
+#
+DisplayVersion() {
+    echo "${THIS_SCRIPT}, version ${VERSION} "
+    exit
+}
+
+############################################################################
+#
+# Display the one-line 'usage' prompt.
+#
+usage() {
+    echo -n "usage: ${THIS_SCRIPT} [ -m ] [ [ -g | -d ] <NS user/grp> ] "
+    echo "[ -u <NS acct> ] [ -s <NS server #> ] [ -l | -x <local acct> ] "
+}
+
+############################################################################
+#
+# Display the help information (-h).
+#
+DisplayHelp() {
+    echo 
+    echo "NAME "
+    echo "    ${THIS_SCRIPT} - Manage mounting of Nearspace shares "
+    echo
+    echo "SYNOPSIS "
+    echo "    ${THIS_SCRIPT} [-g|-d] USERACCOUNT [OPTIONS] "
+    echo "    ${THIS_SCRIPT} [-g|-d] GROUPSHARE  [OPTIONS] "
+    echo "    ${THIS_SCRIPT} COMMAND "
+    echo
+    echo "DESCRIPTION "
+    echo "    This script does the following: "
+    echo "     * Mounts or unmounts a NearSpace share in the filesystem.  "
+    echo "     * Displays the Nearspace shares that are currently mounted. "
+    echo "     * Displays stored Nearspace mounting parameters for a user. "
+    echo
+    echo -n "    Mandatory arguments to long options are mandatory "
+    echo    "for short options, too. "
+    echo
+    echo "    -g --group=SHARE "
+    echo "          Mount a user or group share (default option) "
+    echo
+    echo "    -d --dismount=SHARE "
+    echo "          Dismount a user or group share "
+    echo
+    echo "    -a --account=ACCOUNT "
+    echo "          Specify the account name for logging into Nearspace "
+    echo
+    echo "    -s --server=NUMBER "
+    echo "          Override the default Nearspace server number, 1 "
+    echo
+    echo "    -l --local=USER "
+    echo "          Specify the local account to own the mounted share "
+    echo
+    echo "    -x --examine=USER "
+    echo "          Examine stored share mounting parameters for USER "
+    echo
+    echo "    -m --mounted "
+    echo "          Display Nearspace shares that are mounted "
+    echo
+    echo "    -v --version "
+    echo "          Display the current version of this script "
+    echo
+    echo "    -h --help "
+    echo "          Display this help synopsis "
+    echo
+    echo "Mounted shares are attached to user/group directories created "
+    echo "in '~/Nearspace', in the local user's account. "
+    echo
+    echo "If the desired Nearspace share has not been previously mounted, "
+    echo "then defaults will be used to determine the Nearspace server and "
+    echo "account to use for mounting.  These defaults can be overridden "
+    echo "with additional command line switches listed above. "
+    echo
+    echo "Parameters used to mount a share are remembered, eliminating the "
+    echo "need to specify them each time a share is remounted; in this case"
+    echo "only the user or group name needs to be specified. If no share "
+    echo "is specified, then login account name is assumed as a user share."
+    echo 
+    echo "The Nearspace server will default to 'nearspace1' for User Space "
+    echo "mounts and default to 'nsgroup1' for Group Space mounts. The "
+    echo "default server number, 1, may be overridden with '-s <num>'. "
+    echo
+    
+    exit
+}
+
+
+############################################################################
+############################################################################
+#
+# COMMAND LINE PARSING
+#
+############################################################################
+############################################################################
+
+############################################################################
+#
+# Display Nearspace shares that are mounted in this file system.
+#
+DisplayMounts() {
+    echo "Here's what's mounted: "
+    
+    # Filter for 'cifs' type mounts, then restrict to those which are 
+    # mounted from one of our defined Nearspace servers:
+    #
+    mount | sed -n -e '/type cifs/p' | sed -n -e "/\/\/${NS_SVR_USER}/p"
+    mount | sed -n -e '/type cifs/p' | sed -n -e "/\/\/${NS_SVR_GROUP}/p"
+    
+    exit
+}
+
+############################################################################
+#
+# Should we display the help info?
+# Note: '-h' must be the only command-line argument.
+#
+CheckSwitchHelp() {
+    if [[ "${SWITCH}" == "h" || "${CUT_SWITCH}" == "hel" ]]; then
+        if [ ${1} -eq 1 ]; then
+            DisplayHelp
+        else
+            DisplayErrParsing_OnlyArg
+        fi
+    fi
+}
+
+############################################################################
+#
+# Should we display the script version?
+# Note: '-v' must be the only command-line argument.
+#
+CheckSwitchVersion() {
+    if [[ "${SWITCH}" == "v" || "${CUT_SWITCH}" == "ver" ]]; then
+        if [ ${1} -eq 1 ]; then
+            DisplayVersion
+        else
+            DisplayErrParsing_OnlyArg
+        fi
+    fi
+}
+
+############################################################################
+#
+# Should we display the mounted NS shares?
+# Note: '-m' must be the only command-line argument.
+#
+CheckSwitchMounts() {
+    if [[ "${SWITCH}" == "m" || "${CUT_SWITCH}" == "mou" ]]; then
+        if [ ${1} -eq 1 ]; then
+            DisplayMounts
+        else
+            DisplayErrParsing_OnlyArg
+        fi
+    fi
+}
+
+############################################################################
+#
+# Check for & handle exclusive command line switches.  These are switches 
+# that are exclusive of any other switches appearing on the command line.
+# 
+# We do this by running a (variable) list of individual switch checks.
+# If any one of them fails (i.e., not the only switch), the script bails; 
+# otherwise the action is performed, which also terminates the script.
+#
+# If none of this switches matches, nothing is done and we simply return. 
+#
+CheckForExclusiveSwitches() {
+    
+    CheckSwitchHelp ${1}
+    CheckSwitchVersion ${1}
+    CheckSwitchMounts ${1}
+}
+
+############################################################################
+#
+# Parse the command line argument list
+#
+ParseCommandLineArgs() {
+    unset CL_LOCAL_ACCT
+    unset CL_NS_ACCT
+    unset CL_NS_GROUP
+    unset CL_NS_SVR_NUM
+    
+    unset SWITCH
+    unset VALUE
+    
+    COMMAND="g"
+    NUM_OF_PARAMS=0
+    
+    for TOKEN in $@ ; do
+        
+        # Are we expecting to parse a value argument to a switch?
+        #
+        if [ -n "${SWITCH}" ] ; then  
+            
+            # Save the token as the switch's value, but make sure it 
+            # doesn't start with a hyphen, which would be ambiguous.
+            #
+            VALUE=${TOKEN}
+            
+            if [ $( printf %s "${VALUE}" | cut -c 1 ) = "-" ]; then 
+                DisplayErrParsing_ArgWithLeadHyphen
+            fi
+            
+        # Otherwise we expect to find a switch:
+        #
+        elif [ $( printf %s "${TOKEN}" | cut -c 1 ) = "-" ]; then 
+            
+            # Switch: Allow both '-sargument' or '-s argument' forms,
+            # and the '--long-name=argument' form.
+            #
+            SWITCH=$( printf %s "${TOKEN}" | cut -c 2 )
+            VALUE=$(  printf %s "${TOKEN}" | cut -c 3- )
+            
+            # We could have "-" or "--" or "-a" or "-aArg" (short form) 
+            # or "--alpha" or "--alpha=" or "--alpha=beta" (long form)
+            #
+            if [ -z "${SWITCH}" ]; then 
+                
+                # "-" typically means "take the input from 'stdin'".
+                #
+                DisplayErrParsing_UnknownSwitch
+                
+            elif [ "${SWITCH}" = "-" -a -z "${VALUE}" ]; then
+                
+                # "--" typically means "end of switches; parameters follow".
+                #
+                DisplayErrParsing_UnknownSwitch
+            
+            elif [ "${SWITCH}" = "-" -a -n "${VALUE}" ]; then 
+                
+                # This is the "--long-form" -- which one?
+                #
+                SWITCH=$( printf %s "${VALUE}" | cut -d '=' -f 1 )
+                
+                # If there's no '=', then SWITCH got it all; in that
+                # case, erase VALUE; otherwise, cut after the '='.
+                #
+                if [ "${SWITCH}" = "${VALUE}" ]; then VALUE=""
+                else
+                    VALUE=$( printf %s "${VALUE}" | cut -d '=' -f 2 )
+                fi
+                
+                # Convert the switch to all lower case, and shorten it.
+                #
+                SWITCH=$( printf %s "${SWITCH}" | tr [:upper:] [:lower:] )
+                CUT_SWITCH=$( printf %s "${SWITCH}" | cut -c -3 )
+                
+                if [ -z ${VALUE} ]; then
+                    #
+                    # We can't have a form "--alpha beta"...
+                    # But we can have a form "--exclusive"
+                    #
+                    CheckForExclusiveSwitches ${#}
+                fi
+                
+                # Translate long-form switches to short form.
+                #
+                case "${CUT_SWITCH}" in
+                
+                "gro")
+                    SWITCH="g"
+                    ;;
+                "dis")
+                    SWITCH="d"
+                    ;;
+                "loc")
+                    SWITCH="l"
+                    ;;
+                "acc")
+                    SWITCH="a"
+                    ;;
+                "ser")
+                    SWITCH="s"
+                    ;;
+                "exa")
+                    SWITCH="x"
+                    ;;
+                *)
+                    SWITCH="-"${SWITCH}
+                    DisplayErrParsing_UnknownSwitch
+                esac
+                
+            # Else SWITCH & VALUE are correctly set 
+            # (and VALUE may be "", if the form is "-a Arg").
+            fi
+        else
+            # We have a "naked token", which must be a user/group name:
+            #
+            VALUE=${TOKEN}
+        fi
+        
+        # At this point, we have either:
+        #     1) Switch + Value
+        #     2) Switch (only)
+        #     3) Value, but no Switch
+        #
+        if [ -z "${SWITCH}" ]; then
+            
+            # 3) Value, but no Switch:
+            # If this is the first non-switch argument we find when we were 
+            # expecting a switch, then we can safely interpret it as the 
+            # NearSpace user/group name; the implied switch is '-g':
+            #
+            if [ -z "${CL_NS_GROUP}" ]; then 
+                SWITCH="g"
+                
+            # But if it happens a second time, it's a parsing error...
+            #
+            else
+                DisplayErrParsing_ArgHasNoSwitch
+            fi
+        fi
+            
+        # Make sure the switch isn't one that requires exclusivity:
+        #
+        CheckForExclusiveSwitches ${#}
+    
+        # Now we do have a switch, but do we need to loop for a value?
+        # If yes, then we're done with this loop; we get the value in 
+        # the next iteration.  Otherwise, we have Switch+Value: Process it.
+        #
+        if [ -n "${VALUE}" ]; then
+            
+            # Assume a screw-up awaits us...
+            ERROR=true
+            
+            case "${SWITCH}" in
+                
+            g | d)  
+                if [ -z "${CL_NS_GROUP}" ]; then 
+                    CL_NS_GROUP=${VALUE}
+                    COMMAND=${SWITCH}
+                    unset ERROR
+                elif [ ! "${COMMAND}" = "${SWITCH}" ]; then
+                    DisplayErrParsing_BothGandD
+                    #
+                    # Otherwise it will fall through as a duplicate error.
+                fi
+                ;;
+            l)  
+                if [ -z "${CL_LOCAL_ACCT}" ]; then 
+                    CL_LOCAL_ACCT=${VALUE}
+                    unset ERROR
+                fi
+                ;;
+            a)  
+                if [ -z "${CL_NS_ACCT}" ]; then 
+                    CL_NS_ACCT=${VALUE}
+                    unset ERROR
+                fi
+                ;;
+            s)  
+                if [ -z "${CL_NS_SVR_NUM}" ]; then 
+                    CL_NS_SVR_NUM=${VALUE}
+                    unset ERROR
+                fi
+                ;;
+            x)  
+                CL_LOCAL_ACCT=${VALUE}
+                COMMAND="x"
+                unset ERROR
+                ;;
+            *)  
+                DisplayErrParsing_UnknownSwitch
+            esac
+        
+            # If ${ERROR} is set, then we have a duplicated switch error.
+            #
+            if [ -n "${ERROR}" ]; then
+                DisplayErrParsing_DuplicateSwitch
+            fi
+            
+            # We've parsed a switch-value pair; reset the variables.
+            #
+            NUM_OF_PARAMS=$( expr ${NUM_OF_PARAMS} + 1 )
+            
+            unset SWITCH
+            unset VALUE
+        fi
+    done
+    
+    # Last check: Do we have a dangling switch as the final argument?
+    #
+    if [ -n "${SWITCH}" ]; then
+    
+        if [ $( echo "gdaslx" | grep "${SWITCH}" ) ]; then
+            DisplayErrParsing_DanglingSwitch
+        else
+            DisplayErrParsing_UnknownSwitch
+        fi
+    fi
+}
+
+
+############################################################################
+############################################################################
+#
+#  VALIDATION of PARAMETERS and RESOURCES
+#
+############################################################################
+############################################################################
+
+############################################################################
+#
+# Determine & validate the local account that will own the mount.
+#
+VerifyLocalAccount() {
+    #
+    # Does the local account need to be defaulted?
+    #
+    if [ -z "${CL_LOCAL_ACCT}" ]; then
+        LOCAL_ACCT=$( whoami )
+    else
+        LOCAL_ACCT="${CL_LOCAL_ACCT}"
+    fi
+
+    # Get the parameters for the local account:
+    #
+    ACCT_GREP="^${LOCAL_ACCT}:"
+    LOCAL_UID=$( grep ${ACCT_GREP} /etc/passwd | cut -d ':' -f 3 )
+    LOCAL_GID=$( grep ${ACCT_GREP} /etc/passwd | cut -d ':' -f 4 )
+    LOCAL_HOME=$( grep ${ACCT_GREP} /etc/passwd | cut -d ':' -f 6 )
+
+    # Does the local account exist?
+    #
+    if [ -z "${LOCAL_UID}" -o -z "${LOCAL_GID}" -o -z "${LOCAL_HOME}" ]; then 
+        DisplayErrParam_BadLocalAcct
+    fi
+}
+
+############################################################################
+#
+# Determine/default/validate the NS server/group/account parameters.
+#
+DetermineServerParameters() {
+    #
+    # Default, as needed, the command line parameters for NS login account.
+    #
+    if [ -z "${CL_NS_ACCT}" ]; then
+        NS_ACCT="${LOCAL_ACCT}"
+    else
+        NS_ACCT="${CL_NS_ACCT}"
+    fi
+    
+    # Default, as needed, the name of the NS group or user space to mount.
+    #
+    if [ -z "${CL_NS_GROUP}" ]; then
+        NS_GROUP="${NS_ACCT}"
+        COMMAND="g"
+    else
+        NS_GROUP="${CL_NS_GROUP}"
+    fi
+    
+    # Default, as needed, the number for the NS server.
+    #
+    if [ -z "${CL_NS_SVR_NUM}" ]; then
+        NS_SVR_NUM="${DEFAULT_NS_SVR_NUM}"
+    else
+        NS_SVR_NUM="${CL_NS_SVR_NUM}"
+    fi
+}
+
+############################################################################
+#
+# Determine the Nearspace server URL for the share.
+#
+DetermineServerURL() {
+    #
+    # Assume we're going to mount a NS group, requiring the group server.
+    #
+#    NS_SVR_URL="${NS_SVR_GROUP}${NS_SVR_NUM}.${NS_SVR_FQDN}"
+    NS_SVR_URL="${NS_SVR_GROUP}.${NS_SVR_FQDN}/${NS_SVR_NUM}"
+
+    # Change to user space svr if the "group" name is actually a user name.
+    #
+    if [ "${NS_GROUP}" = "${NS_ACCT}" \
+      -o "${NS_GROUP}" = "${LOCAL_ACCT}" ]; then
+    
+        NS_SVR_URL="${NS_SVR_USER}${NS_SVR_NUM}.${NS_SVR_FQDN}"
+    fi
+}
+
+############################################################################
+#
+# Determine/create/validate the directory that holds the mount points.
+#
+VerifyMountDirectory() {
+    #
+    # Look for the top-level mount point; if it's there, we're done.
+    #
+    MOUNT_DIR="${LOCAL_HOME}/${LOCAL_MOUNT}"
+    
+    if [ ! -d "${MOUNT_DIR}" -a -z "${1}" ]; then
+        
+        # If it's not there, then make it; Note that we need 'sudo',
+        # because we might be an admin creating it on behalf of a user.
+        #
+        CheckSudo
+        sudo mkdir -p "${MOUNT_DIR}"
+        sudo chown -R ${LOCAL_UID}:${LOCAL_GID} ${MOUNT_DIR}
+        
+        # Verify that it was successful... 
+        #
+        if [ ! -d "${MOUNT_DIR}" ]; then
+            DisplayErrFileSys_BadMountDirectory
+        fi
+    fi
+}
+
+############################################################################
+#
+# Determine/create/validate the mount point for the share.
+# Note: This requires prior determination of the Nearspace user/group share.
+#
+DetermineMountPoint() {
+    #
+    # Form the mount point directory path, and see if it's mounted already.
+    # * It may exist & have a file system mounted on it, 
+    # * It may exist and be unmounted (in which case its path is visible),
+    # * It may not exist (and therefore needs to be created).
+    #
+    MOUNT_POINT="${MOUNT_DIR}/${NS_GROUP}"
+    
+    # Exit with MOUNTED non-null only if it exists & is mounted.
+    #
+    if [ -d "${MOUNT_POINT}" ]; then
+        
+        MP_MOUNTED=$( mount | grep "${MOUNT_POINT}" )
+    else
+        MP_MOUNTED=""
+    fi
+}
+
+
+############################################################################
+############################################################################
+#
+#  MOUNT/DISMOUNT NEARSPACE SHARES
+#
+############################################################################
+############################################################################
+
+############################################################################
+#
+# Ask the user for permission to replace the existing directory tree for 
+# the user/group (which conflicts with the requested mount) with an 
+# updated version that will record parameters for the requested mount.
+#
+QueryReplacingParamsTree() {
+    
+    echo -n "The requested Server/Group/Account conflicts "
+    echo    "with a previously-defined item: "
+    echo 
+    echo    "Requested: '${CL_PATH}' "
+    echo    "Existing : '${DIR_PATH}' "
+    echo 
+    
+    PROMPT="Overwrite the stored item with the new one?"
+    DEF_INPUT="n"
+    GetYesNo_Defaulted
+}
+
+############################################################################
+#
+# Ask the user for permission to remove the corrupted directory tree for 
+# the user/group, so that it can be replaced with the requested mount.
+#
+QueryRemovingParamsTree() {
+    
+    echo "Error parsing the server/account info in '${MOUNT_POINT}'... "
+    
+    PROMPT="Replace/correct?"
+    DEF_INPUT="y"
+    GetYesNo_Defaulted
+}
+
+############################################################################
+#
+# Should we dismount an NS share?  If not, do nothing & return.
+# Otherwise, determine the mount point, unmount it, and exit from here.
+# Note: '-d' must be the only command given.
+#
+CheckDoSwitchDismount() {
+    if [ "${COMMAND}" = "d" ]; then
+        
+        # The dismount command must be exclusive
+        #
+        if [ ${NUM_OF_PARAMS} -ne 1 ]; then
+            DisplayErrParsing_OnlyArg
+        fi
+        
+        # Generate the mount point...
+        #
+        VerifyLocalAccount
+        VerifyMountDirectory
+        DetermineServerParameters
+        DetermineMountPoint
+        
+        # And if it's mounted, then unmount it:
+        #
+        if [ -z "${MP_MOUNTED}" ]; then
+            DisplayErrMounting_NotMounted
+        fi
+        
+        CheckSudo
+        sudo umount ${MOUNT_POINT}
+        
+        DisplayMounts
+        exit
+    fi
+}
+
+############################################################################
+#
+# If we're to mount a share, then determine the mount point and 
+# verify that nothing is already mounted there.
+#
+CheckDoSwitchMount() {
+    if [ "${COMMAND}" = "g" ]; then
+
+        # Generate the mount point...
+        #
+        VerifyLocalAccount
+        VerifyMountDirectory
+        DetermineServerParameters
+        DetermineMountPoint
+        
+        # Is there already something mounted there?
+        #
+        if [ -n "${MP_MOUNTED}" ]; then
+            DisplayErrMounting_AlreadyMounted
+        fi
+    else
+        DisplayErrMounting_CantDetermine
+    fi
+}
+
+############################################################################
+#
+# Construct the file system directories corresponding to the mounting 
+# parameters; this will act as a "memory" when mounting in the future.
+#
+ConstructMountParamsTree() {
+    #
+    # Remove the mount point directory, to be sure we get rid of it all.
+    # Note that we might be deleting nothing, an empty directory, 
+    # a tree of (?) stuff, or a now-obsolete path of mount parameters.
+    #
+    CheckSudo
+    sudo rm -rf ${MOUNT_POINT}
+    
+    # Then create the mount point directory & subdirectories.
+    # Make everything from the mount point down owned by the local acct.
+    #
+    sudo mkdir -p "${CL_PATH}"
+    sudo chown -R ${LOCAL_UID}:${LOCAL_GID} ${MOUNT_POINT}
+}
+
+############################################################################
+#
+# Extract the mount parameters from the directories under the mount point.
+# Note that we might be dealing with a corrupted directory structure...
+#
+ExtractMountParams() {
+    unset MP_EXISTS
+    unset DIR_PATH
+    unset PATH_CORRUPT
+    
+    # Is there a directory at the mount point?  If not, nothing to do here.
+    #
+    if [ ! -d "${MOUNT_POINT}" ]; then return; fi
+    
+    # Extract the first file/dir item found in the mount point directory.
+    #
+    DIR_SVR_URL=$( ls -1 ${MOUNT_POINT} | sed -n -e "1 p" )
+    
+    # If there's nothing in there, it's not corrupted.
+    #
+    if [ -z "${DIR_SVR_URL}" ]; then 
+        DIR_PATH="${MOUNT_POINT}"
+        return
+    fi
+    
+    # Something is there, so now we need to test for consistency.
+    MP_EXISTS=true
+    PATH_CORRUPT=true
+    
+    # If there's more than that one item in the directory, it's corrupt.
+    #
+    if [ "${DIR_SVR_URL}" != "$( ls -1 ${MOUNT_POINT} )" ]; then 
+          return
+    fi
+    
+    # Now do the same for the next directory in the tree.
+    #
+    DIR_ACCT=$( ls -1 ${MOUNT_POINT}/${DIR_SVR_URL} | sed -n -e "1 p" )
+    
+    # If it's missing, or if there's more than one item, it's corrupt.
+    #
+    if [[ -z "${DIR_ACCT}" || \
+      "${DIR_ACCT}" != "$( ls -1 ${MOUNT_POINT}/${DIR_SVR_URL} )" ]]; then 
+          return
+    fi
+    
+    # Otherwise, it's good, so we need to form a path string from it.
+    #
+    unset PATH_CORRUPT
+    DIR_PATH="${MOUNT_POINT}/${DIR_SVR_URL}/${DIR_ACCT}"
+}
+
+############################################################################
+#
+# Construct the file system directories corresponding to the mounting 
+#
+DetermineMountPathAndTree() {
+    #
+    # We already have the NS Account, but we also need the Server URL.
+    #
+    DetermineServerURL
+    
+    # If there's nothing at the mount point, here's what we'll make:
+    #
+    CL_PATH="${MOUNT_POINT}/${NS_SVR_URL}/${NS_ACCT}"
+    
+    # Try to extract the mount parameters from the directory structure.
+    #
+    ExtractMountParams
+    
+    # Does a directory structure exist at the mount point?
+    #
+    if [ -z "${MP_EXISTS}" ]; then
+        
+        # It doesn't exist, so just create the path in the filesystem.
+        ConstructMountParamsTree
+        return
+    fi
+    
+    # It exists, but is it good or corrupted?
+    #
+    if [ -n "${PATH_CORRUPT}" ]; then
+        
+        # Ask the user if we can delete the (whole) directory structure.
+        QueryRemovingParamsTree
+        
+        if [ "${UINPUT}" = "n" ]; then 
+            return
+        else
+            echo "Removing existing..."
+            echo 
+            ConstructMountParamsTree
+            return
+        fi
+    fi
+    
+    # If not corrupt, it may be in conflict with the requested mount.
+    #
+    if [ "${DIR_PATH}" != "${CL_PATH}" ]; then
+        
+        # Ask the user if we can replace the directory structure.
+        QueryReplacingParamsTree
+        
+        if [ "${UINPUT}" = "n" ]; then 
+            return
+        else
+            echo "Replacing existing..."
+            echo 
+            ConstructMountParamsTree
+            return
+        fi
+    fi
+}
+
+############################################################################
+#
+# Display the mount parameters and have the user confirm the plan.
+#
+ConfirmMountParameters() {
+    
+    echo "Ready to mount Nearspace group '${NS_GROUP}' to '${MOUNT_POINT}' "
+    echo "using Nearspace account '${NS_ACCT}' on server '${NS_SVR_URL}'; "
+    echo "The local owner of the mounted files will be '${LOCAL_ACCT}'. "
+    echo 
+    
+    PROMPT="Proceed with mounting?"
+    DEF_INPUT="y"
+    GetYesNo_Defaulted
+    
+    if [ "${UINPUT}" = "n" ]; then
+        echo "Aborting..."
+        exit ${ERR_USER_ABORT}
+    fi
+}
+
+############################################################################
+#
+# Mount the Nearspace share to the file system.
+#
+MountShareToFileSystem() {
+    #
+    # Give the user the chance to review and cancel.
+    #
+    ConfirmMountParameters
+    
+    MOUNT_OPTIONS="domain=${NS_DOMAIN},user=${NS_ACCT}"
+    MOUNT_OPTIONS=${MOUNT_OPTIONS}",uid=${LOCAL_UID},gid=${LOCAL_GID}"
+    MOUNT_OPTIONS=${MOUNT_OPTIONS}",sec=${NS_SECURITY}"
+    
+    CheckSudo
+    echo -n "Mounting...  Enter the account password for the "
+    echo    "Nearspace account '${NS_ACCT}': "
+    
+    sudo mount -t ${MOUNT_TYPE} "//${NS_SVR_URL}/${NS_GROUP}" ${MOUNT_POINT} \
+        -o ${MOUNT_OPTIONS}
+
+    DisplayMounts
+    exit
+}
+
+############################################################################
+#
+# Should we display the stored NS share mount parameters?
+#
+CheckDoSwitchExamine() {
+    if [ "${COMMAND}" = "x" ]; then
+        
+        # The examine command must be exclusive
+        #
+        if [ ${NUM_OF_PARAMS} -ne 1 ]; then
+            DisplayErrParsing_OnlyArg
+        fi
+        
+        # Get a reference to the local account user's NS mount dir.
+        #
+        VerifyLocalAccount
+        VerifyMountDirectory "display"
+        
+        echo "Stored mounting parameters for '${LOCAL_ACCT}': "
+        
+        # Then iterate through each subdir to display its mount params.
+        #
+        if [ ! -d "${MOUNT_DIR}" ]; then exit; fi
+        
+        for GROUP in $( ls -1 ${MOUNT_DIR} ); do
+            
+            MOUNT_POINT="${MOUNT_DIR}/${GROUP}"
+            ExtractMountParams
+            
+            if [ -n "${DIR_PATH}" ]; then echo "${DIR_PATH} "; fi
+        done
+        exit
+    fi
+}
+
+
+############################################################################
+############################################################################
+
+############################################################################
+#
+# This is the program:
+#
+GetScriptName
+ParseCommandLineArgs "$@"
+
+CheckDoSwitchExamine
+CheckDoSwitchDismount
+CheckDoSwitchMount
+
+DetermineMountPathAndTree
+MountShareToFileSystem
+
+exit
+
+############################################################################
+############################################################################
+
+# Some debug stuff here:
+
+echo "Local Acct owner = '${LOCAL_ACCT}' "
+echo "NS User account  = '${NS_ACCT}' "
+echo "NS Server URL    = '${NS_SVR_URL}' "
+echo "Mount point      = '${MOUNT_POINT}' "
+echo "Extracted path   = '${DIR_PATH}' "
+echo "Cmd line path    = '${CL_PATH}' "
+
+exit
+
+

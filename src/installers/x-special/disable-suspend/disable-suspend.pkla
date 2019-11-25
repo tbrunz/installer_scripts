@@ -1,0 +1,28 @@
+[Disable suspend]
+Identity=unix-user:*
+ResultAny=no
+ResultInactive=no
+ResultActive=no
+Action=org.freedesktop.upower.suspend
+
+[Disable hibernate]
+Identity=unix-user:*
+ResultAny=no
+ResultInactive=no
+ResultActive=no
+Action=org.freedesktop.upower.hibernate
+
+[Disable restart]
+Identity=unix-user:*
+ResultAny=no
+ResultInactive=no
+ResultActive=no
+Action=org.freedesktop.consolekit.system.restart
+
+[Disable shutdown]
+Identity=unix-user:*
+ResultAny=no
+ResultInactive=no
+ResultActive=no
+Action=org.freedesktop.consolekit.system.stop
+

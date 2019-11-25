@@ -1,0 +1,14 @@
+# #! /usr/bin/env bash
+#
+# Set the environment variables for a Wine bottle. 
+#
+COMMON_PATH='C:\users\Public\Start Menu\Programs\'
+
+APP_PATH=${COMMON_PATH}'GOG.com\Myst Uru Complete Chronicles\'
+MENU_PATH=${APP_PATH}'Myst Uru Complete Chronicles.lnk'
+
+BOTTLE=UruCompleteChronicles
+BOTTLE_NAME=wine-uru-cc
+
+LAUNCH_ENV="env"
+

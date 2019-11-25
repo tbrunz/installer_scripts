@@ -1,0 +1,40 @@
+
+To auto-download & install Pharo (to the current working directory):
+
+        curl https://get.pharo.org | bash 
+    or
+        curl https://get.pharo.org/64/ | bash
+
+
+    or, if curl is not available: 
+
+        wget -O- https://get.pharo.org | bash
+    or
+        wget -O- https://get.pharo.org/64 | bash
+
+
+    The web page is a bash script is a web page...
+
+    Have a look at the Pharo Zeroconf Website for more scripts & information:
+        https://get.pharo.org/64/
+
+
+Downloads:
+
+    For all platforms:
+        https://pharo.org/download
+
+
+Virtual Machines:
+
+    For Intel Linux platforms:
+        https://files.pharo.org/vm/pharo/linux/
+        https://files.pharo.org/vm/pharoS/linux/
+
+
+    For Raspberry Pi ARM platforms:
+        https://files.pharo.org/vm/pharoS/raspbian/
+        https://files.pharo.org/vm/pharo-spur32/linux/armv6/
+
+-------------------------------------------------------------------------------
+

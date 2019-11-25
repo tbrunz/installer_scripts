@@ -1,0 +1,207 @@
+
+Notes on the current state of the installer scripts
+================================================================================
+18 MAY 2014 for v2.1.0
+
+* install-apt-cacher.sh
+For 'apt-cacher-ng' to work properly, you need to set a static IP in your 
+'hosts' table corresponding to the server that will cache the APT packages; 
+this entry should also be present in the 'hosts' file of every (Ubuntu) machine 
+on the LAN.  You can edit the 'apt-cacher-ng' script to set this hostname as 
+your preferred apt-cacher server name (edit the variable MY_APT_SERVER) so that 
+the script will default to using it when you install the service on your server 
+and again on each client host on your LAN.
+
+* install-base.sh
+Feel free to edit the package list in 'install-base' as you see fit.  It has 
+provision for displaying the package sets in (user-defined) categories.  The 
+actual list/categories in the file are what's displayed in the 'help' output 
+(run with no argument).  The current list is merely my suggestions/favorites.
+
+* install-crossover-deb.sh / install-crossover-bin.sh
+Installs CodeWeaver's Crossover, either from a '.bin' package or the newer 
+'.deb' package (I suggest the DEB package).  The '.deb' version also installs 
+'Wine Launcher Creator'.  Not that the DEB version will not update an older 
+Crossover installation that was installed with the '.bin' package version; 
+you'll need to uninstall the older one first.  (It will tell you if this is 
+the case.)
+
+* install-fwknop.sh
+The 'fwknop' script compiles the quasi-latest version of the client and/or 
+server from source code.  Note it does not download the latest from 
+'http://www.cipherdyne.org/fwknop/download/', but if you wish to update the 
+source package, the script is insensitive to the version number in the tarball 
+name.
+
+* install-gnome3.sh / install-ppa-gnome3.sh
+This script will install the repo version of Gnome 3 (Gnome Shell), whereas the 
+'install-ppa-gnome3.sh' script will pull the latest from the developers' PPA.  
+For Raring, it's best to install from the repo first (v3.6), then install using 
+the PPA version to upgrade to v3.8; Saucy already has 3.8 in its repo.  I've 
+yet to try installing 3.10 from the PPA in either distro... Soon.  (And I 
+recommend Gnome 3 -- it's a great desktop.)
+
+* install-hosts-files.sh
+This script won't work correctly unless you first set a "base" hosts file, 
+'/etc/hosts-base', before you run it.  The 'hosts-base' file should contains 
+your local static IP assignments, which will be blended with the 'filter' hosts 
+list.  
+
+* install-java.sh
+The 'java' script will install either v6 or v7 (aka v1.6 or v1.7).  Both will 
+enable 'jbidwatcher' to work (as it requires Java to run).
+
+* install-kvm-qemu.sh
+This script is "experimental", and I'm still experimenting.  (Have fun if you 
+use it, but I suggest playing with this on an otherwise unused machine!  I.e., 
+there's no point in installing it in a virtual machine...)
+
+* install-multimedia.sh
+Installs VLC, codecs, and multimedia tools.  Run with no parameters to see a 
+categorized list of what it will install.  Won't work with Trusty, since they 
+removed 'ffmpeg' from the repos; use the PPA version instead.
+
+* install-noip-duc.sh
+Users of the No-IP dynamic DNS service need to install a "Dynamic Update 
+Client" (DUC) app on at least one system behind each NAT firewall.  This 
+script downloads the source for the latest version from No-IP's website, then 
+compiles & installs it, and sets it to run at each bootup.
+
+* install-ppa-googledrive.sh
+Installs 'google-drive-ocamlfuse', which is a FUSE filesystem backed by Google 
+Drive, written in OCaml.  It lets you mount your Google Drive in Linux.  Refer 
+to the 'usage' prompt and the author's Git page for details on configuration 
+and use.
+
+* install-ppa-googletalk.sh
+Adds Google's repository & installs the latest version of the GoogleTalk plugin.  
+The Update Manager will find/install updates.  This may be deprecated for using 
+"Hangouts" in Google+, but it should still work for making calls directly from 
+Gmail.
+
+* install-ppa-grub-customizer.sh
+Highly recommend Grub Customizer...  Really ought to be in the main repo.
+
+* install-ppa-linux-kernel.sh
+This script is for backporting later kernels into a distro.  It does this by 
+downloading requesting kernels that Canonical modifies for Ubuntu from their 
+website (or fetching them from local cache, if present).  For example, Raring 
+comes with kernel 3.8, but will run with kernels 3.9 and 3.10 -- but not with 
+Saucy's kernel, 3.11...
+
+* install-ppa-manager.sh
+'Y PPA Manager' is a tool from WebUpd8.org that lets you manage Launchpad PPAs: 
+Add, remove, purge PPAs, search for packages in Launchpad PPAs, backup/restore 
+PPAs, as well as other useful features.
+
+* install-ppa-multimedia.sh
+Installs VLC, codecs, and multimedia tools.  Run with no parameters to see a 
+categorized list of what it will install.  Works with Trusty by installing the  
+missing 'ffmpeg' package from a PPA.  May work with other distros (untested).
+
+* install-ppa-pidgin
+Installs 'pidgin' from the repositories, then adds a PPA-based package that 
+implements a compatible indicator for it in Unity.
+
+* install-ppa-pipelight.sh
+Pipelight is a special browser plugin which allows one to use Windows-only
+plugins inside Linux browsers.  Pipelight currently focuses on Silverlight and
+Widevine to allow playing DRM-protected videos.  The project requires a
+patched version of Wine to execute the Silverlight DLL.
+
+* install-ppa-rabbitvcs.sh
+RabbitVCS works in Precise, but has been broken in every distro since then.  
+Pity, as it's a nice look-alike/act-alike for TortoiseSVN.
+
+* install-ppa-skype.sh
+Adds Canonical's "Partner" repo to access Microsoft Skype & installs the repo 
+version of Skype.  The Update Manager will find/install updates.  Be aware that 
+Skype now belongs to Microsoft, and they admit they snoop & give the results 
+to the NSA.  (All more than enough reason to skip this and use GoogleTalk or 
+Hangouts.)
+
+* install-ppa-ubuntu-tweak.sh
+Ubuntu Tweak is another 'System Settings' tool; the Raring & Saucy repos also 
+have a Canonical-supported package, "unity tweak tool".  They're not the same 
+though, so if you use Unity, you might want to try both & choose your favorite.  
+Both seem to beat the installed "System Settings" tool...
+
+* install-ppa-wine.sh / install-wine.sh
+Use this if you want to install Wine (which is fine; it pulls in a number of 
+packages & fonts).  But either install the repo version or the PPA version; you 
+can't install both.  You can safely install Wine, then Crossover, however.
+
+* install-ppa-xorg-edgers.sh / install-ppa-x-updates.sh
+The "X-Updates" and "Xorg-Edgers" repos are for obtaining cutting-edge and 
+'older release' video card drivers.  "Xorg-Edgers" is more bleeding edge than 
+"X-Updates", but the latter often lacks drivers for the last two or three 
+distro releases.  (Should find plenty for Precise, though.)  Use with caution, 
+and I suggest a backup first that you can roll back from.  (I.e., you ought to 
+be using LVM, so take a snapshot, test one of these, and be able to roll back.)  
+Pointless to install in a virtual machine...
+
+* install-refind.sh
+If you have a UEFI system and want to boot in UEFI mode, you will likely want 
+a boot manager, especially if you multi-boot.  This application, made by Rod 
+Smith (UEFI Guru) is a nice boot manager that's easy to install & configure, 
+and allows simple multibooting, including support for Linux stub loading.
+
+* install-remotebox.sh
+This installs a GUI app that allows remote-control of VirtualBox running on 
+another host.  It is not necessary to install Vbox to run 'remotebox', but it 
+is necessary to install/run a version that is compatible with the server's 
+installed version of VirtualBox.  (See the readme file for more info.)  The 
+server host must have VBox Webservices running in order to connect.
+
+* install-skype.sh
+Installs the latest version of Skype from a '.deb' downloaded from Microsoft's 
+website and cached locally.  Will not receive automatic updates.  Be aware that 
+Skype now belongs to Microsoft, and they admit they snoop & give the results 
+to the NSA.  (All more than enough reason to skip this and use GoogleTalk or 
+Hangouts.)
+
+* install-subversion.sh
+The subversion script will backport 1.7.x from Quantal if you install it on 
+Precise (whose repo uses 1.6.11); otherwise it pulls from the repo.  Raring 
+uses 1.7.5; Saucy uses 1.7.9.
+
+* install-vbox-autostart.sh
+VirtualBox provides an ability for virtual machines to be automatically
+started when a system boots.  This script performs the configuration steps 
+needed to set up the service so that users in the VBox Users group, who
+have auto-start privileges, can specify which of their VMs they wish
+to be started at system boot-up.
+
+* install-vbox-dmi-data.sh
+VirtualBox provides the ability to "upload" your PC's DMI data into the VM's DMI 
+data area; this is needed if you want your VM to install/activate a so-called 
+"Royalty OEM" Windows XP installation.  This script does the uploading for you, 
+of either your PC's data (if you have an XP machine and install media) or of a 
+canned-in set of data emulating an HP PC.  Unfortunately, this technique fails 
+for Dell PCs/install disks.
+
+* install-vbox-webservice.sh
+VirtualBox includes a web services API that allows remote-control of the VBox 
+Manager.  This script configures and enables this service (which is needed for 
+RemoteBox to connect & control VBox).
+
+* install-vim.sh
+If you're using EMACS, you should be using VI, and if you're using VI, you 
+should be using VIM, and if you're using VIM, you should be using these add-on 
+scripts...
+
+* install-virtualbox.sh / install-ppa-virtualbox.sh
+For VirtualBox, you can either install the repo version or the version from the 
+VirtualBox website; there are two scripts to handle the two cases.  Once 
+installed, you can get the corresponding ExtensionPack from the 'virtualbox' 
+folder (one level up) to save time downloading from VBox's often slow site.  
+I have the corresponding repo version's ExtPack for Precise (4.2.12), Raring 
+(4.2.10), and Saucy (4.2.16), plus the latest (4.3.x); the 'last' 4.2 version 
+is 4.2.20, which can be downloaded from the VirtualBox website.
+
+
+Future goal: Make a GUI that lets you pick off a menu of choices, then it 
+installs them all without further intervention...
+
+================================================================================
+

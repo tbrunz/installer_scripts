@@ -1,0 +1,145 @@
+
+Scrivener for Linux 1.9.01 Beta Released
+===============================================================================
+
+https://www.literatureandlatte.com/forum/viewtopic.php?f=33&t=32709&sid=7dd37e360e300b11a6a987a206dacd9a
+
+Linux 1.9.01 Beta Released
+by LAP on Wed Oct 21, 2015 7:02 am
+
+Hi Linux folks,
+
+We are pleased to announce Scrivener for Linux 1.9.0.1 beta. This version benefits from many of the bug fixes and new features and new file format of the paid Windows 1.9.0.1 and Mac 2.7 versions. There are two versions we are releasing 1.7.2.4 and 1.9.01. Version 1.7.2.4 is identical to the current Linux 1.7.2.3 version, but with the beta expiry removed. Version 1.9.0.1 also has no expiry. Both versions remain unsupported. There is a full list of new features and bug fixes after the download section of this post.
+
+Note that we currently have no capacity or plans to release another Linux version. As a gesture of good-will, we decided to make a concerted effort to provision 1.9.0.1 to the Linux community instead of just removing the trial expiry date on the current version and re-releasing. We will be resuming focus on the next major releases of Windows & Mac. The Windows version will always be an option to Linux users - either via WINE or VM in the future for those that wish to take advantage of future functionality.
+
+We hope you appreciate our efforts to provide versions of Scrivener for Linux 1.9.0.1 in both 32 & 64 bit, Debian and tar.gz builds, as well as versions for 1.7.2.4.
+
+Download 1.9.0.1 here (32bit and 64bit versions available):
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.9.0.1-amd64.deb
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.9.0.1-amd64.tar.gz
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.9.0.1-i386.deb
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.9.0.1-i386.tar.gz
+
+Download 1.7.2.4 here (32bit and 64bit versions available):
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.7.2.4-amd64.deb
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.7.2.4-amd64.tar.gz
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.7.2.4-i386.deb
+http://www.literatureandlatte.com/scrivenerforlinux/scrivener-1.7.2.4-i386.tar.gz
+
+Refinements and Changes
+- Scrivener no longer includes HTML data on the clipboard when copying text, forcing Word and other programs that read both to paste the RTF contents. Pasting into Word thus now preserves paragraph formatting and inline images as well as comments and footnotes. Programs that do not read RTF data will paste as plain-text
+- Added an option to the File > Export > Files... dialog to exclude a container's subdocuments
+- Adjusted the menu entry for Duplicate > with Subdocuments to the more explicit Duplicate > with Subdocuments and Unique Title
+- Synopsis images are now cached as 640x480 px thumbnails to reduce memory usage, addressing an issue whereby Scrivener would stop displaying imported images and image synopses in projects with numerous large image files.
+- Scrivener's project window now shows the project name first in the title bar, making it easier to identify projects in the Windows taskbar.
+- Project and document references and all project notes are now included when importing a Scrivener project. Scrivener links within the imported project now remain functional, pointing to the imported copy of the original item.
+- The "Exclude from Automatic Backups" setting is now preserved when moving between Mac and Windows.
+- Scrivener's file format has been updated for compatibility with future mobile versions. Upon opening projects, you will be asked to update them. (Please note that you will not be able to open 1.9 projects in earlier versions of Scrivener, and must update to version 2.7 on Mac OS X or Windows 1.9 when working cross-platform.)
+- Scrivener's "project.scrivx" file (the file with the yellow Scrivener icon, used to open the project) now uses the project folder name rather than the generic "project".
+- The UI has been updated slightly, including moving the inspector buttons to the top of the inspector.
+- A View > Inspect submenu has been added for menu (and keyboard) access to the different inspector tabs. The menu will switch the inspector to the selected tab, opening the inspector if necessary, and will move focus to the selected area if it is already visible. (Keyboard shortcuts can be added for the menu items in Tools > Options.)
+- Multiple inspector comments and footnotes can be expanded and collapsed using the View > Outline commands or the Left/Right Arrow keys. The appearance of comments and footnotes within the text has also been slightly refined.
+- Compile replacements now allow tabs and carriage returns. Type Ctrl+Tab or Ctrl+Enter to enter the character into the replacement field.
+- When set to automatically check for updates, Scrivener will do so immediately when the program is opened, without needing a project open.
+- Tooltips on Scrivener links now show the document's full binder path.
+- The tutorial project has been updated and now includes a new “Quick Start” collection.
+
+
+Bugs Fixed
+- Fixed a crash when switching focus from an inspector footnote to another document in a composite Scrivenings session
+- Fixed a memory leak
+- Fixed a bug that could cause the wrong text to be changed when converting inline annotations to inspector comments within a table
+- Fixed a bug causing File > Export > Files... to omit inspector comments and not bracket inline annotations when exporting to plain-text
+- Fixed a bug that could cause the paragraph formatting of text marked with Preserve Formatting to extend to the end of the document when an inspector footnote immediately followed the preserved text
+- Fixed a bug whereby the initial character formatting of inspector footnotes could also affect the footnote reference in some compile formats such as PDF and ODT. References now all use the font of the initial footnote, taken from the main text wherein the footnote falls
+- Fixed a bug that could cause character formatting in the anchor text to extend to the remainder of the paragraph when compiling comments as footnotes or endnotes or compiling inspector footnotes as endnotes
+- Fixed a bug that could cause inspector comments and footnotes in copied text to be offset when pasting over existing text
+- Fixed a bug that created an extra blank document when using the Document Split command within a composite Scrivenings session
+- Fixed a bug whereby the editor focus was lost when using the Document Split command in a Scrivenings session. Focus now moves to the start of the newly-split document
+- Fixed a bug causing character formatting such as highlighting and bold not to toggle correctly
+- Fixed a bug in scriptwriting mode whereby Enter did not correctly change elements from a parenthetical
+- Fixed a bug in scriptwriting mode that prevented the font from updating when switching the script element of selected text
+- Fixed a bug preventing script elements in imported FDX files from being recognised
+- Fixed a bug that returned both double and single quote marks when searching for double
+- Fixed a bug with Import and Split that added an empty line to each document when stripping out a separator character that sat on its own line
+- Fixed a bug causing compiled footnote references to revert to Courier New when followed by an empty line
+- Fixed a bug that gave an incorrect contents list in Compile if the saved compile group was no longer in the Draft
+- Fixed a bug that prevented using the Tab key to move focus from an index card's title to its synopsis on the corkboard
+- Fixed a bug causing the editor not to scroll to Find by Formatting results within a document in a Scrivenings session
+- Fixed a bug that could cause the progress bar in the editor footer to not update immediately when switching documents
+- Fixed a bug preventing project auto-completions working when immediately preceded by a quote or punctuation mark
+- Fixed a bug that could cause formatting problems when importing or pasting text that had "Keep lines together" set in an external program
+- Fixed a bug causing the disclosure triangle not to appear after using Import & Split with a single document or empty folder selected
+- Fixed a bug whereby clicking a Scrivener link within a document also selected it when the navigation options were set to open links in the current editor
+- Fixed a bug causing Find by Formatting to search only the container document of a composite Scrivenings session when set to search in selected documents
+- Fixed a bug that caused the editor to scroll too quickly when selecting text with the mouse in a Scrivenings session with Typewriter scrolling enabled
+- Fixed a bug with some Ctrl key shortcuts in the binder, such as Ctrl+Shift+N, that could cause the following action (Import, rename) to apply to the previously selected folder
+- Fixed a bug that could cause the title column of the outliner to expand to the full width of the editor after viewing a single document in group view mode
+- Fixed a bug causing Export > Outliner Contents as CSV not to work when the focus was outside the editor
+- Fixed a bug whereby Alt-clicking a checkbox in the outliner did not apply the setting to all the items when a multiple selection was loaded
+- Fixed a bug whereby text highlighting obscured the project search results highlight
+- Fixed a bug that could allow negative line spacing in pasted text, causing the text to appear scrambled
+- Fixed a bug causing images in the Trash folder to appear in the list of available cover images for ebook compile
+- Fixed a bug whereby "Save As Collection" was not properly disabled when the project search was limited to the binder selection, causing inconsistent results
+- Fixed several bugs with the "Capitalize 'i'" auto-correction
+- Fixed a bug that caused words connected with an en dash, em dash, or ellipsis to be treated as one when using Ctrl+Left/Right to navigate through the text
+- Fixed accelerator key conflicts in the Tools > Writing Tools submenu
+- Fixed a display bug showing both the C and S underlined in View > Collections > Collections when using the Alt accessibility keys
+- Tweaked the WordNet tool to display the database entry for "to be" for most tenses of the verb
+- Fixed a crash that could occur when pasting web content if Scrivener could not download the selected images.
+- Fixed a bug causing Scrivener to set all items to use the freeform corkboard when opened in the Mac version of Scrivener. The fix will prevent this happening for new documents but will not affect existing documents, which can be toggled back to the regular corkboard view in the Mac version.
+- Fixed a bug whereby JPG files dragged from the binder to the editor were converted to PNG files within the text.
+- Fixed a bug whereby the project search criteria preview did not update until after running the search.
+- Fixed a bug causing the project search criteria to reset each time the project closed.
+- Fixed a bug that exported document notes in place of meta-data and vice versa when using File > Export > Files....
+- Fixed a bug in File > Export that created a 0KB file for containers with no text.
+- Fixed a bug whereby exporting document notes created an empty notes file for items that did not have document notes.
+- Fixed a bug causing referenced PDF files not to load correctly in the editor when the file extension was uppercase.
+- Fixed a bug whereby document notes always exported as RTF files regardless of the export settings.
+- Fixed a bug that could cause script elements with custom settings to be misidentified as "General Text" after closing and reopening the project. (This will only affect new text; elements that have previously been switched to "General Text" will need to be manually restored to the proper element.)
+- Fixed a bug causing Scrivener links within the project notes window to always open in the second editor, regardless of the navigation settings.
+- Fixed a bug whereby inspector comments and footnotes deleted en masse were restored one by one via Undo. The notes are now all restored together.
+- Fixed a bug that caused the resize rectangle around an image to appear in the wrong location when clicking into the empty space above an inserted image.
+- Fixed a bug whereby the Spelling command was disabled when accessed via the Alt accelerator keys.
+- Fixed a bug whereby the Tab key did not move focus from the editor header to the editor when in Scrivenings mode.
+- Tweaked saving and reading the templateinfo.xml file (used to auto-populate the fields in the Save As Template dialog), which should reduce cases of the file causing an innocuous error message when loading the project.
+- Fixed several typos and nn the French translation, under the Éditer menu, "Supprilmer le lien" was changed to "Supprimer le lien".
+- Adjusted accelerator keys in the Format menu to ensure Font, Formatting, and Footnote have unique keys. Also changed the Scratch Pad to use the 'p' accelerator key to avoid duplicate keys in the Tools menu.
+- Fixed a bug that allowed tables to be inserted into inspector comments and footnotes, which could cause Scrivener to crash.
+- Fixed a bug causing the document templates folder assignment to switch to other items in the binder.
+- Fixed a bug that incorrectly re-encoded Mac-created document and project reference links when the project was opened on Windows/Linux, breaking links that contained a space.
+- Fixed a bug whereby newly added comments and footnotes were not included in project search until after reopening the project or running Save and Rebuild Search Indexes.
+- Fixed a bug whereby Scrivener silently failed to open a project containing multiple .scrivx project files (as from a synchronisation glitch). Scrivener will open the project using the file that matches the project folder's name, or the most recent project file if none match.
+- Fixed a bug whereby closing a collection could cause the editor to reload the binder selection rather than to continue displaying the item loaded from the collection. This also corrects a bug that caused multiple items loaded via a collection to revert to binder order in the editor when switching back to the binder.
+- Fixed a bug that caused header and footer text to switch to Courier New following multi-byte characters for some compile formats.
+- Fixed a bug whereby Scrivener links to documents not included in the compile group were not removed when compiling to formats that convert the links to RTF bookmarks, resulting in broken links.
+- Fixed a bug whereby Scrivener links were not removed when using File > Export, leaving broken links in the exported document.
+- Fixed a bug whereby tables did not compile if they immediately followed a forced page break or were preceded only by blank lines.
+- Fixed a bug that stripped character formatting when applying a paragraph-only formatting preset.
+- Fixed a bug that could potentially allow the auto-update to run while a project was saving and might result in project corruption.
+- Fixed a bug whereby newly created Scratch Pad notes sent to a project imported with their original title (e.g. "Untitled note") if the focus was not changed to another note and back before sending.
+- Fixed a bug that placed documents in their creation order rather than binder order when using the Documents > Move > To menu command.
+- Fixed a bug whereby items moved via the Move To command were placed at the top of the selected folder's contents rather than at the bottom, as is done when dragging and dropping onto the folder.
+- Fixed a bug causing compile replacements with an empty "With" field to be ignored and deleted from the settings.
+- Corrected the File > Export behaviour to keep document notes in RTF format when exporting the main text as FDX.
+- Fixed plain-text compile to add fifteen empty lines between sections separated with a "page break" separator or with "page break before".
+- Fixed a bug that caused some Mac-only auto-complete script settings to be lost if the settings were viewed on Windows.
+- Fixed a bug that threw an error when using "Save As Template" from a project created from the "blank" template.
+- Fixed a bug whereby auto-titling did not apply to documents with fewer than fifty characters or to documents titled "Untitled" (as might occur in a Mac-created template).
+- Fixed a bug causing inspector comments and footnotes to always open expanded when switching documents or reopening the project.
+- Fixed a bug whereby Mac compiled footnote numbers were lost after working in the project on Windows.
+- Fixed a bug whereby Scrivener links could be pasted into the Scratch Pad, resulting in broken links (since Scrivener links apply only within the project).
+- Fixed a bug whereby clicking a broken Scrivener link (as to a deleted document) brought up a prompt to search the Microsoft Store for an application to open the linked file.
+- Fixed a bug causing the View Collections shortcut not to work when the main toolbar was hidden if the View > Collections menu had not previously been opened during the session.
+- Fixed a re-introduced bug whereby selecting certain fonts such as Bookman Old Style from the format bar applied an unexpected variant of the font (e.g. Demi Bold vs. Light when there is no "Normal" variant).
+- Fixed a bug whereby the alignment format controls did not properly update for centred text or immediately after applying a paragraph formatting preset that did not also apply font or font size.
+- Fixed a bug whereby text linked to an inspector comment or footnote did not appear formatted as a link if the comments and footnotes could not load.
+- Fixed a bug whereby inspector comments and footnotes were returned in when using Find by Formatting to search for for "All Links".
+- Fixed a bug whereby the magnifying glass icon remained in the collection header after converting a search collection to a standard collection.
+- Fixed a bug that misaligned collection titles in the binder header.
+- Corrected several typos in translations.
+
+Lee & Tiho & Jennifer
+
+

@@ -1,0 +1,107 @@
+
+Installing Windows 7 in native EFI mode from USB
+==========================================================================
+
+http://forums.bit-tech.net/showthread.php?t=209045
+
+Windows 8 users: The following procedure is unnecessary. Just copy the entire 
+contents to a FAT32 USB drive and it should boot correctly in native EFI mode.
+
+Windows 7 users: Follow the procedure below to make a Windows 7 install able 
+to boot in UEFI.
+
+To install Windows so that it will take advantage of the native UEFI firmware 
+of a Sandy Bridge (or later) motherboard can be done from DVD or USB.  Booting 
+the installer from the DVD will boot you straight in EFI mode as you'd expect; 
+however, if you create a USB boot drive for the Windows 7 installer, the system 
+will only boot in BIOS mode, and the installer will not let you install in EFI 
+mode to GPT disks.
+
+Here's what you need to do:
+
+Requirements:
+
+* 4GB (or larger) USB boot drive with Windows 7 64-bit installer - there are 
+plenty of guides around the internet for creating one. Ensure that the drive 
+correctly boots on a BIOS system.
+
+* A copy of 'bootmgfw.efi'. You can obtain this file from an install of 64-bit 
+Windows 7: Look in 'C:\Windows\Boot\EFI'. Alternatively, the file can also be 
+extracted from a Windows 7 (or higher) x64 DVD. It is located in the 2.7 GByte 
+large archive 'Install.wim' in the subdirectory '\sources'. The archive can be 
+extracted with an archiving program. This file is located in the subdirectory 
+"1" of the archive at '1\Windows\Boot\EFI\'. The correct size for the 
+'bootmgfw.efi' file should be around 657 kB.
+
+* A system with native 64-bit UEFI 2.0 firmware. This is pretty much all Sandy 
+Bridge systems (except for Gigabyte motherboards) and some new laptops.
+
+Instructions:
+
+1.) In the root of your USB drive, find the '\efi\microsoft\boot' directory. 
+Copy this directory one level up so the files also reside under '\efi\boot'.
+
+2.) Copy the 'bootmgfw.efi' file to '\efi\boot', and rename it 'bootx64.efi'.
+
+3.) Test the USB drive in a UEFI system. It should automatically boot with the 
+UEFI method, but you may have to specifically choose UEFI boot depending on 
+your system.
+
+That's it! No need to write boot sectors or anything like that.  As long as 
+you have a FAT32 filesystem with a '\efi\boot\bootx64.efi' file, the computer 
+should pick that up and start booting. 
+
+There are now two methods to verify that the installer has indeed booted in 
+EFI mode:
+
+1.) When you see the Install welcome screen, hit Shift+F10. This will open a 
+command prompt. Run "notepad \Windows\Panther\setupact.log", and the log will 
+show:
+
+    Callback_BootEnvironmentDetect: Detected boot environment: BIOS
+or
+    Callback_BootEnvironmentDetect: Detected boot environment: UEFI
+
+2.) Open the command prompt with Shift+F10, but this time run 'diskpart'. Use 
+"list disk" to see all the disks on your computer, and type "select disk n" to 
+select the disk with number 'n' that you're going to install Windows to 
+(usually 1). 
+
+Type "clean" to clear the partition table, then run "convert gpt" to create a 
+GPT partition table. Once that's done, close the command prompt and start the 
+install process. When prompted for the disk to install to, choose the one that 
+you just created a GPT partition table on. If no yellow exclamation mark 
+warning appears, the installer will install Windows in EFI mode, creating the 
+necessary EFI partitions and adding the necessary bootloader entry to the EFI's 
+NVRAM. Otherwise, you've booted in BIOS mode and the installer will not let 
+you install to a GPT disk.
+
+Another tip that you might find useful if the motherboard's EFI NVRAM has been 
+reset somehow (perhaps you got a new board or something) or the default 
+bootloader has been changed. Run
+
+    bcdedit /set {FWbootmgr} displayorder {Bootmgr} /addfirst
+
+either from Windows or a WinPE environment and the EFI bootloader will be set 
+back to the default Windows Bootloader.
+
+Note: If you have a USB 2.0 port, try using that. Windows 7 (unlike Windows 8) 
+does NOT have any in-box drivers for USB 3.0 controllers, so that might cause 
+missing driver error messages (or an inability to install from USB 3 slots).
+
+Note: Do not use the official Windows 7 USB DVD download tool to create a 
+bootable USB drive. It formats drive as NTFS and your UEFI will not recognize 
+it in EFI mode. You can use 'http://sites.google.com/site/rmprepusb/' to format 
+a USB drive using the FAT32 Win7 bootloader option and then manually copy files 
+from the DVD. Once done, you should be able to browse the drive upon EFI boot.
+
+Note: Converting a drive to GPT may require rebooting in order for the setup 
+application to recognize the new partition format.
+
+You can also create a USB installation flash drive with 'WintoFlash', which one 
+can instruct to format the USB drive using FAT32.  (NTFS format cannot be used 
+for a UEFI installation, which is why Microsoft's "Windows 7 USB/DVD download 
+tool" will not work. However, since UEFI is becoming the standard, MS might, 
+in time, update this tool to allow FAT32formatting). 
+
+

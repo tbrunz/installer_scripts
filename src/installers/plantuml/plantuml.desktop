@@ -1,0 +1,10 @@
+[Desktop Entry]
+Comment=PlantUML UML rendering tool
+Terminal=false
+Name=PlantUML
+Exec=${INSTALL_DIR}/plantuml
+Type=Application
+Icon=${INSTALL_DIR}/icons/plantuml.png
+X-Desktop-File-Install-Version=0.22
+GenericName=Programming
+Categories=Development;

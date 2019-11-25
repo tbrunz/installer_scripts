@@ -1,0 +1,118 @@
+
+PlantUML Installation
+===============================================================================
+
+http://plantuml.com/
+
+
+Installing PlantUML
+----------------------------------
+
+You need these things to run PlantUML:
+
+*  Java     - https://www.java.com/en/download/ or install from your Linux repo
+*  Graphviz - https://www.graphviz.org/         or install from your Linux repo
+
+   Graphviz (short for Graph Visualization Software) is a package of open-source 
+   tools initiated by AT&T Labs Research for drawing graphs specified in DOT 
+   language scripts.  It also provides libraries for software applications to 
+   use the tools.  Graphviz is free software licensed under the Eclipse Public 
+   License.
+   
+   Graphviz is optional if you only need sequence diagrams & activity (beta) 
+   diagrams.  PlantUML should be working with any version of Graphviz, starting 
+   with v2.26.3.  The following versions have been tested and are known to work:
+      2.26.3
+      2.28
+      2.30.1
+      2.34
+      2.36
+      2.38
+      
+   If you compile Graphviz by yourself, you have to build it with 'libexpat' in 
+   order to work with PlantUML.  By default, the dot executable should be:
+
+   Windows:
+      * Firstly in: 'C:\Program Files\Graphviz*\bin\dot.exe'
+      * Then in: 'C:\Program Files (x86)\Graphviz*\bin\dot.exe'
+      
+   On Linux/Mac OS-X:
+      * Firstly in: '/usr/local/bin/dot'
+      * Then in: '/usr/bin/dot'
+      * You can also specify the environment variable GRAPHVIZ_DOT to set the 
+        exact location of your GraphViz executable.
+      
+Installed the above?  Then simply download "plantuml.jar" and run it to open 
+PlantUML's graphical user interface.  There is no need to unpack or install 
+anything.  To have information about where PlantUML expects to find 'dot', you 
+can use the command line:
+
+   $ java -jar plantuml.jar -testdot
+
+You can also use this special diagram description in file "testdot.txt":
+
+   @startuml
+   testdot
+   @enduml
+
+then run
+
+   $ java -jar plantuml.jar testdot.txt
+
+
+Version Checking
+----------------------------------
+
+If you want to know the exact version of PlantUML you are using, you can type 
+in the command line:
+
+   $ java -jar plantuml.jar -version
+
+or use the following small special diagram description in "version.txt":
+
+   @startuml
+   version
+   @enduml
+
+To check if a newer version is available, you can use the command line:
+
+   $ java -jar plantuml.jar -checkversion	
+   
+This command connects to the PlantUML website, so you may have to set a proxy:
+(Please note that -D flags must be set before -jar flag.)
+
+   $ java -Dhttp.proxyHost=myproxy.com -Dhttp.proxyPort=8080 \
+     -jar plantuml.jar -checkversion	
+
+Or use the following small special diagram description in "check.txt":
+
+   @startuml
+   checkversion
+   @enduml
+
+You can also set your proxy using the following syntax in "check.txt":
+
+   @startuml
+   checkversion(proxy=myproxy.com,port=8080)
+   @enduml
+
+
+Other Issues
+----------------------------------
+
+If you have a message "file not found" when running the Word Macro with Java 7,
+you may have to properly set Environment Variables.  To fix, go into Windows 
+Environment Variables settings and find/create these two variables:
+
+   Variable Name: PATH, Add to Value: ";C:\Program Files\Java\jre7\bin"
+   Variable Name: CLASSPATH, Add to Value: ";C:\Program Files\Java\jre7\lib"
+
+
+If you are running PlantUML on a Linux server without graphical capability, 
+you can turn PlantUML to headless mode, using a flag:
+
+   $ java -Djava.awt.headless=true -jar /data/PlantUml/plantuml.jar ...
+
+
+===============================================================================
+

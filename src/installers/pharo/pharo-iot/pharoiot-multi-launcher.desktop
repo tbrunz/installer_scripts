@@ -1,0 +1,11 @@
+[Desktop Entry]
+Comment=Pharo IoT Host environment
+Terminal=false
+Name=Pharo IoT Host
+Exec=${INSTALL_DIR}/pharo-ui
+Type=Application
+Icon=${INSTALL_DIR}/icons/Pharo.png
+X-Desktop-File-Install-Version=0.22
+GenericName=Programming
+Categories=Application;Development;
+Name[en_US]=pharoiot-multi-launcher.desktop

@@ -1,0 +1,60 @@
+#
+# hosts-base file - DNS Only
+# 
+# Last update 07 JAN 2017
+# This update 26 APR 2017
+#
+# Be sure to synchronize the set of 'hosts' files with 
+# configuration files for GUFW, FWKNOP, and SSH.
+#
+# Test IP = http://18.62.0.96/ = http://www.eecs.mit.edu/
+#
+# According to RFC 1918, you can use the following IP networks for 
+# private networks which will never be routed on the Internet:
+#
+#       10.0.0.0        -   10.255.255.255
+#       172.16.0.0      -   172.31.255.255
+#       192.168.0.0     -   192.168.255.255
+#
+#
+127.0.0.1       localhost       localhost.localdomain
+::1             localhost6      localhost6.localdomain6
+
+
+# VirtualBox (local) hosts
+#
+192.168.56.1    vmhost      vmhost.localdomain
+
+192.168.56.101  vm101
+192.168.56.102  vm102
+192.168.56.103  vm103
+192.168.56.104  vm104
+192.168.56.105  vm105
+
+10.0.2.2        nat         nat.localdomain
+10.0.2.15       nat1        nat1.localdomain
+
+
+# DNS Servers
+#
+8.8.8.8         ns1.google.com                  # DNS: Google Public DNS
+8.8.4.4         ns2.google.com                  # DNS: Google Public DNS
+
+208.67.222.222  dns-open-1                      # DNS: resolver1.opendns.com
+208.67.220.220  dns-open-2                      # DNS: resolver2.opendns.com
+208.67.222.220  dns-open-3                      # DNS: resolver3.opendns.com
+208.67.220.222  dns-open-4                      # DNS: resolver4.opendns.com
+
+
+# The following lines are desirable for IPv6 capable hosts
+#
+fe00::0         ip6-localnet
+ff00::0         ip6-mcastprefix
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+ff02::3         ip6-allhosts
+
+2001:4860:4860::8888        ns3.google.com      # DNS: Google Public DNS
+2001:4860:4860::8844        ns4.google.com      # DNS: Google Public DNS
+
+

@@ -1,0 +1,24 @@
+
+Banshee PPA
+====================================
+
+I've been trying to figure out how to make online radio station streaming work with Banshee (the default Ubuntu music manager), and along the way, found out about "Banshee Community Extensions".
+
+These extensions look rather useful; many appear to make Banshee more "iTunes like".  You can read about the list here:
+    http://banshee.fm/download/extensions/
+
+I've already installed them; they appear under Edit > Preferences > Extensions in their own section called "Community Extensions".
+
+You will NOT want to follow any of the instructions on the Banshee web page, however -- too complicated!! :^)
+
+What I did was to write a script that adds the Banshee Development Team's "PPA" (Personal Program Archive -- these are what the developers use to manage and distribute their builds as they develop apps for Ubuntu) for Banshee to your system's software repository list.  Then it installs the latest Banshee (which is currently 2.0.1 for the stable version -- the version that installs with Ubuntu 11.04 is version 2.0.0).  
+
+My script also installs the latest "banshee-community-extensions" package, also in the same PPA (along with a bunch of other Banshee-related packages, most of which I don't know anything about; many are for older versions of Banshee and/or Ubuntu).
+
+Once installed, you restart Banshee, then go to Edit > Preferences > Extensions and click the checkboxes to enable the extensions you prefer (i.e., the list in the URL link above).
+
+Some of these are pretty nice, especially the cover art 'flipper'...
+
+I've attached the script.  To use it, you just download it to your hard drive, then open a terminal where you downloaded it, then enter "sh ./install-ppa-banshee" in the terminal, follow the prompts, and it will upgrade your Banshee to 2.0.1, then install the Community Extensions.  Close the Terminal, restart Banshee, and configure...
+
+

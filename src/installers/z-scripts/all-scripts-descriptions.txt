@@ -1,0 +1,302 @@
+
+README for Ubuntu package installer set
+============================================================================
+18 MAY 2014 for v2.1.0
+
+These scripts automate the installation of a number of Ubuntu applications 
+& packages that are not installed by default in the Ubuntu Desktop Edition, 
+are useful to have, yet cannot be installed easily from the Ubuntu Software 
+Center. 
+
+The scripts are located in the 'z-scripts' directory.
+
+Package Descriptions:
+
+do-update-all.sh
+    Macro to execute 'sudo apt-get update && sudo apt-get dist-upgrade'.
+
+add-ppa-list.sh
+    A short script to automate adding a list of PPA repositories.  The 
+    lists are kept in files of the form 'ppa-list.<name>'.
+
+fix-apt.sh
+    Checks/fixes the locations of the 'sources.list' files kept in '/etc/apt' 
+    so that all third-party source lists are kept in their own files in 
+    '/etc/apt/sources.list.d' rather than being incorrectly appended to the 
+    '/etc/apt/sources.list' file (which keeps track of the OS lists).
+
+fix-bash.sh
+    Edits the '.bashrc' file for one or more accounts to redefine the aliases 
+    'l', 'll', and 'la'.  Renames the '.bash_logout' file to inactivate it.
+        
+fix-ubuntu.sh
+    Performs miscellaneous fixups to a freshly-installed system (each of 
+    which is queried before being applied).  Some fix-ups need to be run by 
+    each user, as they tweak individual account settings.
+
+install-apache.sh
+    Installs the Apache Web Server (needed to install Apache Bloodhound).  
+
+install-apt-cacher.sh
+    Installs 'apt-cacher-ng', a server application that caches APT packages 
+    downloaded from the repositories, making updating other machines faster.
+
+install-base.sh
+    Batch installs a large number of useful packages from the repository.
+    The packages are listed in the 'usage' prompt.
+
+install-clementine.sh
+    Installs the Clementine music player from the Ubuntu repos.
+
+install-crossover-deb.sh / install-crossover-bin.sh
+    Installs CodeWeavers CrossOver Linux from a cached installer file.  Also 
+    installs additional packages that CrossOver is dependent on (but which 
+    CrossOver doesn't install itself).  The '.deb' version also installs 
+    Wine Launcher Creator, a utility for adding icons to desktop launchers.
+
+install-fonts.sh
+    Installs a set of fonts from cached font files and the repositories.  The
+    fonts are listed in the 'usage' prompt.
+    
+install-fwknop.sh
+    Installs the client and/or server portions of the FireWall KNock OPerator 
+    suite.  Installation is via compiling source code (to get a significantly 
+    newer version) that was previously obtained from the author's website.  
+    The server component only needs to be installed on a machine intended to 
+    be remotely accessed.
+
+install-gawk.sh
+    Installs GNU AWK, which replaces 'mawk' as the default Ubuntu AWK.  If 
+    the host is Precise (12.04), it will backport v4.0.1 from a later distro's
+    repository, rather than install v3.1.8 from the 12.04 repository.  If 
+    you don't write scripts, you likely don't need this and don't care.
+
+install-gedit-plugins.sh
+    Installs a set of useful add-on plugins for the 'gedit' text editor.  
+    The plugins are listed in the 'usage' prompt.  Note there are two sets of 
+    plugins, one for gedit 2.0-3.6, and one for gedit 3.8+.
+
+install-gnome3.sh
+    Installs the GNOME Shell (Gnome 3) desktop environment, which becomes an 
+    alternative to Unity at the log-in screen.  This install is from the 
+    repositories, and includes the tweak tool, themes, and other useful 
+    Gnome Shell packages.  If you wish to install the Gnome Team PPA version, 
+    install this package first.
+    
+install-hosts-files.sh
+    Installs a hosts file to block ads, banners, third-party cookies, trackers, 
+    third-party page counters, web bugs, and most hijackers.  Combines this 
+    "blocking" file with a normal hosts file for the system, and automates 
+    updating the block list when a new file becomes available.
+
+install-hp15c.sh
+    Installs an HP-15C calculator 'simulator', which faithfully replicates 
+    the real thing.  A 'must have' for RPN calculator fans.  Installs as a 
+    Tcl/Tk application; needs manual creation of a clickable icon.
+
+install-java.sh
+    Installs either Java 6 (v1.6.x) or Java 7 (v1.7.x) from the repositories, 
+    along with the browser plugin.  Required by JBidWatcher.
+
+install-jbidwatcher.sh
+    An Ebay auction sniping program that places a bid for you, in the last 
+    minutes or seconds of the auction.  Installs as a Java application; needs 
+    manual creation of a clickable icon.  Requires pre-installation of Java 
+    (version 6 or 7).
+
+install-kvm-qemu.sh
+    Installs the Kernel Virtual Machine & QEMU package set, plus all the KVM 
+    'suggested' packages.
+    
+install-mawk.sh
+    Installs the latest version of Michael's AWK, invoked as 'mawk'; it does 
+    not replace mawk v1.3.3 as the default Ubuntu AWK.  Installation is by 
+    downloading and compiling source code from the author's website.  If 
+    you don't write scripts, you likely don't need this and don't care.
+
+install-multimedia.sh
+    Installs multi-media codecs, streaming audio/video libraries, VLC (app & 
+    plugin), Flash plugin, and other multi-media support.  'Trusty' requires 
+    the PPA version (due to the deletion of a key package in the repos).
+
+install-noip-duc.sh
+    Users of the No-IP dynamic DNS service need to install a "Dynamic Update 
+    Client" (DUC) app on at least one system behind each NAT firewall.  This 
+    script install's No-IP's DUC and sets it to run at each bootup.
+
+install-perf-test.sh
+    Installs packages for running system performance/tuning applications.  
+    (Currently, 'glxgears' and 'glxspheres' for video performance testing.)
+
+install-postgres.sh
+    Installs the PostgreSQL database from the repository.  Needed for Apache 
+    Bloodhound.
+
+install-ppa-audio-recorder.sh
+    Installs a useful app to record "anything that plays out your speakers".
+
+install-ppa-banshee.sh
+    Installs the latest version of Banshee from the author's PPA, along with 
+    useful extensions.  (The repo version is usually way out of date.)
+
+install-ppa-calendar.sh
+    Adds the Google Calendar to your indicator panel.
+
+install-ppa-chrome.sh
+    Installs Google Chrome from Google's Linux repository.  Note that once 
+    installed, Chrome will be updated via Update Manager.
+
+install-ppa-diodon.sh
+    Installs a lightweight clipboard manager that features an Ubuntu indicator, 
+    clipboard sync (primary selection and Ctrl+C / Ctrl+V clipboard), and an 
+    option to set the clipboard size.
+
+install-ppa-dropbox.sh
+    Installs Dropbox from Dropbox's repository, and prints out some useful 
+    text to describe the rest of Dropbox's (complex) installation process.
+    Note that once installed, Dropbox will be updated via Update Manager.
+
+install-ppa-gnome3.sh
+    Installs the latest version of the GNOME Shell (Gnome 3) desktop 
+    environment, which becomes an alternative to Unity at the log-in screen.  
+    This install is from the Gnome Team PPA, and includes the tweak tool, 
+    themes, and other useful Gnome Shell packages.  Although not required, 
+    you may get the best results by installing the repo package first.
+
+install-ppa-googledrive.sh
+    Installs 'google-drive-ocamlfuse', which is a FUSE filesystem backed by 
+    Google Drive, written in OCaml.  It lets you mount your Google Drive in 
+    Linux.
+
+install-ppa-googletalk.sh
+    Installs the GoogleTalk plugin from Google's repository.  Note that 
+    once installed, GoogleTalk will be updated via Update Manager.  (Also, 
+    GoogleTalk has been superceded by Google+ Hangouts, but still works.)
+
+install-ppa-grub-customizer.sh
+    Installs an excellent GUI application for controlling & customizing GRUB, 
+    including full support for multi-booting other OSes and boot-time tools.
+    
+install-ppa-linux-kernel-3.X.Y.sh
+    Downloads (optionally) and installs a Linux kernel from the Ubuntu kernel 
+    repository.  E.g., can install kernel 3.10.10 in 'raring', which ships with 
+    the 3.8.0-19 kernel.
+
+install-ppa-manager.sh
+    'Y PPA Manager' is a tool from WebUpd8.org that lets you manage Launchpad 
+    PPAs: Add, remove, purge PPAs, search for packages in Launchpad PPAs, as 
+    well as other useful features.
+
+install-ppa-multimedia.sh
+    Installs multi-media codecs, streaming audio/video libraries, VLC (app & 
+    plugin), Flash plugin, and other multi-media support.  This version is for 
+    'Trusty', as it gets a key package from a PPA.  (Should work in others.)
+
+install-ppa-pidgin.sh
+    This script installs Pidgin, then installs a PPA-based indicator for Pidgin.
+
+install-ppa-pipelight.sh
+    Pipelight is a special browser plugin which allows one to use Windows-only
+    plugins inside Linux browsers.  Pipelight currently focuses on Silverlight 
+    and its features, such as playing DRM-protected videos.
+
+install-ppa-rabbitvcs.sh
+    Installs the latest version of RabbitVCS, a Linux equivalent of Windows' 
+    TortoiseSVN, from the author's PPA.  (The repo version is usually way out 
+    of date.)  Requires pre-installation of Subversion.
+
+install-ppa-skype.sh
+    Installs Microsoft Skype for Linux from Ubuntu's 'partner' repository, and 
+    adds the needed 32-bit library support for 64-bit hosts.  Not recommended; 
+    consider using Google+ Hangouts, GoogleTalk, or Ekiga instead.
+
+install-ppa-ubuntu-tweak.sh
+    Installs an excellent GUI application for tweaking the configuration of 
+    the Ubuntu Unity desktop environment.  Does not work for Gnome Shell!
+    Also installs 'unity-tweak-tool' from the repository.
+
+install-ppa-variety.sh
+    Installs a wallpaper manager that regularly changes your wallpaper, either 
+    from local folders or using downloads from online sources.
+    
+install-ppa-virtualbox.sh
+    Installs the latest version of VirtualBox from the Sun/Oracle repository.  
+    Note that once installed, this version will be updated via Update Manager, 
+    which will require manually downloading and updating the VirtualBox 
+    Extensions Pack (if installed, as recommended) and re-installing the 
+    Guest Additions in each virtual machine.
+
+install-ppa-weather.sh
+    Adds a weather conditions indicator to your panel, that also provides an 
+    extended weather forecast by clicking the 'Forecast' option in its menu.
+    
+install-ppa-wine.sh
+    Installs the latest version of Wine from the Wine Team PPA.  Note that  
+    once installed, this version will be updated via Update Manager.
+
+install-ppa-xorg-edgers.sh
+    Installs the 'Xorg Edgers' PPA, which provides the latest bleeding-edge 
+    updates for video card drivers.
+    
+install-ppa-x-updates.sh
+    Installs the 'X updates' PPA, which provides recent, but more stable 
+    updates for video card drivers.  (Usually does not provide drivers for 
+    the latest Ubuntu version.)
+
+install-refind.sh
+    rEFInd is a UEFI boot manager.  rEFInd can auto-detect your installed EFI 
+    boot loaders, and it presents a nice GUI menu of boot options that allows 
+    booting GPT drives, legacy MBR drives, CD/DVDs (in UEFI or BIOS modes), 
+    thumb drives, EFI shells, and other diagnostic tools.  Boots Linux, Mac, 
+    and Windows installations.
+    
+install-remotebox.sh
+    Installs a given version of RemoteBox, an app that can connect to another 
+    host running VirtualBox and control it using a GUI panel that looks just 
+    like the VBox Manager GUI.  Requires that the server host have the VBox
+    Webservices running.
+
+install-skype.sh
+    Installs Microsoft Skype for Linux from a cached '.deb' file, and adds the 
+    needed 32-bit library support for 64-bit hosts.  Not recommended; consider 
+    using Google+ Hangouts, GoogleTalk, or Ekiga instead.
+
+install-subversion.sh
+    Installs the Subversion version control system.  If the host is Precise 
+    (12.04), it will backport SVN from a later distro's repository; this is 
+    in order to install v1.7 (or later), avoiding the problems with multiple 
+    '.svn' folders.  Note that to also install the Apache Web Server, it will 
+    be necessary to use the accompanying install script to prevent a library 
+    dependency issue.
+
+install-vbox-autostart.sh
+    VirtualBox provides an ability for virtual machines to be automatically
+    started when a system boots.  This script performs the configuration steps 
+    needed to set up the system for auto-starting virtual machines.
+
+install-vbox-dmi-data.sh
+    VirtualBox provides the ability to "upload" your PC's DMI data into the VM's 
+    DMI data area; doing so can allow your VM to run your host's WinXP install.  
+    This script does the uploading for you, of either your PC's data or of a 
+    canned-in set of data emulating an HP PC.
+    
+install-vbox-webservice.sh
+    Configures a VirtualBox host to run the VBox Web Services.  This allows 
+    a client PC (running, e.g., RemoteBox) to control VBox running on the 
+    server, including configuring it and starting/stopping guest VMs.
+
+install-vim.sh
+    Installs both 'vim' and 'gvim', plus useful vim scripts.  This replaces 
+    'vi' as the default vi editor.  The scripts are listed in the 'usage' 
+    prompt.
+
+install-virtualbox.sh
+    Installs the OSE version of VirtualBox from the Ubuntu repositories.  This 
+    version is considered 'stable' and does not receive updates.
+
+install-wine.sh
+    Installs the current stable version of Wine from the repositories.
+
+============================================================================
+
+

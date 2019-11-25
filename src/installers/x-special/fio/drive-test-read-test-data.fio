@@ -1,0 +1,53 @@
+# Notes:  This test creates 8 100GB files and writes to them simultaneously.
+# 
+# This is meant for the server so direct=0 is set -- leave caching enabled.
+# 
+# There is no "stonewall" entry between the 8 job sections, so a job won't 
+# wait for the previous job to finish.
+# 
+# Each job section writes to a different file name.
+# 
+# time_based  -- this parameter tells the job to run for a certain amount of time, rather than 
+# for a set amount of bytes, which simulates long running continuous data loads and how those loads
+# might interact with RAM cache on the server.
+# 
+# runtime -- only works when used with "time_based".  Sets how long jobs will run.
+# 
+# directory=   -- directory or mount point to run test against, set this for your environment.
+#
+
+
+[global]
+bs=256k
+ioengine=libaio
+iodepth=4
+size=100g
+direct=0
+time_based
+runtime=900
+directory=/testdata
+
+[seq-read]
+rw=read
+filename=fio1.test.file
+[seq-read]
+rw=read
+filename=fio2.test.file
+[seq-read]
+rw=read
+filename=fio3.test.file
+[seq-read]
+rw=read
+filename=fio4.test.file
+[seq-read]
+rw=read
+filename=fio5.test.file
+[seq-read]
+rw=read
+filename=fio6.test.file
+[seq-read]
+rw=read
+filename=fio7.test.file
+[seq-read]
+rw=read
+filename=fio8.test.file

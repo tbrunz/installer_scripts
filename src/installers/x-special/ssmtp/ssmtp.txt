@@ -1,0 +1,56 @@
+
+Tasks to be performed after installing 'ssmtp'
+===========================================================================
+
+* Configure 'ssmtp' to email failure notifications.
+
+   Edit '/etc/ssmtp/ssmtp.conf' to read:
+
+---------------------------------------------------------------------------
+#
+# Config file for sSMTP sendmail
+#
+# The person who gets all mail for userids < 1000
+# Make this empty to disable rewriting.
+root=[your Gmail account name]@gmail.com
+
+# The place where the mail goes. The actual machine name is required no 
+# MX records are consulted. Commonly mailhosts are named mail.domain.com
+mailhub=smtp.gmail.com:587
+AuthUser=[your Gmail account name]@gmail.com
+AuthPass=[your Gmail account password]
+UseSTARTTLS=YES
+
+# Where will the mail seem to come from?
+#rewriteDomain=
+
+# The full hostname
+hostname=[your machine's hostname]
+
+# Are users allowed to set their own From: address?
+# YES - Allow the user to specify their own From: address
+# NO - Use the system generated From: address
+FromLineOverride=NO
+---------------------------------------------------------------------------
+
+* There is no need to edit the 'revaliases' file;
+
+* To test ssmtp, send an email to yourself:
+
+    Create a message body and save as 'message.txt':
+        To: [recipient-email-address]
+        From: [your-email-address]
+        Subject: [email-subject]
+        [blank line]
+        [body of message...]
+    $ ssmtp [your.gmail.acctname]@gmail.com < messsage.txt
+
+
+* Or, perform a simulated failure test on a RAID array & verify the email(s):
+
+    $ sudo mdadm --monitor --scan --test --oneshot
+    
+    
+
+
+

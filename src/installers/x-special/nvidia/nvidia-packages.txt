@@ -1,0 +1,51 @@
+
+HOW TO install Nvidia drivers in Ubuntu
+===============================================================================
+
+https://linuxconfig.org/how-to-install-the-nvidia-drivers-on-ubuntu-18-04-bionic-beaver-linux
+
+Automatic Install using standard Ubuntu Repository
+
+The first method is the easiest to perform and in most cases it is the 
+recommended approach.  First, detect the model of your nvidia graphic card 
+and the recommended driver.  
+
+To do so execute the following (which will take several seconds to scan your 
+system, so be patient):
+
+$ ubuntu-drivers devices
+== /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 ==
+modalias : pci:v000010DEd00001180sv00001458sd0000353Cbc03sc00i00
+vendor   : NVIDIA Corporation
+model    : GK104 [GeForce GTX 680]
+driver   : nvidia-304 - distro non-free
+driver   : nvidia-340 - distro non-free
+driver   : nvidia-384 - distro non-free recommended
+driver   : xserver-xorg-video-nouveau - distro free builtin
+
+== cpu-microcode.py ==
+driver   : intel-microcode - distro free
+
+From the above output we can conclude that the current system has NVIDIA 
+GeForce GTX 680 graphic card installed and the recommend driver to install 
+is nvidia-384.  If you agree with the recommendation feel free to use 
+ubuntu-drivers command again to install all recommended drivers:
+
+    $ sudo ubuntu-drivers autoinstall
+
+Alternatively, install a desired driver selectively using the apt command. 
+For example:
+
+    $ sudo apt install nvidia-340
+
+Once the installation is concluded, reboot your system and you are done.
+
+-----
+
+Nvidia packages to install on Dell m7710:
+
+bumblebee-nvidia nvidia-settings nvidia-prime nvidia-opencl-icd-384 nvidia-384 
+nvidia-375 nvidia-367 
+
+-----
+

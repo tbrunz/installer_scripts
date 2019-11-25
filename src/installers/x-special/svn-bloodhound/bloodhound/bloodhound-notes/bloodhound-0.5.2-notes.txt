@@ -1,0 +1,17 @@
+To install Bloodhound, the following steps represent the current recommended method:
+
+  tar xvzf apache-bloodhound-incubating-<version number>.tar.gz
+  cd apache-bloodhound-incubating-<version number>/installer
+  virtualenv bloodhound
+  source ./bloodhound/bin/activate
+  pip install -r requirements.txt
+
+
+NOTE: for version 0.5.2, you will additionally need to:
+
+  pip install ../bloodhound_search
+
+
+Then run the bloodhound_setup.py script:
+
+  python bloodhound_setup.py

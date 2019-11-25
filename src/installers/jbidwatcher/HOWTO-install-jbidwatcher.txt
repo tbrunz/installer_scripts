@@ -1,0 +1,48 @@
+
+HowTo install jBidwatcher in Ubuntu
+===========================================================
+
+Review here:
+    http://www.auctionsoftwarereview.com/software/jbidwatcher.asp
+
+
+* Download the latest '.jar' file from http://www.jbidwatcher.com/
+
+* Make a directory in '/opt' called 'jbidwatcher'
+
+* Put the icon & '.jar' files in '/opt/jbidwatcher'
+
+* Change the ownership of the directory & files to 'root:root'
+
+* Make the jar file executable (chmod 755 *)
+
+* [Unity & GNOME 3] Create a menu launcher
+    Search for & run the application 'alacarte'
+    Click on Internet
+    Click 'New Item'
+    Type = Application
+    Name = JBidWatcher
+    Command = 
+      java -Xmx512m -jar /opt/jbidwatcher/JBidwatcher-2.5.jar
+      (Replace "JBidwatcher-2.5" with the version being installed.)
+    Comment = Ebay auction sniper 
+    Load the jaybird icon using /opt/jbidwatcher/jbidwatcher.png
+
+* [GNOME 2] Create a menu launcher of type 'application':
+    Go to System / Preferences / Main Menu
+    Click on Internet
+    Click 'New Item'
+    Type = Application
+    Name = JBidWatcher
+    Command = 
+      java -Xmx512m -jar /opt/jbidwatcher/JBidwatcher-2.5.jar
+      (Replace "JBidwatcher-2.5" with the version being installed.)
+    Comment = Ebay auction sniper 
+    Load the jaybird icon using /opt/jbidwatcher/jbidwatcher.png
+
+* The executing app will create a '.jbidwatcher' directory in your account
+
+
+
+
+

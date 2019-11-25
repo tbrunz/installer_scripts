@@ -1,0 +1,38 @@
+
+AQEMU Documentation
+===========================================================
+
+The latest AQEMU is available in the Ubuntu Universe repository
+
+
+Use http://translate.google.com to translate Russian & German pages
+
+Russian AQEMU Documentaion:
+http://sourceforge.net/projects/aqemu/files/AQEMU%20Russian%20Documentation/0.7.3/AQEMU-Documentation-0.7.3.tar.bz2/download
+
+German AQEMU Documentaion:
+http://qemu-buch.de/d/Managementtools/_Tools_für_QEMU_und_KVM/_AQEMU
+http://translate.google.com/translate?sl=auto&tl=en&js=n&prev=_t&hl=en&ie=UTF-8&u=http%3A%2F%2Fqemu-buch.de%2Fd%2FManagementtools%2F_Tools_f%25C3%25BCr_QEMU_und_KVM%2F_AQEMU&act=url
+
+Forum About AQEMU (Russian)
+Version 0.8  http://www.nclug.ru/forum/aqemu-08
+Version 0.7  http://www.nclug.ru/forum/aqemu-07
+Version 0.6  http://www.nclug.ru/forum/aqemu-06
+Version 0.5  http://www.nclug.ru/forum/aqemu-05
+
+Version 0.1-0.5  http://www.nclug.ru/forum/aqemu-graficheskii-interfeis-dlya-qemu
+
+QEMU Home Page (English)
+http://www.nongnu.org/qemu/
+
+Good Forum About QEMU (English)
+http://qemu-forum.ipi.fi/
+
+-----
+
+QEMU Wiki (and download page)
+http://wiki.qemu.org/Download
+
+Wiki and Other Information About QEMU (German and English)
+http://qemu-buch.de/e/Content
+

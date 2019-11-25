@@ -1,0 +1,52 @@
+                                                                                                                  
+         Part          Start           End          Size   # of 2 MiB         Size                   2 MiB Start  
+                                                                                                                  
+                        Data     Partition    1924300800       469800      917.578       GiB                      
+                                                                    6         5505       GiB                      
+                                                                                                                  
+                Start Sector    End Sector Size, Sectors   2 MiB Size    Size, MiB      Label        2 MiB Start  Format            
+                                                                                                                  
+   4 TB  HGST   724040ALE640                                                                                      
+         HDN      7814037168                                                                                      
+          1             1024          2047          1024         0.25            1    bios_grub             0.25  No format         
+          2             2048       1130495       1128448        275.5          551 EFI System Part           0.5  FAT32             
+          3          1130496       3227647       2097152          512         1024 Linux Boot Part           276  Ext4 on RAID-1    
+          4          3227648      53559295      50331648        12288        24576  Linux OS Part            788  LVM on RAID-1     
+          5         53559296    1977860095    1924300800       469800       939600 Linux Data Part         13076  LVM on RAID-1(+0) 
+          6       1977860096    3902160895    1924300800       469800       939600 Linux Data Part        482876  LVM on RAID-1(+0) 
+          7       3902160896    5826461695    1924300800       469800       939600 Linux Data Part        952676  LVM on RAID-1(+0) 
+          8       5826461696    7750762495    1924300800       469800       939600 Linux Data Part       1422476  LVM on RAID-1(+0) 
+          9       7750762496    7814037134      63274639       469800        30896   Thumbs Part         1892276  NTFS on LVM       
+                                                      34                     60.34       GiB                      
+                                                                          3670.313       GiB                      
+   3 TB   WD    WD30EFRX-68A                                                                                      
+                  5860533168                                                                                      
+          1             1024          2047          1024         0.25            1    bios_grub             0.25  No format         
+          2             2048       1130495       1128448        275.5          551 EFI System Part           0.5  FAT32             
+          3          1130496       3227647       2097152          512         1024 Linux Boot Part           276  Ext4 on RAID-1    
+          4          3227648      53559295      50331648        12288        24576  Linux OS Part            788  LVM on RAID-1     
+          5         53559296    1977860095    1924300800       469800       939600 Linux Data Part         13076  LVM on RAID-1(+0) 
+          6       1977860096    3902160895    1924300800       469800       939600 Linux Data Part        482876  LVM on RAID-1(+0) 
+          7       3902160896    5826461695    1924300800       469800       939600 Linux Data Part        952676  LVM on RAID-1(+0) 
+          8       5826461696    5860533134      34071439       469800        16636   Thumbs Part         1422476  NTFS on LVM       
+                                                      34                     64.99       GiB                      
+                                                                          2752.734       GiB                      
+   2 TB   WD    WD20EFRX-68A                                                                                      
+                  3907029168                                                                                      
+          1             1024          2047          1024         0.25            1    bios_grub             0.25  No format         
+          2             2048       1130495       1128448        275.5          551 EFI System Part           0.5  FAT32             
+          3          1130496       3227647       2097152          512         1024 Linux Boot Part           276  Ext4 on RAID-1    
+          4          3227648      53559295      50331648        12288        24576  Linux OS Part            788  LVM on RAID-1     
+          5         53559296    1977860095    1924300800       469800       939600 Linux Data Part         13076  LVM on RAID-1(+0) 
+          6       1977860096    3902160895    1924300800       469800       939600 Linux Data Part        482876  LVM on RAID-1(+0) 
+          7       3902160896    3907029134       4868239       469800         2377   Thumbs Part          952676  NTFS on LVM       
+                                                      34                      4.64       GiB                      
+                                                                          1835.156       GiB                      
+ 1.5 TB  S/S         HD154UI                                                                                      
+                  2930277168                                                                                      
+          1                                                                                                       
+                                                                                                                  
+                                                                                                                  
+ 1.5 TB   ST    ST31500541AS                                                                                      
+                  2930277168                                                                                      
+          1                                                                                                       

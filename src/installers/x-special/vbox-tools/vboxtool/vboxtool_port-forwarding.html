@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><title>Port forwarding</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<link href="main.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<table style="width: 700px; text-align: left; margin-left: auto; margin-right: auto;" align="center" border="0" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td>
+<h1>Port forwarding&nbsp;</h1>
+<hr style="width: 100%; height: 0px;">
+<p style="text-align: right;"><a href="index.html">Home</a>&nbsp;</p>
+When a session is
+running within VirtualBox and it is doing a server
+task
+like web or database serving, clients like browsers, etc. must be able
+to reach the session
+from the outside. To
+facilitate this, host interfacing or port forwarding can be used.<br>
+<br>
+Possible usage includes (just a few examples):
+<ul>
+<li>web serving (port 80)</li>
+<li>database serving</li>
+<li>FTP serving (port 21)</li>
+<li>SSH connection (port 22)</li>
+</ul>
+<h2>Host interfacing</h2>
+For reaching a session from the outside, host interfacing is the
+standard
+procedure for most virtialization products. Host interfacing acts like
+a bridge between the session and
+the outside world. The session it self must be configured with a static
+IP address (must be different from the host address) and on this
+address, the session can be reached from the outside by client
+applications.<br>
+<br>
+<span style="font-weight: bold;">Example</span>.
+Host where VirtualBox is running has IP address 192.168.0.201
+configured. A session of Ubuntu Server is running, with an active
+Apache web server on port 80. Host interfacing is configured, session
+has 192.168.0.202 as a static IP address. A browser points to the IP
+address of
+the session, thus: 192.168.0.202. This
+request reaches the session on port 80 and the Apache web server
+responds as usual.<br>
+<h3>Drawbacks</h3>
+<ul>
+<li>not working with Network Manager on Ubuntu (a common
+situation on laptops with wireless connections), Network Manager must
+be disabled</li>
+<li>complex, tedious task,&nbsp;for experienced users
+only;&nbsp;requires several non-trivial tasks to do; this is the
+most common complaint from switchers from VMware where host interfacing
+is actually dead simple; see section
+6.8 of the VirtualBox manual for details</li>
+<li>not flexible: per session, one configured interface
+is needed&nbsp;</li>
+<li>client session must have a static
+IP address;&nbsp;configuration procedure&nbsp;is different on
+different OS's, even different between several Linux distro's</li>
+<li>not able to retrieve session IP address from the
+outside;&nbsp;except by a brute force port scan on an entire
+network segment</li>
+<li>limited portability due to the session's static IP
+address; when the session is moved to another server, it is
+not certain if that session works right away because the configured
+static IP address may be in another network segment, possible without a
+proper gateway or net mask configuration, thus not working</li>
+<li>exposes implementation of the network service, i.e.
+implemented as a separate, virtual machine</li>
+</ul>
+<h2>Port forwarding</h2>
+When a session in configured with port forwarding, it is possible to
+reach the session from the outside by pointing to the host at a
+particular port. This port is then forwarded by VirtualBox to the
+session. The session then can respond. Essentially, the&nbsp;server
+where VirtualBox is running publishes a network service, but hides the
+implementation, i.e. the virtual machine.<br>
+<br>
+<span style="font-weight: bold;">Example</span>.
+Host where VirtualBox is running has IP address 192.168.201 configured.
+A session of Ubuntu Server is running, with an active Apache web server
+on port 80. Port forwarding is configured from host port 8080 to guest
+port 80. A browser points to the IP address of the host, with the
+configured host port, thus: 192.168.0.201:8080. This request is
+forwarded by VirtualBox to the session on port 80 and the Apache web
+server responds. The browser does not know or has no means to detect
+that there's actually another (virtual) machine doing the work.<br>
+<h3>Benefits</h3>
+<ul>
+<li>works&nbsp;with Network Manager on Ubuntu</li>
+<li>easy to configure, just three&nbsp;commands per
+session to apply</li>
+<li>very&nbsp;flexible: configuration can take place
+on the fly</li>
+<li>client
+session does not have to be configured with a&nbsp;static IP-address</li>
+<li>no need to retrieve the session's IP address</li>
+<li>flexible portability; when
+the session is moved to another server, it is very easy to re-configure
+because port forwarding configuration is no part of the session (vdi
+file)</li>
+<li>hides implementation; from the client's view, the
+server just publishes a network service</li>
+</ul>
+<h3>Drawback(s)</h3>
+<ul>
+<li>when a session is moved to another server, which
+naturally has another host IP address, all clients (browsers, etc.)
+must also point to the new address, requiring reconfiguration on
+each&nbsp;client; however, this can be circumvented by using
+another port forwarding schema on top of the existing one
+on&nbsp;the router serving the network
+segment of the VirtualBox host</li>
+</ul>
+<h2>How fits VBoxTool in this?</h2>
+Port forwarding has huge benefits
+above host interfacing: far more flexible, no conflicts with other
+software, scalable, easy to configure, good portability of sessions,
+etc.<br>
+<br>
+Although port forwarding configuration only requires just three
+commands, VBoxTool
+makes it
+even easier by automating this process. VBoxTool is capable for
+configuring&nbsp;port forwarding for
+all sessions, all at once in one command:&nbsp;'vbox autostart';
+configuration takes place&nbsp;in&nbsp;/etc/vbox/machines.conf.
+As many port pairs as wanted can be applied.<br>
+<br>
+Example&nbsp;in&nbsp;/etc/vbox/machines.conf: "Ubuntu
+Server,3392,2022-22|80-80". In this example, the Ubuntu Server can be
+reached
+with SSH on the host IP address on port 2022. A web server is active
+within the session on port 80 and can be reached by pointing to the
+host IP address, on the normal web port, 80.<br>
+<br>
+Note.
+Of course, a host port to be forwarded must be unique over all sessions
+over the host VirtualBox installation. Say several sessions have to be
+reached by SSH (internal port 22). Each session must have another host
+port, say session 1: 2022 and session 2: 3022, all&nbsp;pointing to
+the
+same internal session port for SSH, 22. By using VBoxTool, this is very
+easy to configure.<br>
+</td>
+</tr>
+</tbody>
+</table>
+<br>
+</body></html>

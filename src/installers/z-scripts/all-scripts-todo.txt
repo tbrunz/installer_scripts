@@ -1,0 +1,42 @@
+
+*** Need to do:
+
+fix-bash.sh
+    Update with better techniques
+    
+    
+install-hosts-files.sh
+    Update with better techniques
+    
+    
+hosts-fix.sh
+    Integrate into 'install-hosts-files.sh' (to make one script)
+    
+
+install-hp15c.sh
+install-jbidwatcher.sh
+    Figure out how to create a '.desktop' file & add it to a given  
+    menu programmatically.
+    
+    
+install-virtualbox.sh
+install-ppa-virtualbox.sh
+    Blend these together into one script (eliminating redundant code).
+    
+
+
+*** Need to fix:  
+    
+install-fwknop.sh 
+    Add a script in '/usr/bin'(?) to edit '~/.fwknoprc': 
+    Set up the default stanza for connecting to the server via router NAT;
+    Ask for the FW_ACCESS_TIMEOUT period & set this parameter;
+    Set the KEY values (new passphrase or imported BASE64) + FW_TIMEOUT
+    
+
+
+*** Test fixes:
+
+Need to re-run each script in 14.04 & 16.04 VMs to test... 
+
+

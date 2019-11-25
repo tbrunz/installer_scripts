@@ -1,0 +1,186 @@
+
+VBoxTool
+==============================================================
+
+https://forums.virtualbox.org/viewtopic.php?f=7&t=9956
+
+
+Provides effective control of virtual machines of VirtualBox icon-external-link.png (virtualization solution) on a Linux headless server, published as free and open source software.
+
+Currently VirtualBox lacks a decent management environment for controlling virtual sessions on a headless server environment. VBoxTool mimics partly Virtual Machine Manager icon-external-link.png which controls sessions for other virtualization solutions like Qemu, KVM, etc. Unfortunately, VirtualBox is not in the list of supported engines (nor will be in the near future).
+
+Features
+-------------------
+Heart of the framework is a script which can do several actions (start, save, backup, etc.) on all registered VirtualBox sessions in batch mode. It is a wrapper around VBoxManage (the command line interface of VirtualBox), so execution is also by command line. 
+
+    Autostart at host boot. When the host boots, all sessions registered in /etc/vboxtool/machines.conf will be started in the background, issuing a 'vboxtool autostart' command under the named vbox_user in /etc/vboxtool/vboxtool.conf. 
+
+    Autosave at host halt. When the host has a controlled down, i.e. halted, all running sessions are automatically saved.
+
+    Show info. Name, status (running, saved, etc.) and other info of all registered sessions like the configured VRDP port are shown with the command 'vboxtool show'. When a session is running, also CPU load and memory usage are shown. As an alternative, 'vboxtool showrun' shows info only of running sessions.
+
+    Mass operation: save, start, stop. Save all running sessions with one command without any configuration: 'vboxtool save'. Start all saved sessions with 'vboxtool start'. Stop all running sessions with 'vboxtool stop'.
+
+    Mass backup. Backup all sessions using rsync with one command: 'vboxtool backup'. When a session is running, it is saved and restarted after the backup. The next level of backup, could mean that on line backup (thus without bringing the session off line) is possible*.
+
+    Batch start. Controlled start of several sessions, defined in a configuration file, /etc/vboxtool/machines.conf. Only sessions named in that file will be started by 'vboxtool autostart'.
+
+    Mass configuration of VRDP port and port forwarding. Configure VRDP port and port forwarding for all sessions, all at once in one command: 'vboxtool autostart'. Configuration takes place in /etc/vboxtool/machines.conf. When using port forwarding, there's no need for host interfacing anymore (in Linux, a tedious, complex task).
+
+    *System monitoring. Monitor server status, session cpu load and memory in a graphical image. This will be done by developing and implementing a Munin plugin. Munin icon-external-link.png is a system monitoring  platform with a plugin structure.
+
+    *Webserver. Next to develop is a webserver which points to the automation script. With this you can activate all functions from the script, all by a web page, so without requiring shell access. ... This will be not developed anymore, because VBoxWeb looks very promising.
+
+* Not (yet) implemented.
+
+Usage
+--------------------
+
+$ vboxtool --help
+Usage: vboxtool OPTION [session]
+Show info about VirtualBox sessions or control those sessions.
+
+Options:
+  show              Show status of all sessions.
+  showrun           Only show status of running sessions.
+  showconfig        Show configuration.
+  start [session]   Start all saved sessions or only the given session.
+                    When no session name is given, all saved sessions will be
+                    started; powered off and aborted sessions are left alone.
+  autostart         Starts all sessions in a predefined configuration file.
+  save [session]    Save all running sessions or only the given session.
+  stop [session]    Stop all running sessions or only the given session.
+  backup [session]  Backup all running sessions or only the given session.
+  --version|version Version info.
+  --help|help       This help.
+
+*Configuration. vboxtool depends on two config files, located in /etc/vboxtool.
+
+Configuration file /etc/vboxtool/machines.conf:
+- each line in this file is a separate machine
+- structure of each line: <session name>,<vrde-port>,<host port>-<guest port>|...
+- the delimiter ',' between name and VRDE-port only required when configuring
+  portforwarding
+- do not use spaces before and after the first ',' delimiter
+- lines can be commented out by '#'
+
+Example for /etc/vboxtool/machines.conf:
+Ubuntu Desktop #1
+Ubuntu Desktop #2,3391
+Ubuntu JeOS #1,3392,2022-22|80-80
+Ubuntu JeOS #2,,2022-22|80-80
+
+Example for /etc/vboxtool/vboxtool.conf
+vbox_user='user'
+backup_folder=/home/user/vboxbackup
+
+*Autostart. Sessions can be started in a controlled way from the command line,
+only the echo sessions in /etc/vboxtool/machines.conf will be started. As a bonus,
+the VRDE port and port forwarding can be set at startup time. These
+options are controlled by /etc/vboxtool/machines.conf. The given ports
+are set statically to the session, prior to starting. When VRDE port has to be
+changed, state is discarded when session is in savestate.
+
+*Start at boot, save on halt. VBoxTool is capable for autostart sessions at
+boot time and autosave sessions when host is stopped. This depends on
+/etc/vboxtool/vboxtool.conf. In here, the variable vbox_user must be filled:
+vbox_user='<user name>'
+Note the quotes. Fill for <user name> the name of the user under which
+sessions are installed/running.
+
+When vboxtool.conf is not present, no session will start at boot, nor will
+auto save on host down take place. When vboxtool.conf is present, all sessions
+in machines.conf will be started because actually, a 'vboxtool autostart'
+command is issued. Saving sessions when host goes down does not depend on
+machines.conf: all running sessions will be saved by a 'vboxtool save' command.
+
+*Stopping sessions. Saving sessions is preferred above stopping: this
+is faster when restoring and safer because session can appear to be cold booted.
+
+*The backup command copies all session files to a safe location. This includes
+the configuration file(s), main VDI file and all snapshots. Running sessions
+are saved and started after backup has completed. The default backup folder is
+relative to the vbox folder: <vbox_folder>/.backup. Underneith, subfolders VDI and
+Machines are created.
+Backups can be automated by putting something like in /etc/crontab:
+05 2    * * *   <user name>    vboxtool backup &
+A different backup folder can be used, by defining this in /etc/vboxtool/vboxtool.conf:
+backup_folder=/home/user/vboxbackup
+
+*Logging. All commands will be logged to /home/user/.VirtualBox/vboxtool.log
+
+See http://vboxtool.sourceforge.net for more details.
+
+
+Facts
+-------------------------
+
+    Minimal requirements:
+        Linux (kernel & distro agnostic, although developed and tested only on Ubuntu)
+        VirtualBox 3.x+ OSE/non-OSE (lower versions might work, but are not tested)
+
+    Project status: Production. Script is in use in several production environments, ranging from Ubuntu, to Debian, Suse, CentOS and OpenSolaris.
+
+    Copyright: Mark Baaijens mark.baaijens@gmail.com
+
+    License: GNU Public License version 3
+
+
+News
+--------------------------
+
+See changelog.txt icon-external-link.png for complete revision information.
+
+    2012-04-29 Version 0.5
+        Compatibility:
+            now compatible with version 4.x while providing backwards compatibility with 3.x;
+            now compatible with ose version (3.x/4.x) while providing backwards compatibility with non-ose
+            this version will break compatability of 2.x versions, i.e. these are not supported anymore but they may still work
+        Major bug fixes
+            Dynamic setting of the vbox starttype: either 'vrdp' or 'headless'. On version 4.x only the option 'headless' exist, both in ose or non-ose. But in version 3.x, option 'vrdp' is available, but *only* in the non-ose variant; the ose version only has 'headless'. Using 'headless' on a non-ose version essentially disables vrdp functionallity so it is not safe to use headless on the only option. The strategy is to find out if a vrdp option is available, otherwise use headless. This strategy means compatability between 3.x and 4.x to both versions ose and non-ose.
+                bug 3151695
+                feature request 2854538
+                patch 2948748
+            Do not use VRDP because it is deprecated, use VRDE. To provide backwards compatability with 3.x, the correct syntax is determined dynamically (bug 3518250)
+            Backup repaired. In 3.x, de extraction for the main vdi-file is changed, grep for "Primary master" is changed into "(UUID:". Also added log-messages and made copying of snapshots conditional. (bug 2954442 & 2903768; note that this bug in not entirely solved, because handling multiple vdi's is not yet supported).
+        Enhancements
+            When there is no VRDP-port defined in machines.conf, do not apply this (bug 2893328)
+            Removing the requirement of having a trailing comma in machines.conf (bug 2952485)
+            When a vm is not or registered invalid in machines.conf, show and log a warning; this will facilitate debugging
+        Minor bug fixes & enhancements
+            Option syntax single dash is deprecated in VBox 3.1.x. These should be replaced by a double dash. (bug 2908385)
+            Repair double dash option syntax in $vbox_command modifyvm $uuid -vrdpport
+            Do not set VRDP-ports when VRDP is disabled. This is the case when using 3.x/ose or 4.x without an extension pack. It is not only useless but also risky because the setting seems to work but the VRDP-port is not stored, so everytime the session starts, the current state is discarded as the first step of (trying to) set to VRDP-port. Discarding state multiple times can lead to data loss of session corruption (bug 3518251)
+            Extraction of PID for status purposes is made more specific. This is done by using UUID for identification and an extra grep on "[v]irtualbox". This solves the problem that there are multiple PID's returned (thus resulting in an error); this is the case when the name of a session is a substring of another session and also when the name of the session is, by coincidence the same as another daemon (say: oracle for the vbox-session and for the database server). (bug 2961192 & 2836110)
+    2009-07-04 Version 0.4
+        Major bug fixes
+            Auto start en stop stopped working in Ubuntu Jaunty (bug 2789649)
+            VBoxTool is working again with VirtualBox >= 2.2 (bug 2775886)
+            Command 'vboxtool stop' stops sessions (by poweroff). (bug 2317852)
+        Enhancements
+            Configurable backup folder (feature request 2213713)
+            Added logging (feature request 2275101).
+            Added option 'vboxtool showconfig' (feature request 2275280)
+            Sessions are paused in stead of saved prior to backup (feature request 2805829).
+        Minor bug fixes & enhancements
+            Extracting of default folders is working again; due to changed CLI-output from VBoxManage (bug 2815159)
+            Output of vboxtool does now contain 'backup' (feature request 2813155)
+            Modifying vboxtoolinit to work with OpenSolaris/Solaris (bug 2527710).
+            Backup destination path is shown in logfile (feature request 2806034)
+            Added a generic -nologo for VBoxManage command (feature request 2393874).
+            Expanded readme.txt, added configuration details (feature request 2275085).
+            When issuing vboxtoolinit, it produced an error. (bug 2317839).
+            Documented backup option in help (feature request 2216423).
+            Pause state was not detected. (bug 2318332).
+            Modified output of 'show' and 'showrun' command for consistency and easy text manipulation
+            Code refactoring, changed all variable name: consistent separator '_'
+    2008-10-16 Version 0.3
+        Autostart at host boot, autosave at host halt
+        Compatibility break with 0.2: renamed main script 'vbox' to 'vboxtool', moved config folder from '/etc/vbox' to '/etc/vboxtool'
+    2008-10-02 Version 0.2
+        Configurable port forwarding
+        Lines in /etc/vboxtool/machines.conf can be commented out by '#'
+    2008-09-23 Version 0.1
+        First public release
+    2008-09-20 Start of the VBoxTool project
+

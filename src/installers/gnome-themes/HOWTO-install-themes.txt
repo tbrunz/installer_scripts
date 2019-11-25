@@ -1,0 +1,39 @@
+
+How To Install Ubuntu Themes
+==============================================================
+
+1. Unzip the archive (right-click > Extract Here)
+
+2. Press <Alt>-<F2> or open a Terminal & type "gksu nautilus /usr/share/themes"
+
+3. Move the extracted theme folder to the 'usr/share/themes' folder
+
+4. Apply the theme using GNOME Tweak Tool
+
+
+
+Installing themes in Ubuntu 11.10 and GNOME-Shell
+==============================================================
+
+1. Install 'gnome-shell', 'gnome-shell-extensions-common', 
+
+2. Install 'gnome-shell-extensions-user-theme', 'gnome-tweak-tool'
+
+3. Install 'gnome-themes-standard', 'gnome-sushi'
+
+4. Log out and back in for the extension to be picked up by the system
+
+5. Enable the extension from the 'Shell Extensions' tab in the 
+'Advanced Settings/GNOME Tweak Tool' app
+
+6. Log out and back in one more time so that the extension is fully enabled
+
+7. Download a GNOME Shell theme you like...
+
+8. Open the Advanced Settings/GNOME tweak tool
+
+   - Choose 'Themes' from the left-hand pane
+
+   - Click the '(none)' button and navigate to and select your downloaded theme
+
+   - The theme will be applied instantly 

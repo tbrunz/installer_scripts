@@ -1,0 +1,9 @@
+# .cronrc
+
+if [ -f ~/.bashrc ]; then
+	. ~/.bashrc
+fi
+
+PATH=$PATH:/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/opt/scripts
+
+export PATH

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Comment=HP-15C calculator simulator
+Terminal=false
+Name=HP-15C Calculator
+Exec=/opt/hp15c/HP-15C
+Type=Application
+Icon=/opt/hp15c/doc/images/favicon.ico

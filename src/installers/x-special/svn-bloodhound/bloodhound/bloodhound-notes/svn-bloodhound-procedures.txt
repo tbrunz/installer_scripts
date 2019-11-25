@@ -1,0 +1,233 @@
+
+MSI GROUP SERVER INSTALLATION & CONFIGURATION PROCEDURES
+========================================================================
+
+I. Postfix
+
+  A. Installation
+  
+    [12.04] # apt-get install postfix mailutils
+    [RHEL6] # yum install postfix
+
+  B. Configuration
+  
+    [12.04] # dpkg-reconfigure postfix [and answer prompts]
+    [RHEL6] [Edit '/etc/postfix/main.cf' to configure]
+    [RHEL6] [Set 'postfix' to start on boot using 'chkconfig']
+    
+II. PostgreSQL (needed by Trac/Bloodhound)
+
+  A. Installation
+  
+    [RHEL6] [May need to download & install some of these as RPMs]
+
+    [12.04] # apt-get install postgresql postgresql-contrib postgresql-doc
+    [RHEL6] # yum install postgresql postgresql-server 
+    [RHEL6] # yum install uuid postgresql-contrib postgresql-docs
+    
+    Suggested:
+    [12.04] # apt-get install uuid oidentd libdbd-pg-perl
+    
+  B. Configuration
+  
+    # service postgresql initdb
+    
+    [12.04] # cd /etc/postgresql/<version>/main
+    [RHEL6] # cd /var/lib/pgsql/data
+    # [Edit 'postgresql.conf' as needed for port #, etc.]
+    
+    # service postgresql start
+    # su - postgres
+    
+    $ psql postgres
+    -# \password postgres'
+    -# \q
+    
+    $ createuser -U postgres -S -P -R -E -D bloodhound
+    $ createdb -U postgres -O bloodhound -E UTF-8 bloodhound
+    
+    $ vi pg_hba.conf
+        [Change the lines "local  all  all  [*]  [peer|ident]" 
+        to read "local  all  all  [*]  md5" instead]
+        
+    $ exit
+    [RHEL6] # chkconfig postgresql on
+    # service postgresql restart
+ 
+III. Apache Web Server (needed by Trac/Bloodhound)
+ 
+  A. Installation
+  
+    [RHEL6] [May need to download & install some of these as RPMs]
+    
+    [12.04] # apt-get install apache2 apache2-doc libapache2-mod-wsgi
+    [RHEL6] # yum install mod_wsgi
+    
+  B. Configuration
+  
+    [12.04] # a2enmod wsgi
+    [12.04] # a2enmod auth_digest
+    [RHEL6] [Edit '/etc/httpd/conf/httpd.conf' to enable 'mod_wsgi.so']
+    
+    [RHEL6] [Edit '/etc/httpd/conf/httpd.conf' for the 'AddHandler's]
+    [12.04] # cd /etc/apache2/sites-available
+    [12.04] # vi default
+        [Change the "<Directory /var/www/>" stanza:]
+        1) Append " ExecCGI" to the 'Options' line
+        2) After the 'Options' line, add these lines:
+            AddHandler  cgi-script  .cgi
+            AddHandler  wsgi-script .wsgi
+        [Repeat for the "default-ssl" file]
+            
+    [12.04] # cd /etc/apache2/mods-enabled
+    [12.04] # vi dir.conf
+        [Append " index.wsgi" to the 'DirectoryIndex' line
+    
+    [12.04] # service apache2 restart
+    [RHEL6] # service httpd start
+    
+IV. Python packages (needed by Trac/Bloodhound)
+
+    # apt-get install python-pip python-setuptools python-virtualenv
+    # apt-get install python-docutils python-tz python-pygments
+    # apt-get install python-dev postgresql-server-dev-all libpq-dev
+    
+    # yum install python-pygments python-imaging
+    # yum install postgresql-devel
+    [Need to install python-pip, -virtualenv, -docutils from RPMs]
+    
+V. UberSVN
+
+  A. UberSVN Installation
+  
+    # ./uberSVN-<arch>-<version>.sh  (e.g., 'uberSVN-64-1211.sh')
+        [Answer all the questions with the suggested defaults]
+    
+    # cd /var/lib
+    # mkdir subversion
+    # chown ubersvn:ubersvn subversion
+
+  B. UberSVN Configuration
+  
+    1. Open a web browser, surf to <IP or hostname>:9890
+    2. Use the default installation directory, '/opt/ubersvn'
+    3. Change the repo location to '/var/lib/subversion'
+    4. Create 'admin' user "Administrator", using a JPL email address
+    5. Change the SVN repo port number from 9880 to 3690
+    6. Configure for email:
+        a) Do not use SSL(TLS)
+        b) SMTP Server is 'localhost'
+        c) SMTP Port is 25
+        d) Use the admin email address for the 'From' address 
+        e) SMTP authorization is not required
+    7. Log in as 'admin', surf to Administration>Updates & do updates
+    
+  C. UberSVN Set up
+  
+    1. Create repositories (as 'admin', under "Repositories" tab)
+    
+        a) Click "Add", enter repo info with a descriptive name
+        b) Enter the location as all lower-case, no spaces (short!)
+        c) Click "Next", and expand the repo category that applies
+        d) Click "Done" to have UberSVN create the SVN repository
+  
+    2. Create users (as 'admin', under "Users" tab)
+    
+        a) Click "Add", enter user account info
+            use all lower-case for user names
+        b) Click "Create" (one-shot) or "Create & Add" (to add more)
+    
+    3. Create groups (as 'admin', under "Teams" tab)
+    
+        a) Click "Add", enter group ('team') info
+        b) Create one 'team' for each Subversion repository;
+            capitalize the name / use CamelCase
+        c) Can create an 'Admins' team for administrator users
+        d) Each repo team should include the admins + the repo owner
+        e) Can associate with repos later, if repo hasn't been created
+        f) Type name of each repo to join; UberSVN echos if recognized;
+            click "Add"; repeat for each repo to associate to the team
+        g) Type each user name; if correct, it will display below;
+            click "Add"; repeat for each user to be added to the team
+    
+    4. Associate users/teams with repositories
+    
+        a) Surf to Repositories, click a repo name, click "Permissions"
+        b) In the textbox, type a user or team name, click "Add"; repeat
+        c) Use the radio buttons / 'X' to adjust access & access type
+        d) Click "Save" to save changes
+    
+VI. Trac/Bloodhound
+
+  A. Installation
+    
+    # [Add a system user:group named "bhound:bhound"]
+        Make the home directory = '/var/lib/bloodhound'
+        Create a '.bash_profile' file and add this line:
+            source /opt/bloodhound/bin/activate
+
+    # usermod -a -G bhound <apache_acct>
+    
+    # cd /opt
+    # virtualenv bloodhound
+    # chown -R bhound:bhound bloodhound
+    
+    # su - bhound
+    (bloodhound)$ cd /opt/bloodhound
+    (bloodhound)$ tar zxf /path/to/<apache-bloodhound-tarball>
+    
+    (bloodhound)$ cd <created-directory>/installer
+    (bloodhound)$ pip install psycopg2
+    (bloodhound)$ pip install -r requirements.txt
+        [Packages will be compiled & installed...]
+        
+    (bloodhound)$ python bloodhound_setup.py 
+        --project=<project_name> 
+        --environments_directory=/var/lib/bloodhound 
+        --database-type=postgres
+    [Answer each question asked after pressing <Enter>]
+        Use a <project_name> that matches the SVN repo name
+    
+    (bloodhound)$ tracd --port=8000 /var/lib/bloodhound/<project_name>
+        [Surf to http://localhost:8000/<project_name> to verify]
+        Enter <Ctrl-C> to stop the 'tracd' server
+    
+    (bloodhound)$ trac-admin /var/lib/bloodhound/<project_name> 
+        deploy /var/lib/bloodhound/<project_name>/site
+    (bloodhound)$ exit
+    
+    [12.04] # cd /etc/apache2/sites-available
+    [12.04] # vi <project_name>
+        [Copy the following into this file, changing the <project_name>]
+        [Use "python2.7" for the python version]
+        
+    [RHEL6] # cd /etc/httpd/conf
+    [RHEL6] # vi httpd.conf
+        [Copy the following at the end, changing the <project_name>]
+        [Use "python2.6" for the python version]
+    
+<VirtualHost *:8080>
+    WSGIDaemonProcess bloodhound_tracker user=bhound group=bhound python-path=/opt/bloodhound/lib/<python_vers>/site-packages
+    WSGIScriptAlias /<project_name> /var/lib/bloodhound/<project_name>/site/cgi-bin/trac.wsgi
+    <Directory /var/lib/bloodhound/<project_name>/site/cgi-bin>
+        WSGIProcessGroup bloodhound_tracker
+        WSGIApplicationGroup %{GLOBAL}
+        Order deny,allow
+        Allow from all
+    </Directory>
+    <LocationMatch "/bloodhound/[^/]+/login">
+        AuthType Digest
+        AuthName "Bloodhound"
+        AuthDigestDomain /bloodhound
+        AuthUserFile /var/lib/bloodhound/<project_name>/bloodhound.htdigest
+        Require valid-user
+    </LocationMatch>
+</VirtualHost>
+    
+    # a2ensite <project_name>
+    # apachectl configtest
+    # service apache2 reload
+    
+    [Surf to http://localhost:8080/<project_name> to verify]
+    
+    

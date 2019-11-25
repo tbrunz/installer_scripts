@@ -1,0 +1,148 @@
+HOWTO: Grub Customizer 
+
+Grub Customizer
+
+
+GRUB CUSTOMIZER & GRUB 1.99 ISSUES
+Daniel Richter has released Grub Customizer 2.2 , which deals with the new submenu structure in Grub 1.99 and later. See post #158 for the announcement. If you are using the default bootloader in Natty or later, please update your version of Grub Customizer to the latest version.
+
+
+Images/Fonts
+Grub 1.99 allows placing an image directly in /boot/grub for use as a background image. Because of the way Grub sets the background image priority, if an image resides in /boot/grub it will be used even if the user selects an image in Grub Customizer. If using Grub Customizer, remove all image files from the /boot/grub folder, set the image in Grub Customizer, and do not copy the image to the grub folder.
+
+These issues are addressed with a bit more detail starting in Post #108, and the developer, Daniel Richter, responds in Post # 118. (Thanks Daniel).
+
+
+GRUB CUSTOMIZER
+Daniel Richter has developed a GUI configuration tool to allow users to change the Grub 2 settings without using the command line. The application allows the user to add, remove, freeze, rename and reorder boot menu items. It will also allow changes to the Grub 2 configuration settings such as background image and menu timeout. For long-time users familiar with StartUp-Manager, this application performs many of the same capabilities with additional options. It also makes convoluted guides such as my "Grub 2 Title Tweaks" unnecessary for all but the most devoted command-line enthusiasts!
+
+The purpose of this guide is to briefly explain how to use Grub Customizer. I am not going 'under the hood' to explain what happens at the file level. For those interested in how the application actually accomplishes the tasks, please refer to Daniel's Grub Customizer FAQ.
+
+I will include thumbnails of the primary screens. While full-scale graphics would be more convenient, thumbnails comply with the Forum's guidelines for posting images. Eventually I may create an Ubuntu Community documnet with complete graphics and will post a link should I undertake that project.
+
+1. Installation 
+I've found adding the repository via some of the GUI apps to be a bit troublesome at times, and since Synaptic is no longer included, it's easiest to just open a terminal, add the repository, and install Grub Customizer:
+A. Terminal:
+Add the repository to your system. The following commands will add the repository, import the security key, update the list of available packages and install Grub Customizer.
+o Open a terminal
+Applications > Accessories > Terminal
+o Install Grub Customizer
+Code:
+sudo add-apt-repository ppa:danielrichter2007/grub-customizer
+sudo apt-get update
+sudo apt-get install grub-customizer
+B. Manual Download from the Grub Customizer Launchpad site. 
+I don't recommend installing it via this method as other methods will properly install and keep the correct version updated. If manually downloading the package please ensure you choose the correct version. 
+o You can get the latest version from https://launchpad.net/ubuntu-tweak/+downloadhere. 
+* The current version requires python 2.7 or later. Maverick uses python 2.6 and Lucid uses python 2.5.5.
+* If you must or still desire to download the package from the site, Lucid/Maverick users should select an older version to install.
+* Updates will not be automatically available unless the repository is added.
+
+
+2. Starting Grub-Customizer 
+Since this application modifies system files you will be asked to enter your password to gain access.
+
+GUI: Applications > System Tools > Grub Customizer
+
+
+Terminal: gksu grub-customizer
+
+
+3. Main Menu Interface 
+Grub.Customizer.main.png
+Categories
+Each Grub 2 script in the /etc/grub.d folder which finds operating systems is depicted in an expanded tree view: linux, memtest86+, os-prober, 40_custom, 41_custom, etc.
+* Main:
+o Scripts are displayed by their name (in numerical order) in the /etc/grub.d folder.
+o Only scripts which deal with operating systems are displayed in the tree. There are no entries for 00_header and 05_header in the tree view.
+o Scripts which are active are displayed with a filled orange tick box.
+o Scripts which are currently not executable are present but unticked.
+o If the main category title is unticked, the subsections are not included in the Grub menu, even if selected.
+* Sub Sections:
+o linux - The 10_linux script. Listings of your primary Ubuntu OS kernels.
+o memtest86+ - The 20_memtest86+ script.
+o os-prober - The 30_os-prober script. Finds and displays other operating systems, including Windows and linux systems installed on other partitions.
+o custom - In a default installation, the first 'custom' refers to 40_custom, and the second 'custom' refers to 41_custom.
+
+4. Making Changes (from Main Page)
+* Removing / Hiding Entries
+o Hide An Entire Section: Untick the main header (linux, os-prober, etc)
+* Example: Unticking os-prober will disable the script and remove all entries normally found by it - Windows, other Ubuntu installations, etc. Even if the entries within the subsection are enabled, they will not be displayed.
+* Hide Specific Entries: Untick the entry 
+* Example: Unticking Ubuntu, with 2.6.35-24-generic will remove that specific entry in the Grub 2 menu.
+* Freezing Entries (new Entries) 
+o Unticking "new Entries" prevents the addition of any new Grub 2 menu entries for that section. New options found during updates may be included in the tree view but will not be selected by default.
+* If a new item is found by an enabled script, it will not be added to the Grub 2 menu.
+o Example: If 'new Entries' in 'linux' is deselected, when a new kernel is installed on the main system it will not appear in the menu.
+* Adding Entries
+o Tick the applicable entry.
+o Selecting a main category will enable the script.
+o Selecting an item within a main category will add it to the Grub 2 menu if it's parent is enabled.
+* Renaming Entries
+o Double-click a menu title to enable the editing mode. Type the new title and click elsewhere on the page to complete the edit.
+* Moving Entries
+o To move a main section, highlight the entry and use the Up/Dn arrows on the main menu to change the menu order. Moving a main category will move all its submenus.
+* Example: If you want Windows to appear before the main Ubuntu entries, move os-prober to the top of the list.
+o To move a title up or down within a subsection, highlight the entry and use the Up/Dn arrows on the main menu to change the menu order.
+* A titles can only be moved within its own subsection.
+
+5. Preferences Tabs (Edit > Preferences)
+* General
+Grub.Customizer.settings.General.png
+Initial display options such as whether the menu is shown, which menu entry is highlighted, and what kernel options to add to the instructions.
+o Default entry
+* How to Specify the Default Entry by Name:
+* 'default entry' > 'predefined': Click on "Entry 1", on the expanded selection screen choose the exact title from the right column.
+* This works for Grub 1.98. Grub 1.99/Natty introduces submenus and using exact titles will change. I don't know if GC has accounted for this change yet. In the meantime, you can refer to this link on how to manually add a default entry from a submenu: Grub 1.99 Submenus
+o visibility - Menu display, other OS selections, and timeout.
+o kernel parameters - Add options such as nomodeset, noapic, quiet, splash, etc
+* Appearance
+Grub.Customizer.settings.Appearance.png
+Menu eye candy - resolutions, colors, background images.
+o custom resolution
+o menu colors
+o background image
+* Advanced
+Grub.Customizer.settings.Appearance.png
+Selection of options normally found in the /etc/default/grub file. The user can enable/disable individual items and can modify the existing entries by double-clicking the 'value' column and entering the desired value.
+o The only items listed in this section are those which currently exist in /etc/default/grub. The user can enable items displayed here, but cannot add items which do not already exist in the file.
+o Ticked items are included in the Grub 2 configuration file.
+o Unticked items will not be included in the Grub 2 configuration file. Unticking an entry places a # (comment) symbol at the start of the line in /etc/default/grub
+
+6. Partition Selector
+Accessed via the main menu "File" option, GC allows the user to select a partition on which to perform operations. This allows the user to accomplish tasks on another OS's partition via the chroot process. This is useful when you are running one OS but use another OS's Grub run the boot process. 
+
+For instance, running "update-grub" will update the menu on the current OS. If another partition's Grub 2 is controlling things, no change in the boot menu will occur unless the change is made within the controlling Grub's partition. This option allows you to make these changes without booting the controlling OS.
+
+7. Returning to Grub 2 Defaults
+
+Daniel Richter describes how to revert to the normal files in his Grub Customizer FAQ. 
+Note: Original files which Grub Customizer will modify are moved to the /etc/grub.d/proxifiedScripts folder, with the leading numeric designation removed.
+
+The /etc/grub.d/proxifiedScripts and /etc/grub.d/bin folders, and any *_proxy files are only created if a Grub 2 script has to be modified. If only changes normally made to /etc/default/grub are invoked by Grub Customizer, the following won't be necessary.
+
+To restore the normal Grub 2 control of the boot menu:
+* Remove the /etc/grub.d/bin folder
+* Move the contents of /etc/grub.d/proxifiedScritps back to the /etc/grub.d folder.
+o Any files moved back need to be renamed to the original name.
+o linux back to 10_linux, os-prober back to 30_os-prober, etc.
+* Remove the /etc/grub.d/proxifiedScipts folder once it is empty.
+* Check the settings in /etc/default/grub and make any desired changes (default kernel, timeout, etc).
+* Run "sudo update-grub".
+
+8. Links 
+
+Launchpad Grub-Customizer
+Daniel Richter's Grub Customizer FAQ
+Grub 2 (help.ubuntu.com)
+Grub 2: Introduction
+Grub 2: Title Tweaks
+Grub 2: 5 Common Tasks
+GNU Grub 2 Manual/Wiki
+Attached Images 
+Grub.Customizer.settings.Advanced.png (29.1 KB, 702 views)__________________
+GRUB2 : Tweaks : Basics : Tasks : ISO : Rm Kernel : PW : Chroot : ISO-Inst : Customizer : BIS : 
+Boot Repair 
+
+Last edited by drs305; 1 Day Ago at 02:45 PM.. Reason: Grub Customizer 2.2 for submenus. 
+

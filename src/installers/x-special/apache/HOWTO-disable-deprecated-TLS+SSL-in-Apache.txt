@@ -1,0 +1,85 @@
+
+How to disable outdated TLS and SSL versions in Apache (and why you should)
+================================================================================
+
+https://www.techrepublic.com/article/heres-how-to-disable-outdated-tls-and-ssl-versions-in-apache-and-why-you-should/
+
+Older TLS and SSL protocols can pose a security risk and will no longer be supported as of June 30.
+
+By Scott Matteson  | June 13, 2018
+
+Starting June 30, 2018, websites will need to stop supporting Transport Layer Security (TLS) version 1.0 in order to remain PCI compliant. The TLS 1.0/1.1 and Secure Sockets Layer 2.0/3.0 protocols are deprecated and provide insufficient cryptography for securely transmitting data. TLS version 1.0 in particular contains vulnerabilities to certain malware attacks. All four of these outdated protocols should be removed from use, especially in environments which require high security levels.
+
+It's easy to eliminate TLS 1.0/1.1 and SSL 2.0/3.0 on an Apache web server (which constitutes nearly half of all websites) in favor of utilizing TLS 1.2 exclusively, but it's important to note that older clients or applications which connect to these sites may be impacted if they are unable to support TLS 1.2. These should be researched in advance to determine their capabilities, and upgrade them if necessary.
+
+Keep in mind modern web browsers will support TLS 1.2 and should have no issues with the change, but always enact changes of this nature on development systems first then confirm functionality before moving onto production systems.
+
+To achieve this, follow these steps:
+
+1.	Use vi (or vim) to edit /etc/httpd/conf.d/ssl.conf (or wherever the ssl.conf file pertaining to this Apache installation is located).
+
+2.	Look for the "SSL Protocol Support" section. It will probably read as follows:
+
+    # SSL Protocol support:
+    # List the enable protocol levels with which clients will be able to
+    # connect. Disable SSLv2 access by default:
+    SSLProtocol all -SSLv2
+
+3.	Comment out "SSLProtocol all -SSLv2" and add this line below it:
+
+    SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+
+This section should now look as follows:
+
+    # SSL Protocol support:
+    # List the enable protocol levels with which clients will be able to
+    # connect. Disable SSLv2 access by default:
+    #SSLProtocol all -SSLv2
+    SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+
+This setting turns off TLS 1.0/1.1 and SSL 2.0/3.0.
+
+4.	Look for the SSL Cipher Suite section. It will probably read as follows:
+
+    # SSL Cipher Suite:
+    # List the ciphers that the client is permitted to negotiate.
+    # See the mod_ssl documentation for a complete list.
+    SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5:!SEED:!IDEA
+
+5.	Comment out "SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5:!SEED:!IDEA" and add this line below it:
+
+    SSLCipherSuite HIGH:!aNULL:!MD5:!3DES
+
+This section should now look as follows:
+
+    # SSL Cipher Suite:
+    # List the ciphers that the client is permitted to negotiate.
+    # See the mod_ssl documentation for a complete list.
+    #SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5:!SEED:!IDEA
+    SSLCipherSuite HIGH:!aNULL:!MD5:!3DES
+
+This setting ensures only high-security SSL Ciphers will be used.
+
+Now add "SSLHonorCipherOrder on" under "SSLCipherSuite HIGH:!aNULL:!MD5:!3DES" or scroll down to the "Speed-optimized SSL Cipher configuration:" section and add it underneath (it doesn't really matter where you actually add these settings, but it helps to keep things uniform so all configuration files have appropriate sections for settings):
+
+    # Speed-optimized SSL Cipher configuration:
+    # If speed is your main concern (on busy HTTPS servers e.g.),
+    # you might want to force clients to specific, performance# optimized 
+    # ciphers. In this case, prepend those ciphers
+    # to the SSLCipherSuite list, and enable SSLHonorCipherOrder.
+    # Caveat: by giving precedence to RC4-SHA and AES128-SHA
+    # (as in the example below), most connections will no longer
+    # have perfect forward secrecy - if the server's key is
+    # compromised, captures of past or future traffic must be
+    # considered compromised, too.SSLHonorCipherOrder on
+
+This setting ensures the server's cipher preferences are followed instead of the client's for consistency.
+
+Save the file in the editor, then restart the Apache service for it to take effect:
+
+    service httpd restart
+
+Now make sure to thoroughly test access to the web server using whatever clients or applications are involved to confirm success. If you run into problems, you can reverse the changes by editing the ssl.conf file, commenting out the additions you made, uncommenting out the original settings, saving the file then restarting the httpd service.
+
+-----
+

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Comment=Ebay auction sniper
+Terminal=false
+Name=jBidWatcher
+Exec=java -Xmx512m -jar /opt/jbidwatcher/JBidwatcher-2.5.6.jar
+Type=Application
+Icon=/opt/jbidwatcher/jbidwatcher.png

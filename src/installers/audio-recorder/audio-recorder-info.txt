@@ -1,0 +1,103 @@
+
+Audio-Recorder PPA 
+===================================
+
+This software has not yet been released to the public repositories.  
+You can only get it (for the time being) from the developer's 
+"Personal Package Archive" (PPA) -- which requires adding the PPA to 
+your machine's repository list.
+
+To install, open a Terminal window, then enter the following commands:
+
+    sudo apt-add-repository ppa:osmoma/audio-recorder
+    sudo apt-get update
+    sudo apt-get install audio-recorder
+
+Audio Recorder can be launched from the Applications > Audio/Sound sub
+menu.  Sarch for 'Audio Recorder' in the Application 'lens'.
+
+---
+
+This is an audio recorder application for the GNOME 2.x/3.x and Ubuntu's 
+Unity Desktops.
+
+This program allows you to record your favourite music and audio to a file. 
+It can record audio from your system's soundcard, microphones, browsers, 
+webcams & more. 
+
+Put simply; if it plays out of your loudspeakers you can record it. This 
+can also record your Skype-calls automatically.
+
+It has an advanced timer that can:
+
+* Start, stop or pause recording at a given clock time.
+* Start, stop or pause after a time period.
+* Stop when the recorded file size exceeds a limit.
+* Start recording on voice or sound (user can set the audio level and delay).
+* Stop or pause recording on "silence" (user can set the audio level and delay).
+
+The recording can be atomatically controlled by MPRIS2-compatible media players.
+Skype. It can also record all your Skype calls without any user interaction.
+
+This program supports several audio (output) formats such as OGG audio, Flac, 
+MP3 and WAV. 
+
+The installation is very easy. Run these commands on the command line:
+
+    sudo apt-add-repository ppa:osmoma/audio-recorder
+    sudo apt-get update 
+    sudo apt-get install audio-recorder
+
+You will also need to install one or more of these packages to add support for 
+various audio-formats:
+
+    gstreamer0.10-plugins-base (OGG format)
+    gstreamer0.10-plugins-good (WAV and Flac formats)
+
+    gstreamer0.10-plugins-ugly  (MP3 format)
+    gstreamer0.10-plugins-ugly-multiverse  (only in Ubuntu 11.10 or earlier)
+
+    gstreamer0.10-plugins-bad
+    gstreamer0.10-plugins-bad-multiverse (AAC, m4a format)
+
+Notice: 
+Fluendo's gstreamer0.10-fluendo-mp3 package provides MP3 playback, but it has 
+no recording capabilities -- Playback only.
+
+---
+
+Start the program from Applications -> Sound & Video menu or search for it in 
+the Dash (audio....).  
+
+Or start it from the command line:  $ audio-recorder
+
+---
+
+The source code is available from: https://launchpad.net/audio-recorder
+
+You can control the recorder from the command line with the '--command' option. 
+Enter 'audio-recorder --help' for more information.
+
+---
+
+Aditional guides and fixes:
+
+If you are recording from a microphone, please check the [Input] settings in 
+'gnome-volume-control'. The input volume is often too low.  Please study this 
+picture: http://www.futuredesktop.org/oneiric/images/picture-8c.png
+
+You may need to change the sound configuration on some computer systems. Please 
+take a look at this picture: http://bildr.no/image/1168830.jpeg
+
+Install & start "pavucontrol" and set the configuration to "Analog Stereo Output" 
+and test the recording. This may fix the recording if you get "empty" audio files. 
+
+---
+
+Here is a guide to setup a perfect Ubuntu Desktop with Skype:
+    http://www.futuredesktop.org/#step8c
+
+More info: https://launchpad.net/~osmoma/+archive/audio-recorder
+
+---
+

@@ -1,0 +1,16 @@
+
+How can I test a list of ciphers for SSH supported by a server?
+
+    nmap --script ssh2-enum-algos -sV -p <port> <hostname>
+    
+
+How can I find a list of MACs, Ciphers, and KexAlgorithms that my 
+OpenSSH client supports?
+
+    ssh -Q cipher  # Ciphers
+    ssh -Q mac     # MACs
+    ssh -Q kex     # KexAlgorithms
+    ssh -Q key     # PubkeyAcceptedKeyTypes
+
+-----
+

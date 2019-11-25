@@ -1,0 +1,76 @@
+
+UEFI GPT fdisk: aka gdisk.efi by Bub'soft.
+Build of GPT fdisk for UEFI BIOS environments.
+
+http://sourceforge.net/projects/uefigptfdisk/
+
+Version 0.2 april 2014.
+(Version <1 means it's pretty much beta software like GPT fdisk in fact.)
+
+First attempt by Bernard Burette <bernard at burette dot net> january 2014.
+
+This is a build of GPT fdisk for UEFI. You should be able to register it
+as a boot-loader in the UEFI or run it from the UEFI Shell if you system
+has one. Anyway this executable image should be copied to the EFI System
+Partition (aka EFI SP or Partition type 0xEF) to be permanently usable. You
+also have the option of copying it to a USB storage and invoke the UEFI Shell
+then navigate ("fs1:"; "cd xx", etc.) to you key to run it from there.
+
+
+To successfully build UEFI GPT fdisk, you will additionnal packages:
+- UEFI fdisk: the original code, can be found at:
+  http://sourceforge.net/projects/gptfdisk/
+  GPT fdisk needs g++ and additionnal libraries as well see it's README.
+- GNU EFI library, can be found at:
+  http://sourceforge.net/projects/gnu-efi/
+
+Unpack the sources from GPT fdisk to a location you like, it will create a
+subdirectory containing all its stuff. Then go inside this subdirectory (for
+example ~/gptfdisk.0.8.10) and there unpack *this* package, it will create
+a new subdirectory (for example ~/gptfdisk.0.8.10/uefi-0.2) where you will
+build the UEFI version of GPT fdisk. You now need to unpack GNU EFI package
+in the build directory it will once again create its own subdirectory (for
+example ~/gptfdisk.0.8.10/uefi-0.2/gnu-efi-3.0).
+
+Depending on the version of GTP fdisk you use you need to patch some files
+or not (GPT fdisk author has incorporated my patches in version >0.8.10).
+If you use version 0.8.10 of GPT fdisk, there is a small patch to be applied
+to GPT fdisk sources, the PATCH.sh script is ready for that. The program
+won't compile if you dont apply the patch to gpt.cc and it won't display
+the partition sizes in IEEE values if you don't patch support.cc. Note that
+since these patches are now included in GPT fdisk main branch, the patch
+script will be removed in future revisions.
+
+Now your current directory should be ~/gptfdisk.0.8.10/uefi-0.2, just enter
+"make" and voilà!
+
+
+Things to know:
+- We use "gnuefi" version 3.0u but any later version should work as well: adjust
+  the directory name in Makefile if needed.
+- We link against libstdc++ - which *is* compiled with _GLIBCXX_USE_WCHAR_T -
+  when we only use UTF-8: this adds a lot of bloat to the program. But only a
+  full rewrite of GPT fdisk in plain C could change that.
+- Any 32 bits stuff has *not* been tested (but is it still necessary nowadays?)
+  the GNU EFI library can be compiled in both 32 bits and 64 bits but this
+  program will at the very least miss the start-up code "start-i386.S" and the
+  relocation manager code "relocate-i386.c".
+- We use a hand-made version of the standard libc because the linux one
+  embeds system calls to the kernel (we don't want them because EFI has nothing
+  to do with Linux kernel), this library is mostly built from bits copied from
+  "dietlibc" but since GNU libstdc++ also calls __newlocale() some other bits
+  were copied from "glibc" (version 2.18 at the time of this writing).
+  That fake libc library is called "libmy.a" and is built in "libmy/" subdirectory.
+  We build the library files using 2 bytes wchar_t because EFI is UTF-16, still
+  gdisk uses UTF-8 internally so it doesn't need any other UTF-xx and our
+  functions hand code conversions from UTF-8 to EFI UTF-16.
+- No C++ exception is handled here. The stack unwinding is very complicated to
+  handle and exceptions are not used in GPT fdisk.
+- For all the system calls from the standard libray we build EFI versions
+  of write(), read() and so on, all these functions are in the ".c" source
+  files in this "." directory, not in "libmy/" subdirectory.
+- We also have a "dynamic_cast" module that doesn't check anything because the
+  code should be fully debugged for all use cases and using libstdc++ doesn't
+  work the way it should (remember we don't do C++ exceptions here, so
+  throwing a "bad_cast" would crash the program with no explanation).
+

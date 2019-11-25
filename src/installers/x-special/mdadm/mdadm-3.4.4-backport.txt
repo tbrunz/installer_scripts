@@ -1,0 +1,51 @@
+
+From AskUbuntu.com
+https://askubuntu.com/questions/789953/how-to-enable-degraded-raid1-boot-in-16-04lts/798213#798213
+
+The mentioned bug appears in mdadm 3.3-2ubuntu7 and has been fixed in 3.4-2.
+
+The latest mdadm release for yakkety (16.10) 3.4-4 contains the fix already and is available for 16.10 but not (yet?) for 16.04 LTS.
+
+Thus I upgraded mdadm of my 16.04 LTS by hand:
+
+wget http://launchpadlibrarian.net/275652884/mdadm_3.4-4_amd64.deb
+sudo dpkg -i mdadm_3.4-4_amd64.deb
+
+-----
+
+From ServerFault:
+https://serverfault.com/questions/688207/how-to-auto-start-degraded-software-raid1-under-debian-8-0-0-on-boot
+
+I think the problem is in file
+/usr/share/initramfs-tools/scripts/local-top/mdadm on line 79
+(mdadm-3.3.2-5-amd64).
+The solution is replace line 79:
+
+log_failure_msg "failed to assemble all arrays."
+
+by:
+
+log_warning_msg "failed to assemble all arrays...attempting individual starts"
+for dev in $(cat /proc/mdstat | grep md | cut -d ' ' -f 1); do
+    log_begin_msg "attempting mdadm --run $dev"
+    if $MDADM --run $dev; then
+      verbose && log_success_msg "started $dev"
+    else
+      log_failure_msg "failed to start $dev"
+    fi
+done
+
+And that works. Founded and tested on polish debian forum.
+
+This serverfault solution isn't exactly wrong, it is incomplete, it
+does not cover a situation when you have slow-to-appear devices.
+This solution, however, fixes the problem in this bugreport,
+a problem which I introduced when I tried to address the problem
+with slow-to-appear devices.  Ofcourse it is better to be able
+to boot from a degraded raid than to be able to boot from slow
+devices, esp. since the latter had a workaround.  So in this
+sense, serverfault solution will fix _this_ bug.
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=784070
+
+-----
+
