@@ -1,0 +1,32 @@
+#
+# Bash 'hosts' file
+#
+# This file is automatically sourced from the '~/.bash_aliases' file.
+#
+__hosts_version() {
+echo
+echo "Last update 03 JAN 2017 "
+echo "This update 23 MAR 2019 "
+}
+
+#
+# Set the remote hosts table
+#
+unset HOSTS
+unset FQDN
+unset PORT
+unset KNOCK
+
+declare -A HOSTS
+declare -A FQDN
+declare -A PORT
+declare -A KNOCK
+
+NUM_HOSTS=1
+
+HOSTS[0]=myhost
+FQDN[myhost]=myhost.example.com
+PORT[myhost]="022"
+KNOCK[myhost]="022"
+
+##########################################################################

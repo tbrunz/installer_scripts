@@ -1,0 +1,2425 @@
+#! /usr/bin/env bash
+#
+# ----------------------------------------------------------------------------
+# bash 'aliases' file
+# ----------------------------------------------------------------------------
+
+#
+# This file is automatically sourced from the '~/.bashrc' file,
+# and depends on the '~/.bash_hosts' file.
+#
+source ~/.bash_hosts
+
+#
+# Display "help" menu sections
+#
+__alist_version() {
+echo
+echo "Last update 16 NOV 2019 "
+echo "This update 24 NOV 2019 "
+}
+
+__alist_linux_1() {
+echo
+echo "d2u <DOS filename> [ <Linux filename> ] = Convert DOS text file to *nix "
+echo "u2d <Linux filename> [ <DOS filename> ] = Convert *nix text file to DOS "
+echo
+echo "remk <ker> <ptch list> = Remove a set of kernel packages (X.Y.Z-W) "
+echo "fixk <ker> [-l] <list> = Install a set of kernel packages (X.Y.Z-W) "
+echo "remr()                 = Remove list of most recent docs "
+echo "remt()                 = Remove list of thumbnails "
+echo "rema()                 = Remove obsolete packages "
+echo
+echo "upd()                  = Update distro packages "
+echo "upg()                  = Update distro packages (w/o initial update) "
+echo "vers <package grep>    = Check/report the installed version of a pkg "
+echo "got  <package name>    = Check repo to see if a package exists "
+echo "show <package name>    = Show package info, w/ optional grep "
+}
+
+__alist_commmon_1() {
+echo
+echo "gssh [<user>] <host>   = Shell into account %1 on local machine %2 "
+echo "pssh [<user>] <host>   = Shell into %1 on machine %2 using '-p 62202' "
+echo "pscp  <args list>      = SCP using '-P 62202' "
+echo
+echo "lshost()               = List the known remote hosts "
+echo "idhost()               = List information for a particular host "
+echo
+echo "ulhost <host>          = Unlock <host> using FWKNOP "
+echo "gohost [<user>] <host> = SSH into <user> account on <host> "
+echo
+echo "rdhost [<user>] <host> = SSH into <user> on <host> + prep for RemDesktop "
+echo "rbhost [<user>] <host> = SSH into <user> on <host> + prep for RemoteBox "
+echo
+echo "ptusb  <psync options> = Psync  to  USB thumbdrive "
+echo "pfusb  <psync options> = Psync from USB thumbdrive "
+echo
+echo "sthost <user> <host> <remote path> <[list of] local files> "
+echo "sfhost <user> <host> <remote path> <local path> "
+echo
+echo "rthost <user> <host> <remote path> <local path> <rsync options> "
+echo "rfhost <user> <host> <remote path> <local path> <rsync options> "
+echo
+echo "pthost <user> <host> <psync options> "
+echo "pfhost <user> <host> <psync options> "
+}
+
+__alist_linux_2() {
+echo
+echo "wthost <user> <host> <rsync options> "
+echo "wfhost <user> <host> <rsync options> "
+}
+
+__alist_commmon_2() {
+echo
+echo "remkey() = Remove an authorized host "
+echo "sha      = Compute SHA hash for every '.sha' file found "
+echo "md5      = Compute MD5sum hash for every '.md5' file found "
+echo "blast [-h | <filename>] [..<filename>] [-- <excl-host> [..<excl-host>]] "
+}
+
+__alist_chromeos_1() {
+echo
+echo "Crouton: All commands customized for 'trusty' "
+echo
+echo "cdd              = Change directory to '~/Downloads' and list directory "
+echo "cdc              = Change directory to '~/Downloads/Crouton' & list dir "
+echo
+echo "cdu              = Change directory to USB thumbdrive & list directory "
+echo "cda              = Change directory to MULTIBOOT thumbdrive & list dir "
+echo
+echo "crouton          = List all the arguments & help info for 'crouton' "
+echo "crouton [<args>] = Run 'crouton' script on Linux using <args> arguments "
+echo
+echo "che              = List all the arguments & help info for 'edit-chroot' "
+echo "che [<args>]     = Execute 'edit-chroot' using <args> on Linux chroot "
+echo
+echo "chb              = Backup Linux, putting tarball in '~/Downloads/Backup' "
+echo "cli              = Enter Linux, but to Command Line Interface (no GUI) "
+echo
+echo "xwt [<appname>]  = Launch Linux application <appname> in a Chrome tab "
+echo "xwf [<appname>]  = Launch Linux application <appname> using full screen "
+echo
+echo "uxw              = Enter Linux in 'xiwi' mode (desktop in a Chrome tab) "
+echo "ubu              = Enter Linux in 'xorg' mode (desktop uses full screen) "
+echo
+echo "byo              = Launch an Ubuntu Byobu terminal in a new Chrome tab "
+echo "kbd [dv|us]      = Change keyboard layout (in a 'byo' Byobu terminal) "
+}
+
+#
+# Display a "help" menu (Linux platforms)
+#
+alist() {
+    __alist_linux_1
+    __alist_commmon_1
+    __alist_linux_2
+    __alist_commmon_2
+    __alist_version
+    echo
+}
+
+#
+# Display a "help" menu (ChromeOS platforms)
+#
+clist() {
+    __alist_commmon_1
+    __alist_commmon_2
+    __alist_chromeos_1
+    __alist_version
+    echo
+}
+
+################################################################################
+#
+# Environment variables
+#
+# Set IP# and port definitions:
+#
+PORT_SSH_LOCAL=22
+PORT_SSH_REMOTE=62202
+
+PORT_REMDESKTOP=5900
+PORT_REMOTEBOX=18083
+
+# For IP (only) strings, could use IFS=. & printf to split octets:
+#
+IP_GREP="([[:digit:]]+[.][[:digit:]]+[.][[:digit:]]+[.][[:digit:]]+)"
+
+# Set default scripts/apps/locations:
+#
+HOSTS_FILE=/etc/hosts-base
+
+FILE_EDITOR_VISUAL=/usr/bin/vi
+FILE_EDITOR_GUI=/usr/bin/gedit
+
+DIRNAME_MB_LOCAL=a64
+DIRNAME_MB_USB=MULTIBOOT
+DIRNAME_MEDIA_CHROMEOS=removable
+
+FILENAME_SCRIPT_PSYNC=psync.sh
+PATH_SCRIPT_PSYNC=~/${DIRNAME_MB_LOCAL}/${FILENAME_SCRIPT_PSYNC}
+
+DIR_SCRIPTS_MB=~/ascr
+
+DIR_DOWNLOADS=~/Downloads
+DIR_BACKUP=${DIR_DOWNLOADS}/Backup
+
+DIR_SCRIPTS_CROUTON=${DIR_DOWNLOADS}/Crouton
+DIR_ARCHIVE_CROUTON=${DIR_SCRIPTS_CROUTON}/archive
+
+
+################################################################################
+#
+# Display a prompt asking a Yes/No question, repeat until a valid input
+#
+# Allows for a blank input to be defaulted.  Automatically appends "(y/n)"
+# to the prompt, capitalized according to the value of DEF_INPUT
+#
+# $1 = Default input, (y|n|<don't care>)
+# $2 = Prompt
+#
+# Returns 0 if Yes, 1 if No
+#
+GetYesNo_Defaulted() {
+
+local PROMPT
+
+case ${1,,} in
+y )
+    PROMPT=${2}" [Y/n] "
+    ;;
+n )
+    PROMPT=${2}" [y/N] "
+    ;;
+*)
+    PROMPT=${2}" "
+    ;;
+esac
+
+unset REPLY
+while [[ "${REPLY}" != "y" && "${REPLY}" != "n" ]]; do
+
+    read -e -r -p "${PROMPT}"
+    [[ -z "${REPLY}" ]] && REPLY=${1}
+
+    REPLY=${REPLY:0:1} && REPLY=${REPLY,,}
+done
+
+[[ ${REPLY} == "y" ]] && return
+}
+
+
+################################################################################
+#
+# Is this a ChromeOS/GalliumOS platform? Set/Unset $IS_CHROME_OS/$IS_GALLIUM_OS
+#
+LSB_RELEASE_PATH=/etc/lsb-release
+
+unset IS_CHROME_OS
+unset IS_GALLIUM_OS
+
+if [[ -r "${LSB_RELEASE_PATH}" ]]; then
+
+    cat "${LSB_RELEASE_PATH}" | grep -q "CHROMEOS" && IS_CHROME_OS=true
+    cat "${LSB_RELEASE_PATH}" | grep -q "GalliumOS" && IS_GALLIUM_OS=true
+fi
+
+#
+# Test method: "Is this is a ChromeOS platform?"
+#
+# ChromeOS:     Echo a "can't do" warning & return 0.
+# Not ChromeOS: Do nothing & return 1.
+#
+__warn_if_os_is_chromeos() {
+    [[ ! ${IS_CHROME_OS} ]] && return 1
+
+    local CMD_NAME
+
+    [[ -n "${1}" ]] && CMD_NAME="${1}: "
+
+    echo >&2 "${CMD_NAME}Not in ChromeOS ! "
+}
+
+#
+# Test method: "Is this is not a ChromeOS platform?"
+#
+# Not ChromeOS: Echo a "can't do" warning & return 0.
+# ChromeOS:     Do nothing & return 1.
+#
+__warn_if_os_is_not_chromeos() {
+    [[ ${IS_CHROME_OS} ]] && return 1
+
+    local CMD_NAME
+
+    [[ -n "${1}" ]] && CMD_NAME="${1}: "
+
+    echo >&2 "${CMD_NAME}Only in ChromeOS ! "
+}
+
+#
+# Test method: "Is this is a GalliumOS platform?"
+#
+# GalliumOS:    Echo a "can't do" warning & return 0.
+# Not GalliumOS: Do nothing & return 1.
+#
+__warn_if_os_is_galliumos() {
+    [[ ! ${IS_GALLIUM_OS} ]] && return 1
+
+    local CMD_NAME
+
+    [[ -n "${1}" ]] && CMD_NAME="${1}: "
+
+    echo >&2 "${CMD_NAME}Not in GalliumOS ! "
+}
+
+#
+# Test method: "Is this is not a GalliumOS platform?"
+#
+# Not GalliumOS: Echo a "can't do" warning & return 0.
+# GalliumOS:     Do nothing & return 1.
+#
+__warn_if_os_is_not_galliumos() {
+    [[ ${IS_GALLIUM_OS} ]] && return 1
+
+    local CMD_NAME
+
+    [[ -n "${1}" ]] && CMD_NAME="${1}: "
+
+    echo >&2 "${CMD_NAME}Only in GalliumOS ! "
+}
+
+
+################################################################################
+#
+# Method to classify file type: File, Link, or not a file?
+#
+# Returns one of the following result codes:
+#
+__TYPE_FILE_ABSENT=0
+__TYPE_LINK_ABSENT=1
+__TYPE_FILE_PRESENT=2
+__TYPE_LINK_PRESENT=3
+__ERR_ARGUMENT_BAD=4
+
+# Note the values for these codes is NOT arbitrary!
+# The returned code is calculated, not just assigned.
+
+__get_file_type() {
+    local -i RESULT
+
+    # Assert at least one parameter, otherwise argument error:
+    #
+    [[ -n "${1}" ]] || return ${__ERR_ARGUMENT_BAD}
+
+    # Bit 1 = Does file/link exist?  (Value = 0 | 2)
+    #
+    [[ -e "${1}" ]]
+    RESULT=$(( 2 * ( 1 - $? ) ))
+
+    # Bit 0 = Is the file a link?  (Value = 0 | 1 ; add to above)
+    #
+    [[ -h "${1}" ]]
+    RESULT=$(( RESULT + ( 1 - $? ) ))
+
+    return ${RESULT}
+}
+
+################################################################################
+#
+# Configure for possible USB thumbdrive repository
+#
+# ChromeOS defines a non-standard user media directory name:
+#
+DIRNAME_MEDIA_USER=$( whoami )
+[[ ${IS_CHROME_OS} ]] && DIRNAME_MEDIA_USER=${DIRNAME_MEDIA_CHROMEOS}
+
+DIR_MEDIA_USB=/media/${DIRNAME_MEDIA_USER}
+
+# Function to detect USB drive (dynamic) & configure environment:
+#
+__ERR_REPOS_BOTH_PRESENT=0
+__ERR_REPOS_BOTH_ABSENT=1
+__ERR_REPO_USB_ABSENT=2
+__ERR_REPO_LOCAL_ABSENT=3
+__ERR_REPO_LOCAL_INCONSISTENT=4
+__ERR_REPO_TEST_ERROR=5
+
+__check_usb_repo() {
+    unset IS_MB_LOCAL
+    DIR_MB_LOCAL=~/${DIRNAME_MB_LOCAL}
+    [[ -f ${DIR_MB_LOCAL}/${FILENAME_SCRIPT_PSYNC} ]] && IS_MB_LOCAL=true
+
+    unset IS_MB_USB
+    DIR_MB_USB=${DIR_MEDIA_USB}/${DIRNAME_MB_USB}
+    [[ -f ${DIR_MB_USB}/${FILENAME_SCRIPT_PSYNC} ]] && IS_MB_USB=true
+
+    # Determine what repos exist; first is a USB repo absent?
+    #
+    if [[ ! ${IS_MB_USB} ]]; then
+        [[ ! ${IS_MB_LOCAL} ]] && return ${__ERR_REPOS_BOTH_ABSENT}
+        return ${__ERR_REPO_USB_ABSENT}
+    fi
+
+    # Find out if a local repo directory exists, and in what form;
+    # There are 8 possible situations
+    #
+    __get_file_type "${DIR_MB_LOCAL}"
+    local -i RESULT=$?
+    [[ ${IS_MB_LOCAL} ]] && RESULT=$(( RESULT + 4 ))
+
+    # Handle the possible cases of a local repo directory;
+    # Note that if we get this far, there is a USB repository:
+    #
+    case ${RESULT} in
+    0 )
+        # No local repo directory exists, so make a link to the USB repo;
+        # Then change the flags to make local true and USB false:
+        #
+        ln -s "${DIR_MB_USB}" "${DIR_MB_LOCAL}"
+
+        if (( $? > 0 )); then
+            echo >&2 "error: Can\'t link '${DIR_MB_USB}' to '${DIR_MB_LOCAL}' ! "
+            return ${__ERR_REPO_LOCAL_INCONSISTENT}
+        fi
+
+        IS_MB_LOCAL=true
+        unset IS_MB_USB
+        ;;&
+    7 )
+        # Both a USB and a local repo detected; If the local repo
+        # softlinks to the USB repo, then forget the USB repo:
+        #
+        DIR_MB_PHYSICAL=$( readlink -e "${DIR_MB_LOCAL}" )
+        [[ ${DIR_MB_PHYSICAL} == "${DIR_MB_USB}" ]] && unset IS_MB_USB
+        ;;&
+    0 | 6 | 7 )
+        # 6 = Both repos exist, and the local is a physical directory:
+        #
+        return ${__ERR_REPOS_BOTH_PRESENT}
+        ;;
+    1 | 2 | 3 )
+        # There is a local directory, but it isn't a repository!
+        #
+        echo >&2 "warning: '${DIR_MB_LOCAL}' exists, but isn't a repository ! "
+        return ${__ERR_REPO_LOCAL_ABSENT}
+        ;;
+    4 | 5 )
+        # Inconsistency!  A local repo was found && local dir is absent!
+        #
+        echo >&2 "error: inconsistency detected with '${DIR_MB_LOCAL}' ! "
+        return ${__ERR_REPO_LOCAL_INCONSISTENT}
+        ;;
+    * )
+        # Internal error -- should never be here!
+        #
+        echo >&2 "error: internal inconsistency in '${FUNCNAME}' ! "
+        return ${__ERR_REPO_TEST_ERROR}
+    esac
+}
+
+################################################################################
+#
+# Convenience 'cd' commands (all platforms)
+#
+# Call the function to set script/USB thumbdrive variables and flag errors:
+#
+__check_usb_repo
+
+alias ips='ip -br -c a'
+
+alias cda="cd ${DIR_MB_LOCAL} && ls -alF "
+alias cdz="cd ${DIR_MB_LOCAL}/Z-FILES && ls -alF "
+alias cds="cd ${DIR_SCRIPTS_MB} && ls -a "
+
+alias cdd="cd ${DIR_DOWNLOADS} && ls -alF -tr "
+alias cdu="cd ${DIR_MEDIA_USB} && ls -alF "
+alias cdm="cd ${DIR_MEDIA_USB}/${DIRNAME_MB_USB}/installers && ls -alF "
+
+#
+# ChromeOS-specific aliases
+#
+CHROOT_RELEASE=trusty
+
+alias cdc="cd ${DIR_SCRIPTS_CROUTON} && ls -alF "
+
+alias crouton="sudo sh ${DIR_SCRIPTS_CROUTON}/crouton -n ${CHROOT_RELEASE} "
+alias che="sudo edit-chroot ${CHROOT_RELEASE} "
+alias chb="cd ${DIR_BACKUP} && sudo edit-chroot -b ${CHROOT_RELEASE} "
+
+alias cli="sudo enter-chroot -n ${CHROOT_RELEASE} "
+
+alias ubu="sudo startunity -X xorg "
+alias uxw="sudo startunity -X xiwi "
+
+alias xwt="sudo startxiwi -n ${CHROOT_RELEASE} -T -b "
+alias xwf="sudo startxiwi -n ${CHROOT_RELEASE} -F -b "
+
+alias byo="sudo startxiwi -n ${CHROOT_RELEASE} -T -b gnome-terminal -x byobu-launcher "
+
+
+################################################################################
+#
+# Enable speakers/headphones/microphone or reset the screen/touchpad
+# on the Google Pixel Chromebook "Samus" motherboard
+#
+samus() {
+    __warn_if_os_is_not_galliumos ${FUNCNAME} && return 1
+
+    if [[ -z "${1}" ]]; then
+
+        echo >&2 \
+    "usage: ${FUNCNAME} sp(eakers) | he(adphones) | mi(crophone) | to(uch) "
+        return 2
+    fi
+
+    local SELECT=${1,,}
+
+    case ${SELECT:0:2} in
+    "sp" )
+        RESULT=$( samus-alsaenable-speakers )
+        ;;
+    "he" )
+        RESULT=$( samus-alsaenable-headphones )
+        ;;
+    "mi" )
+        RESULT=$( samus-alsaenable-microphone )
+        ;;
+    "to" )
+        RESULT=$( samus-touch-reset )
+        ;;
+    * )
+        echo >&2 "Unknown option, '${1}' !  "
+    esac
+}
+
+################################################################################
+##
+# Set the CLI prompt to show the current Git branch when in a Git project,
+# and to enable git branch name completion.
+#
+# Scripts and configuration from "Learn Enough Git to be Dangerous".
+# https://www.learnenough.com/git-tutorial#sec-advanced_setup
+#
+gitp() {
+    local GIT_PROMPT_SCRIPT=~/.git-prompt.sh
+    local GIT_COMPLETION_SCRIPT=~/.git-completion.bash
+    
+    # See the header block of ${GIT_PROMPT_SCRIPT} for details...
+    #
+    GIT_PS1_SHOWDIRTYSTATE=true
+    GIT_PS1_SHOWSTASHSTATE=true
+    GIT_PS1_SHOWUNTRACKEDFILES=true
+    GIT_PS1_SHOWUPSTREAM="auto"
+    GIT_PS1_STATESEPARATOR=
+    GIT_PS1_DESCRIBE_STYLE=
+    GIT_PS1_SHOWCOLORHINTS=true
+    GIT_PS1_HIDE_IF_PWD_IGNORED=true
+
+    # Embed the current Git branch name in the prompt:
+    #
+    if [[ -r "${GIT_PROMPT_SCRIPT}" ]]; then
+
+        source "${GIT_PROMPT_SCRIPT}"
+
+        PS1='\u@\h:[\W$(__git_ps1 " (%s)")]\$ '
+
+        export PROMPT_COMMAND='echo -ne "\033]0;${PWD/#$HOME/~}\007"'
+    else
+        echo
+        echo -n "Cannot find '${GIT_PROMPT_SCRIPT}' "
+        echo    "to set the Git branch prompt ! "
+        return 1
+    fi
+
+    # Enable tab completion for Git branch names:
+    #
+    if [[ -r "${GIT_COMPLETION_SCRIPT}" ]]; then
+
+        source "${GIT_COMPLETION_SCRIPT}"
+    else
+        echo
+        echo -n "Cannot find '${GIT_COMPLETION_SCRIPT}' "
+        echo    "to enable Git branch completion ! "
+        return 1
+    fi
+}
+
+gitls () {
+   ARGS="${@}"
+   
+   RESULT=$( which git )
+
+   if [[ $? == 0 && -n "${ARGS}" ]]; then
+      if [[ "${ARGS}" == "-h" ]]; then
+         git ls-files -H
+      elif [[ "${ARGS}" == "-H" ]]; then
+         git help ls-files
+      else
+         git ls-files --error-unmatch "${ARGS}"
+      fi
+   elif [[ -z "${ARGS}" ]]; then
+      git ls-files
+   else
+      echo >&2 "Git is not installed ! "
+   fi
+}
+
+puml () {
+   RESULT=$( which java )
+   
+   if (( $? != 0 )); then
+      echo >&2 "PlantUML requires Java, which is not installed ! "
+      return 1
+   fi
+
+   if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+      echo "'${FUNCNAME} <text-file>' will generate an image file & return. "
+      echo "'${FUNCNAME}' will start PlantUML & open GUI to monitor activity. "
+      echo "    PlantUML will monitor all text files in the directory, "
+      echo "    creating a new image file each time a change is detected. " 
+      echo 
+      echo "Some options: "
+      echo "    '-Djava.awt.headless=true' to run headless (should be first) "
+      echo "    '-DPLANTUML_LIMIT_SIZE=8192' to expand max diagram size "
+      echo "    '-Xmx1024m' to increase memory (already in this alias) "
+   else
+      java -Xmx1024m -jar /opt/plantuml/plantuml.jar "${@}"
+   fi
+}
+
+sts () {
+    local TERSE_GUIDE_TO_PHARO=~/Pharo/pharolauncher/TerseGuideToPharo.st
+    
+    if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
+        gedit "${TERSE_GUIDE_TO_PHARO}"
+    else
+        echo "error: Cannot find '${TERSE_GUIDE_TO_PHARO}' ! "
+    fi
+}
+
+
+################################################################################
+#
+# DEPRECATED : Mount an external thumb drive image file to '/srv'
+#
+mnth() {
+    local IMG_FILE_NAME="MULTIBOOT_64.img"
+    local IMG_FILE_ROOT="/srv/Mounts"
+    local IMG_FILE_MOUNT="/srv/MULTIBOOT_64"
+    local IMG_PATH=
+
+    read -r IMG_PATH < <( find "${IMG_FILE_ROOT}" -type f \
+                            -name "${IMG_FILE_NAME}" 2>/dev/null )
+
+    if [[ ! -f "${IMG_PATH}" ]]; then
+        echo 1>&2 "Cannot find a thumbdrive image file to mount ! "
+        return 1
+    elif [[ ! -d "${IMG_FILE_MOUNT}" ]]; then
+        echo 1>&2 "The mount point for the image file is missing ! "
+        return 1
+    fi
+
+    # Check to see if it's already mounted:
+    #
+    RESULT=$( sudo losetup -a | grep -o '/srv/Mounts/[^)]' )
+    return
+
+    sudo mount -t vfat \
+        -o loop,offset=1048576,uid="$( whoami )",gid="$( whoami )",umask=007 \
+        "${IMG_PATH}" "${IMG_FILE_MOUNT}"
+}
+
+################################################################################
+#
+# Mount any entries in '/etc/fstab' that start with "### " (delayed mount)
+#
+dlymnt() {
+   RESULT=$( sudo awk '/^###/ { print $2, $3 }' /etc/fstab )
+   
+   [[ -n "${RESULT}" ]] || return 1
+   
+   printf "%s" "${RESULT}" | xargs -t -r -n 2 -L 1 sudo mount --bind
+}
+
+bw() {
+   bwm-ng "$@"
+}
+
+wazzup() {
+   ip addr | grep -v 'lo:' | grep 'state UP'
+   echo
+   ip addr | grep 'state DOWN'
+}
+
+
+################################################################################
+#
+# Ubuntu 18.04++ uses snaps mounted as loop devices; fix 'df' to not display
+#
+dfh() {
+    df -hT | grep -v '/snap/' | \
+    awk '{
+        rank = $6
+        sub( "%", "", rank )
+        printf "%03d %s \n", rank, $0
+        }' | \
+    sort | awk '{ print substr( $0, 5 ) }'
+}
+
+#
+# Running 'gnome-terminal' in a Chromebook xiwi tab doesn't honor current xkbmap
+#
+kbd() {
+#    [[ ${IS_CHROME_OS} ]] && \
+#            { echo >&2 "Use the GUI 'System Settings' app ! " ; return 1 ; }
+
+    local LAYOUT=${1}
+
+    [[ "${1}" == "dv" ]] && LAYOUT="dvorak"
+
+    setxkbmap ${LAYOUT}
+}
+
+#
+# 'Fix' gedit for CLI launch
+#
+gedit() {
+    __warn_if_os_is_chromeos  ${FUNCNAME} && return 1
+    __warn_if_os_is_galliumos ${FUNCNAME} && return 1
+
+    [[ -x "${FILE_EDITOR_GUI}" ]] || \
+            { echo >&2 "Can't launch '${FILE_EDITOR_GUI}' ! " ; return 1 ; }
+
+    # Launch gedit from the CLI with all file arguments, discarding its
+    # annoying diagnostic messages, throwing the process into the background:
+    #
+    "${FILE_EDITOR_GUI}" 2>/dev/null "$@" &
+}
+
+#
+# Calculate the MD5 hash for every '.md5' file found
+#
+md5() {
+    if [[ "${1:0:1}" == "-" ]]; then    
+        md5sum -c *md5
+    else   
+        md5sum -c *md5 2>/dev/null | grep -v 'open or read'
+    fi
+}
+
+#
+# Calculate the SHA hash (default 256) for every '.sha' file found
+#
+# Types supported: sha1sum, sha224sum, sha256sum, sha384sum, sha512sum
+#
+sha() {
+    local SHA_FORCE=${1}    
+    local DEBUG=${2}
+    local LENGTH
+    
+    [[ -z "${DEBUG}" ]] && DEBUG=${SHA_FORCE}
+    
+    ls *.sha* &>/dev/null
+    if (( $? != 0 )); then
+        echo >&2 "error: '${FUNCNAME}': can't find a SHA file ! "
+        return 1
+    fi
+    
+    for SHA_FILE in *.sha*; do
+
+       # Read & analyze the first line to determine the SHA size:
+       #
+       local LEN1=$( awk 'NR==1 {print  $1}' "${SHA_FILE}" | wc -c )
+       local LEN2=$( awk 'NR==1 {print $NF}' "${SHA_FILE}" | wc -c )
+       
+       LENGTH=${LEN2}
+       (( LEN1 > LEN2)) && LENGTH=${LEN1}
+       
+       if [[ "${DEBUG:0:1}" == "-" ]]; then
+          echo "Determined code length of ${LENGTH} "
+       fi
+       
+       # The SHA type is either given (force it) or determined from above...
+       #
+       case ${SHA_FORCE} in
+           1  ) SHA_TYPE=1   ;;
+           224) SHA_TYPE=224 ;;
+           256) SHA_TYPE=256 ;;
+           384) SHA_TYPE=384 ;;
+           512) SHA_TYPE=512 ;;
+           * )
+               case ${LENGTH} in 
+                  41 ) SHA_TYPE=1   ;;
+                  57 ) SHA_TYPE=224 ;;
+                  65 ) SHA_TYPE=256 ;;
+                  97 ) SHA_TYPE=384 ;;
+                  129) SHA_TYPE=512 ;;
+                  *  ) echo >&2 "error: '${FUNCNAME}': can't find a SHA file ! "
+               esac 
+       esac
+
+       # Now run the test on this file, optionally verbosely:
+       #
+       if [[ "${DEBUG:0:1}" == "-" ]]; then
+           sha${SHA_TYPE}sum -c "${SHA_FILE}"
+       else
+           sha${SHA_TYPE}sum -c "${SHA_FILE}" 2>/dev/null | \
+               grep -v 'open or read'
+       fi
+    done
+}
+
+################################################################################
+#
+# Check a backup host for presence of recent backup files
+#
+chkb() {
+    local TODAY
+    TODAY=$(date -I)
+
+    local TARGET_DATE=${TODAY}
+    [[ -n "${1}" ]] && TARGET_DATE=${1}
+    shift
+
+    local TARGET_DEPTH=1
+    [[ -n "${1}" ]] && TARGET_DEPTH=${1}
+    shift
+
+    printf "%s" "${TARGET_DATE}" | \
+            egrep -q "[[:digit:]]{4}"
+    (( $? == 0 )) || TARGET_DATE=${TODAY}
+
+    # Limit the target depth to no more than 6, but must be at least 1.
+    #
+    (( TARGET_DEPTH > 1 && TARGET_DEPTH < 6 )) || TARGET_DEPTH=1
+
+    # Create a '/*/*/*/*/*' string of arbitrary length using 'printf'.
+    #
+    # Note: The '.0' spec in '%.0s' specifies the field width; in
+    # this case, zero.  This suppresses output, and therefore
+    # results in only the '/*' being rendered.  Also, whenever there
+    # are more arguments than there are '%' specs for 'printf', the
+    # entire format argument is recycled to provide for them.
+    # Hence, N arguments will produce N '/*' in a row.
+    #
+    # Note: The 'seq' command must NOT be quoted, because we WANT
+    # to cause word splitting on the multiple values produced.
+    # Each value in the 'seq' output creates one '/*'.
+    #
+    printf -v SEARCH_PATH '/*%.0s' $( seq 1 ${TARGET_DEPTH} )
+
+    ls --full-time var${SEARCH_PATH} 2>/dev/null | grep -q "${TARGET_DATE}"
+    (( $? == 0 )) && echo "Files Found for ${TARGET_DATE}." && return
+
+    echo "No files Found for ${TARGET_DATE}! "
+    echo "(Be sure to run this from a backup set root directory.) "
+}
+
+################################################################################
+#
+# Remove a host's key(s) from '.ssh/known_hosts'
+#
+remkey() {
+    local THIS_HOST
+    local HOSTS_LINE
+    local HOST_GREP
+    local HOST_TO_REM
+    local IP_TO_REM
+    local UINPUT
+    local HOST_RESULT
+    local IP_RESULT
+
+    (( $# == 1 )) || \
+        { echo >&2 "usage: ${FUNCNAME} <hostname> | <ipnumber> " ; return 1 ; }
+
+    # Grep through the hosts table for the host expression given:
+    #
+    HOST_GREP="[[:space:]]${1}[[:space:]]"
+
+    while read -r HOSTS_LINE; do
+        #
+        # Chop off any comment on the line before checking:
+        #
+        HOSTS_LINE=" ${HOSTS_LINE%%#*} "
+
+        [[ "${HOSTS_LINE}" =~ ${HOST_GREP} ]] && break
+
+    done < "${HOSTS_FILE}"
+
+    # If we get a hit in the hosts table, try to grep just its IP number:
+    #
+    if (( $? == 0 )); then
+
+        IP_TO_REM=$( printf "%s" "${HOSTS_LINE}" | egrep -o "${IP_GREP}" )
+
+        if [[ $? -ne 0 || -z "${IP_TO_REM}" ]]; then
+            echo >&2 "Can't resolve an IP for host '${1}' ! "
+            return 1
+        fi
+
+        # Now grep the hostname from the same hosts table line -- but with
+        # the matched IP number also removed.  Note that above, we already
+        # stripped off any comment at the end of this hosts file line.  Now,
+        # we're stripping off the IP number at the beginning of the line.
+        #
+        HOST_TO_REM=$( printf "%s" "${HOSTS_LINE#*${IP_TO_REM}}" | \
+                egrep -o "${HOST_GREP}" )
+
+        # If that fails, make a last-ditch try using awk to extract the
+        # first hostname token from the hosts file line:
+        #
+        if (( $? != 0 )); then
+            HOST_TO_REM=$( printf "%s" "${HOSTS_LINE}" | awk '{ print $2 }' )
+
+            if [[ $? -ne 0 || -z "${HOST_TO_REM}" ]]; then
+                echo >&2 "Failed to match '${1}' in the 'hosts' file ! "
+                return 1
+            fi
+        fi
+    else
+        # If the argument is not in the hosts table, try our bash_hosts table:
+        #
+        for THIS_HOST in "${HOSTS[@]}"; do
+
+            [[ "${1}" == "${THIS_HOST}" ]] && break
+        done
+
+        # If that fails, we can't cross-reference the host...
+        #
+        if (( $? != 0 )); then
+
+            echo >&2 "Failed to match '${1}' in either hosts file... "
+            #
+            # Verify with the user before attempting to remove unknown host:
+            #
+            GetYesNo_Defaulted "y" \
+                    "Okay to (try to) remove '${1}' from known hosts?"
+
+            (( $? == 0 )) || return 2
+
+            ssh-keygen -R "${1}"
+            return $?
+        fi
+
+        # We found it in the bash_hosts file; now cross-ref its public host:
+        #
+        HOST_TO_REM=$( idhost ${THIS_HOST} )
+
+        if [[ -z "${HOST_TO_REM}" ]]; then
+            echo >&2 "Failed to match '${1}' in either hosts file... "
+            return 1
+        fi
+
+    fi
+
+    # Verify with the user before destroying data!!
+    #
+    THIS_HOST=${HOST_TO_REM}
+    [[ -n "${IP_TO_REM}" ]] && THIS_HOST="${HOST_TO_REM} (${IP_TO_REM})"
+
+    GetYesNo_Defaulted "y" "Okay to remove '${THIS_HOST}'?"
+    (( $? == 0 )) || return 2
+
+    HOST_RESULT=0
+    if [[ -n "${HOST_TO_REM}" ]]; then
+        ssh-keygen -R ${HOST_TO_REM}
+        HOST_RESULT=$?
+    fi
+
+    IP_RESULT=0
+    if [[ -n "${IP_TO_REM}" ]]; then
+        ssh-keygen -R ${IP_TO_REM}
+        IP_RESULT=$?
+    fi
+
+    (( HOST_RESULT == 0 )) && return ${IP_RESULT}
+    return ${HOST_RESULT}
+}
+
+################################################################################
+#
+# d2u <DOS filename> [ <Linux filename> ]
+# u2d <Linux filename> [ <DOS filename> ]
+#
+# Convert a file from DOS to Unix format.
+# With one argument, convert in place, replacing the file;
+# with two arguments, convert & save as second argument, preserving first
+#
+__to_from_dos() {
+    local APP_FROMDOS=fromdos
+
+    local ROUTE=${1}
+    shift
+    local USAGE=${1}
+    shift
+
+    which "${APP_FROMDOS}" 2>/dev/null 1>&2 || \
+            { echo >&2 "Cannot find app '${APP_FROMDOS}' ! " ; return 1 ; }
+
+    local BASE_OPTIONS="-a -o"
+    local FUNC_OPTIONS
+
+    case ${ROUTE} in
+    "to_dos")
+        FUNC_OPTIONS="-u"
+        ;;
+    "to_nix")
+        FUNC_OPTIONS="-d"
+        ;;
+    *)
+        echo >&2 "error: '${FUNCNAME}' attempting to route using '${ROUTE}' ! "
+        return 1
+    esac
+
+    case $# in
+    2)
+        cp -p "${1}" "${2}" || return 1
+        shift
+        ;&
+    1)
+        ${APP_FROMDOS} ${BASE_OPTIONS} ${FUNC_OPTIONS} "${1}"
+        ;;
+    *)
+        echo >&2 "usage: ${USAGE}"
+        return 1
+    esac
+}
+
+d2u() {
+    __to_from_dos "to_nix" "${FUNCNAME} <dosfile> [<*nixfile>] " "$@"
+}
+
+u2d() {
+    __to_from_dos "to_dos" "${FUNCNAME} <*nixfile> [<dosfile>] " "$@"
+}
+
+################################################################################
+#
+# Remove the "Recent Documents" list
+#
+remr() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    rm -f ~/.local/share/recently-used.xbel && \
+    echo "Recent documents list (old style) cleared."
+}
+
+#
+# Remove the thumbnail images
+#
+remt() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    rm -f ~/.thumbnails/large/*
+    rm -f ~/.thumbnails/normal/*
+    rm -f ~/.thumbnails/fail/*/*
+    echo "Thumbnail images cleared."
+}
+
+#
+# Remove obsolete packages
+#
+rema() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    remk
+    sudo apt-get autoremove "$@"
+}
+
+################################################################################
+#
+# UPDATING THE DISTRO
+#
+
+__fix_apt_for_chromeos() {
+
+    # This function is currently unused...
+    #
+    [[ ! ${IS_CHROME_OS} ]] && return
+
+    return
+    apt-mark hold linux-images
+}
+
+upg() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    sudo apt-get dist-upgrade "$@"
+
+    [[ -d /run ]] && ls -1 /run/ | grep required
+}
+
+upd() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    sudo apt-get update && upg
+}
+
+vers() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    (( $# > 0 )) || \
+        { echo >&2 "usage: ${FUNCNAME} package [ egrep-spec ] " ; return 1 ; }
+
+    SEARCH_GREP=${1}
+    shift
+
+    GREP_RESULT=$( dpkg -l | \
+        awk -v pattern="${SEARCH_GREP}" '$2 ~ pattern { print $0 }' )
+
+    if [[ -n "${1}" ]]; then
+        for GREP_STR in "${@}"; do
+            GREP_RESULT=$( printf "%s" "${GREP_RESULT}" | egrep "${GREP_STR}" )
+        done
+    fi
+
+    printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP}"
+}
+
+inst() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    (( $# > 0 )) || \
+        { echo >&2 "usage: ${FUNCNAME} package [... package ] " ; return 1 ; }
+
+    sudo apt-get update && sudo apt-get install "$@"
+
+    [[ -d /run ]] && ls -1 /run/ | grep required
+}
+
+got() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    (( $# > 0 )) || \
+        { echo >&2 "usage: ${FUNCNAME} package [ egrep-spec ] " ; return 1 ; }
+
+    SEARCH_GREP=${1}
+    shift
+
+    if [[ -z "${1}" ]]; then
+        apt-cache search "${SEARCH_GREP}"
+    else
+        apt-cache search "${SEARCH_GREP}" | egrep "${@}"
+    fi
+}
+
+gotker() {
+   if [[ "${1}" =~ [[:digit:]][.][[:digit:]] ]]; then
+      VERS=${1}
+   elif [[ "${1}" =~ [[:digit:]][[:digit:]] ]]; then
+      VERS="4.${1}"
+   elif [[ "${1}" =~ [[:digit:]] ]]; then
+      VERS="5.${1}"
+   else
+      VERS=4.18
+   fi
+   
+   VERS="${VERS}.0"
+   got "linux-image-un" "${VERS}.*gen" | sort | egrep "${VERS}-[[:digit:]]+"
+}
+
+show() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    if [[ -z "${2}" ]]; then
+        apt-cache show "${1}"
+    else
+        apt-cache show "${1}" | grep -i "${2}"
+    fi
+}
+
+showtask() {
+   local RESULT
+   
+   if [[ -z "${1}" ]]; then
+      RESULT=$( which tasksel )
+      
+      if [[ -z "${RESULT}" ]]; then
+         echo "usage: ${FUNCNAME} [<tasksel task> [<grep pattern>] ] "
+      fi
+      
+      tasksel --list-tasks
+      return $?
+   fi
+   
+   RESULT=$( show ${1}^ | grep '^Package' | awk '{ print $2 }' | sort | uniq )
+   
+    if [[ -z "${2}" ]]; then
+        printf "%s\n" "${RESULT}"
+    else
+        printf "%s" "${RESULT}" | grep -i "${2}"
+    fi
+}
+
+debver() {
+   local EXT=$( basename "${1}" | cut -d'.' -f 2 )
+
+   if [[ -z "${1}" || "${EXT}" != "deb" ]]; then
+      echo "usage: ${FUNCNAME} <DEB file> "
+      return 1
+   fi
+   
+   dpkg-deb -f "${1}" Version
+}
+
+
+################################################################################
+#
+# REMOTE LOGIN to LOCAL MACHINES
+#
+__ssh_to_host() {
+    local ACCT_NAME
+    local HOST_NAME
+
+    local SCRIPT_NAME=${1}
+    shift
+    local SSH_PORT=${1}
+    shift
+
+    ACCT_NAME=$( whoami )
+
+    case $# in
+    0)
+        echo >&2 "usage: ${SCRIPT_NAME} [<user>] <host> [-- <SSH args>] "
+        return 1
+        ;;
+    1)
+        # If only one argument remains, it must be the hostname,
+        # so default the account name to this account's name.
+        #
+        HOST_NAME=${1}
+        shift
+        ;;
+    *)
+        # Otherwise, check the *second* argument to see if it's '--';
+        # If it's not, then the first two arguments are <user> & <host>:
+        #
+        if [[ "${2:0:1}" != '-' ]]; then
+            ACCT_NAME=${1}
+            shift
+        fi
+
+        # Having now taken care of the <user> parameter, get the <host>
+        # parameter, then discard the "--" parameter (if it exists):
+        #
+        HOST_NAME=${1}
+        shift
+    esac
+
+    [[ ${1:0:2} == "--" ]] && shift
+
+    # Any arguments left over must be SSH parameters...
+    #
+    ssh -Y -p ${SSH_PORT} ${ACCT_NAME}@${HOST_NAME} "$@"
+}
+
+gssh() {
+    __ssh_to_host ${FUNCNAME} ${PORT_SSH_LOCAL} "$@"
+}
+
+pssh() {
+    __ssh_to_host ${FUNCNAME} ${PORT_SSH_REMOTE} "$@"
+}
+
+pscp() {
+    scp -P ${PORT_SSH_REMOTE} "$@"
+}
+
+
+################################################################################
+#
+# echopad(string,size) = pad a string to fit a field of a given size
+#
+echopad() {
+     local LEN=${#1}
+     local SIZE=${2}
+     local DIFF=$(( SIZE - LEN ))
+     
+     __STRING=${1}
+     if (( SIZE > 1 && SIZE > LEN && DIFF != 0 )); then
+         while (( ${#__STRING} < SIZE )); do
+              __STRING="${__STRING} "
+         done
+     fi
+     
+     echo "${__STRING} "
+}
+
+################################################################################
+#
+# idhost <host> = Return FQDN:Port for <host>
+#
+idhost() {
+    (( $# == 1 )) || { echo >&2 "usage: ${FUNCNAME} <host> " ; return 1 ; }
+
+    [[ -n "${FQDN[${1}]}" && -n "${PORT[${1}]}" ]] || \
+            { echo >&1 "'${1}'?  Whazzat? " ; return 1 ; }
+
+    echo "${FQDN[${1}]}:${PORT[${1}]}"
+}
+
+#
+# Echo the list of known hosts
+#
+lshost() {
+    for THIS_HOST in "${HOSTS[@]}"; do
+        echo "$( echopad "${THIS_HOST}" 12 )$( idhost "${THIS_HOST}" )"
+    done
+
+    __hosts_version
+}
+
+################################################################################
+#
+# ulhost <host>        = Unlock <host> using FWKNOP
+# gohost <user> <host> = SSH into <user> account on <host>
+# rdhost <user> <host> = SSH into <user> account on <host> & prep for Rem D/T
+#
+ulhost() {
+    (( $# == 1 )) || { echo >&2 "usage: ${FUNCNAME} <host> " ; return 1 ; }
+
+    [[ -n "${FQDN[${1}]}" && -n "${PORT[${1}]}" && -n "${KNOCK[${1}]}" ]] || \
+            { echo >&1 "'${1}'?  Whazzat? " ; return 1 ; }
+
+    # No need to use FWKNOP if the remote site's SSH port is 22...
+    #
+    (( ${PORT[${1}]} > 1024 )) || return
+
+    fwknop -D ${FQDN[${1}]} -n ${1} --server-port ${KNOCK[${1}]}
+}
+
+gohost() {
+    local ACCT_NAME
+
+    ACCT_NAME=$( whoami )
+
+    case $# in
+    2)
+        ACCT_NAME=${1}
+        shift
+        ;&
+    1)
+        [[ -n "${FQDN[${1}]}" && -n "${PORT[${1}]}" ]] || \
+                { echo >&1 "'${1}'?  Whazzat? " ; return 1 ; }
+
+        ssh -p ${PORT[${1}]} -Y ${ACCT_NAME}@${FQDN[${1}]}
+        ;;
+    *)
+        echo >&2 "usage: ${FUNCNAME} [<user>] <host> "
+        return 1
+    esac
+}
+
+################################################################################
+#
+# rdhost = SSH into host & prep for Remote Desktop session
+# rbhost = SSH into host & prep for RemoteBox session
+#
+__ssh_port_forward() {
+    local ACCT_NAME
+
+    local SCRIPT_NAME=${1}
+    shift
+    local SCRIPT_SSH_PORT=${1}
+    shift
+
+    ACCT_NAME=$( whoami )
+
+    case $# in
+    2)
+        ACCT_NAME=${1}
+        shift
+        ;&
+    1)
+        [[ -n "${FQDN[${1}]}" && -n "${PORT[${1}]}" ]] || \
+                { echo >&1 "'${1}'?  Whazzat? " ; return 1 ; }
+
+        ssh -Y -p ${PORT[${1}]} \
+                -L ${SCRIPT_SSH_PORT}:localhost:${SCRIPT_SSH_PORT} \
+                ${ACCT_NAME}@${FQDN[${1}]}
+        ;;
+    *)
+        echo >&2 "usage: ${SCRIPT_NAME} [<user>] <host> "
+        return 1
+    esac
+}
+
+rdhost() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    __ssh_port_forward ${FUNCNAME} ${PORT_REMDESKTOP} "$@"
+}
+
+rbhost() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    __ssh_port_forward ${FUNCNAME} ${PORT_REMOTEBOX} "$@"
+}
+
+################################################################################
+#
+# SCP to or from a remote host
+#
+__scp_to_from_host() {
+    local FQ_REM_PATH
+    local RSH_PORT
+
+    # Get the caller's parameters
+    #
+    local ROUTE=${1}
+    shift
+    local USAGE=${1}
+    shift
+
+    # Check parameter count...
+    #
+    (( $# >= 3 )) || { echo >&2 "usage: ${USAGE}" ; return 1 ; }
+
+    # Start by assuming <user> <host> <rempath> <options> <paths> provided:
+    #
+    local USER=${1}
+    shift
+    local HOST=${1}
+    shift
+    local REMOTE_PATHS=${1}
+    shift
+    local OPTIONS_PATHS="$*"
+
+    # Test this by trying to resolve ${1} as <host>;
+    # If this succeeds, then default <user> to 'whoami',
+    # Then shift all the parameters down by one:
+    #
+    if [[ -n "${FQDN[${USER}]}" ]]; then
+        OPTIONS_PATHS="${REMOTE_PATHS} ${OPTIONS_PATHS}"
+        REMOTE_PATHS=${HOST}
+        HOST=${USER}
+        USER=$( whoami )
+    fi
+
+    # Assume that the remote host is not on the LAN:
+    #
+    FQ_REM_PATH=${FQDN[${HOST}]}:${REMOTE_PATHS}
+    RSH_PORT=${PORT[${HOST}]}
+
+    # Test to see if the <host> is a host on the LAN:
+    #
+    grep -q ${HOST} "${HOSTS_FILE}"
+
+    if (( $? == 0 )); then
+        FQ_REM_PATH=${HOST}:${REMOTE_PATHS}
+        RSH_PORT=${PORT_SSH_LOCAL}
+    fi
+
+    # If the <host> isn't in the '.bash_hosts' file, then
+    # form a canonical connection but use a remote port:
+    #
+    if [[ "${FQ_REM_PATH}" == ":" || -z "${RSH_PORT}" ]]; then
+        FQ_REM_PATH=${HOST}:${REMOTE_PATHS}
+        RSH_PORT=${PORT_SSH_REMOTE}
+    fi
+
+    # Do the SCP:
+    #
+    case ${ROUTE} in
+    "to")
+        scp -P ${RSH_PORT} ${OPTIONS_PATHS} "${USER}@${FQ_REM_PATH}"
+        ;;
+    "from")
+        scp -P ${RSH_PORT} "${USER}@${FQ_REM_PATH}" ${OPTIONS_PATHS}
+        ;;
+    *)
+        echo >&2 "error: '${FUNCNAME}' attempting to route using '${ROUTE}' ! "
+        return 1
+    esac
+}
+
+sthost() {
+    local USAGE
+
+    USAGE="${FUNCNAME} [<user>] <host> <remote path> "
+    USAGE="${USAGE}[<SCP options>] <local path[s]> "
+
+    __scp_to_from_host to "${USAGE}" "$@"
+}
+
+sfhost() {
+    local USAGE
+
+    USAGE="${FUNCNAME} [<user>] <host> <remote path[s]> "
+    USAGE="${USAGE}[<SCP options>] <local path> "
+
+    __scp_to_from_host from "${USAGE}" "$@"
+}
+
+################################################################################
+#
+# RSYNC to a remote host
+#
+__rsync_to_host() {
+    local FQ_REM_PATH
+    local RSH_APP
+
+    # Get the caller's parameters
+    #
+    local ROUTE=${1}
+    shift
+    local USAGE=${1}
+    shift
+
+    # Check parameter count...
+    #
+    (( $# >= 3 )) || { echo >&2 "usage: ${USAGE}" ; return 1 ; }
+
+    # Start by assuming <user> <host> <rempath> <options> <paths> provided:
+    #
+    USER=${1}
+    shift
+    HOST=${1}
+    shift
+    REMOTE_PATHS=${1}
+    shift
+    SOURCE_PATH=${1}
+    shift
+    OPTIONS="$*"
+
+    # Test this by trying to resolve ${1} as <host>;
+    # If this succeeds, then default <user> to 'whoami',
+    # Then shift all the parameters down by one:
+    #
+    if [[ -n "${FQDN[${USER}]}" ]]; then
+        OPTIONS="${SOURCE_PATH} ${OPTIONS}"
+        SOURCE_PATH=${REMOTE_PATHS}
+        REMOTE_PATHS=${HOST}
+        HOST=${USER}
+        USER=$( whoami )
+    fi
+
+    # Assume that the host is not on the local LAN:
+    #
+    FQ_REM_PATH=${FQDN[${HOST}]}:${REMOTE_PATHS}
+    RSH_APP="ssh -p ${PORT[${HOST}]}"
+
+    # Then test to see if it is on the local LAN:
+    #
+    grep ${HOST} "${HOSTS_FILE}" 1>/dev/null 2>&1
+
+    if (( $? == 0 )); then
+        FQ_REM_PATH=${HOST}:${REMOTE_PATHS}
+        RSH_APP="ssh -p ${PORT_SSH_LOCAL}"
+    fi
+
+    # If the <host> isn't in the '.bash_hosts' file, then
+    # form a canonical connection but use a remote port:
+    #
+    if [[ "${FQ_REM_PATH}" == ":" || "${RSH_APP}" == "ssh -p " ]]; then
+        FQ_REM_PATH=${HOST}:${REMOTE_PATHS}
+        RSH_APP="ssh -p ${PORT_SSH_REMOTE}"
+    fi
+
+    # Do the rsync:
+    #
+    case ${ROUTE} in
+    "to")
+        rsync ${OPTIONS} --rsh="${RSH_APP}" ${SOURCE_PATH} ${USER}@${FQ_REM_PATH}
+        ;;
+    "from")
+        rsync ${OPTIONS} --rsh="${RSH_APP}" ${USER}@${FQ_REM_PATH} ${REMOTE_PATHS}
+        ;;
+    *)
+        echo >&2 "error: '${FUNCNAME}' attempting to route using '${ROUTE}' ! "
+        return 1
+    esac
+}
+
+rthost() {
+    local USAGE
+
+    USAGE="${FUNCNAME} [<user>] <host> <remote path> "
+    USAGE="${USAGE}<local path> <rsync options> "
+
+    __rsync_to_host to "${USAGE}" "$@"
+}
+
+#
+# RSYNC from a remote host
+#
+__rsync_from_host() {
+    local FQ_REM_PATH
+    local RSH_APP
+
+    # Get the caller's parameters
+    #
+    local ROUTE=${1}
+    shift
+    local USAGE=${1}
+    shift
+
+    # Check parameter count...
+    #
+    (( $# >= 3 )) || { echo >&2 "usage: ${USAGE}" ; return 1 ; }
+
+    # Start by assuming <user> <host> <rempath> <options> <paths> provided:
+    #
+    USER=${1}
+    shift
+    HOST=${1}
+    shift
+    SOURCE_PATH=${1}
+    shift
+    REMOTE_PATHS=${1}
+    shift
+    OPTIONS="$*"
+
+    # Test this by trying to resolve ${1} as <host>;
+    # If this succeeds, then default <user> to 'whoami',
+    # Then shift all the parameters down by one:
+    #
+    if [[ -n "${FQDN[${USER}]}" ]]; then
+        OPTIONS="${REMOTE_PATHS} ${OPTIONS}"
+        REMOTE_PATHS=${SOURCE_PATH}
+        SOURCE_PATH=${HOST}
+        HOST=${USER}
+        USER=$( whoami )
+    fi
+
+    # Assume the host is not on the local LAN:
+    #
+    FQ_REM_PATH=${FQDN[${HOST}]}:${SOURCE_PATH}
+    RSH_APP="ssh -p ${PORT[${HOST}]}"
+
+    # Then test to see if it is on the local LAN:
+    #
+    grep ${HOST} "${HOSTS_FILE}" 1>/dev/null 2>&1
+
+    if (( $? == 0 )); then
+        FQ_REM_PATH=${HOST}:${SOURCE_PATH}
+        RSH_APP="ssh -p ${PORT_SSH_LOCAL}"
+    fi
+
+    # If the <host> isn't in the '.bash_hosts' file, then
+    # form a canonical connection but use a remote port:
+    #
+    if [[ "${FQ_REM_PATH}" == ":" || "${RSH_APP}" == "ssh -p " ]]; then
+        FQ_REM_PATH=${HOST}:${SOURCE_PATH}
+        RSH_APP="ssh -p ${PORT_SSH_REMOTE}"
+    fi
+
+    # Do the rsync:
+    #
+    case ${ROUTE} in
+    "to")
+        rsync ${OPTIONS} --rsh="${RSH_APP}" ${SOURCE_PATH} ${USER}@${FQ_REM_PATH}
+        ;;
+    "from")
+        rsync ${OPTIONS} --rsh="${RSH_APP}" ${USER}@${FQ_REM_PATH} ${REMOTE_PATHS}
+        ;;
+    *)
+        echo >&2 "error: '${FUNCNAME}' attempting to route using '${ROUTE}' ! "
+        return 1
+    esac
+}
+
+rfhost() {
+    local USAGE
+
+    USAGE="${FUNCNAME} [<user>] <host> <remote path> "
+    USAGE="${USAGE}<local path> <rsync options> "
+
+    __rsync_from_host from "${USAGE}" "$@"
+}
+
+################################################################################
+#
+# PSYNC to/from a USB thumbdrive
+#
+__psync_usb() {
+    local LOCAL_REPO=~/a64
+    local DRIVE_REPO=/media/$(whoami)/MULTIBOOT
+    local ROUTE=${1}
+    shift
+
+    __check_usb_repo
+
+    case $? in
+    0)
+###        pushd "${DIR_MB_LOCAL}" 1>/dev/null
+        #
+        # The command must be executed from the repo directory...
+        #
+###        ./${FILENAME_SCRIPT_PSYNC} ${ROUTE} ${DIR_MB_USB} "$@"
+
+        if [[ "${1}" == "-d" ]]; then
+            FILE_PATH=${2}
+            
+            if [[ "${ROUTE}" == "to" ]]; then
+                FR_REPO=${LOCAL_REPO}
+                TO_REPO=${DRIVE_REPO}
+            else
+                FR_REPO=${DRIVE_REPO}
+                TO_REPO=${LOCAL_REPO}
+            fi
+            
+            diff -cs "${FR_REPO}/${FILE_PATH}" "${TO_REPO}/${FILE_PATH}"
+        else
+            bash ${PATH_SCRIPT_PSYNC} ${ROUTE} ${DIR_MB_USB} "$@"
+        fi
+
+###        popd 1>/dev/null
+        return
+        ;;
+
+    ${__ERR_REPOS_BOTH_ABSENT} )
+        echo >&2 "No local or USB repo directory ! "
+        ;;
+
+    ${__ERR_REPO_LOCAL_ABSENT} )
+        echo >&2 "No local repo directory ! "
+        ;;
+
+    ${__ERR_REPO_USB_ABSENT} )
+        echo >&2 "No USB repo is present ! "
+        ;;
+    esac
+
+    return 1
+}
+
+ptusb() {
+    __psync_usb to "$@"
+}
+
+pfusb() {
+    __psync_usb from "$@"
+}
+
+################################################################################
+#
+# PSYNC to/from a remote host
+#
+__psync_host() {
+    local HOST
+    local OPT
+    local OPTIONS
+    local ROUTE=${1}
+    shift
+    local USER=${1}
+    shift
+    OPT=$( printf "%s" ${1} | cut -c 1 )
+
+    if [[ -z "${1}" || "${OPT}" == "-" ]]; then
+        HOST=$USER
+        USER=$( whoami );
+        OPTIONS="$*"
+    else
+        HOST=${1}
+        shift
+        OPTIONS="$*"
+    fi
+
+    local REPO=${DIRNAME_MB_LOCAL}
+    if [[ ! -d ~/"${REPO}" ]]; then
+        echo >&2 "error: local '${REPO}' directory not found ! "
+        return 1
+    fi
+
+    # Assume the host is not on the local LAN:
+    #
+    FQ_REM_PATH=${USER}@${FQDN[${HOST}]}:${REPO}
+    RSH_PORT=${PORT[${HOST}]}
+
+    # Then test to see if it is on the local LAN:
+    #
+    grep ${HOST} "${HOSTS_FILE}" 1>/dev/null 2>&1
+
+    if (( $? == 0 )); then
+        FQ_REM_PATH=${USER}@${HOST}:${REPO}
+        RSH_PORT=${PORT_SSH_LOCAL}
+    #
+    # If not a local host, then it must be in the list
+    # of hosts that we have a special relationship with;
+    # In this case, it must be in the '.bash_hosts' file:
+    #
+    elif [[ -z "${FQDN[${HOST}]}" ]]; then
+        echo >&2 "'${USER}@${HOST}'?  Whazzat? "
+        return 1
+    fi
+
+    bash ${PATH_SCRIPT_PSYNC} ${ROUTE} ${FQ_REM_PATH} ${RSH_PORT} ${OPTIONS}
+}
+
+#
+# PSYNC to a remote host
+#
+pthost() {
+    if (( $# > 0 )); then
+        __psync_host to "$@"
+    else
+        echo "usage: pthost [<user>] <host> [<psync options>] "
+    fi
+}
+
+#
+# PSYNC from a remote host
+#
+pfhost() {
+    if (( $# > 0 )); then
+        __psync_host from "$@"
+    else
+        echo "usage: pfhost [<user>] <host> [<psync options>] "
+    fi
+}
+
+################################################################################
+#
+# WSYNC to/from a remote host
+#
+__wsync_host() {
+    ROUTE=${1}
+    shift
+    USER=${1}
+    shift
+    OPT=$( printf "%s" ${1} | cut -c 1 )
+    if [[ -z "${1}" || "${OPT}" == "-" ]]; then
+        HOST=$USER
+        USER=$( whoami );
+        OPTIONS="$*"
+    else
+        HOST=${1}
+        shift
+        OPTIONS="$*"
+    fi
+
+    REPO=.config/variety/Favorites
+    LOCAL_PATH=~/${REPO}/
+
+    # Assume the host in not on the local LAN:
+    #
+    FQ_REM_PATH=${USER}@${FQDN[${HOST}]}:${REPO}/
+    RSH_PORT=${PORT[${HOST}]}
+
+    # Then test to see if it is on the local LAN:
+    #
+    grep ${HOST} "${HOSTS_FILE}" 1>/dev/null 2>&1
+
+    if (( $? == 0 )); then
+        FQ_REM_PATH=${USER}@${HOST}:${REPO}/
+        RSH_PORT=${PORT_SSH_LOCAL}
+    #
+    # If not a local host, then it must be in the list
+    # of hosts that we have a special relationship with;
+    # In this case, it must be in the '.bash_hosts' file:
+    #
+    elif [[ -z "${FQDN[${HOST}]}" ]]; then
+        echo "'${USER}@${HOST}'?  Whazzat? "
+        return
+    fi
+
+    # Determine how to order the source & destination hosts:
+    #
+    if [[ "${ROUTE}" == "to" ]]; then
+        SRCE=${LOCAL_PATH}
+        DEST=${FQ_REM_PATH}
+    else
+        SRCE=${FQ_REM_PATH}
+        DEST=${LOCAL_PATH}
+    fi
+
+    rsync -axvP ${OPTIONS} --rsh="ssh -p ${RSH_PORT}" ${SRCE} ${DEST}
+}
+
+#
+# WSYNC to a remote host
+#
+wthost() {
+    [[ ${IS_CHROME_OS} ]] && { echo "Not in ChromeOS ! " ; return 1 ; }
+
+    if (( $# > 0 )); then
+        __wsync_host to "$@"
+    else
+        echo "usage: wthost [<user>] <host> [<psync options>] "
+    fi
+}
+
+#
+# WSYNC from a remote host
+#
+wfhost() {
+    [[ ${IS_CHROME_OS} ]] && { echo "Not in ChromeOS ! " ; return 1 ; }
+
+    if (( $# > 0 )); then
+        __wsync_host from "$@"
+    else
+        echo "usage: wfhost [<user>] <host> [<psync options>] "
+    fi
+}
+
+################################################################################
+#
+# Go back to a previous directory in the pwd hierarchy
+# Inspired by 'bd' from https://github.com/vigneshwaranr/bd
+#
+gb() {
+    local OLD_PWD
+    local NEW_PWD=
+
+    local PATH_DIR=
+
+    local OPTIONS=""
+    local E_SET=
+    local I_SET=
+
+    local ERR=
+
+    OLD_PWD=$( pwd )
+
+    # No positional parameters?  Return the usage prompt (error):
+    #
+    (( $# == 0 )) && ERR=true
+
+    # While there are arguments on the CLI, parse them:
+    #
+    while [[ -n "${1}" ]]; do
+
+        getopts ":ei" SWITCH
+
+        if (( $? != 0 )); then
+
+            # If not a switch, then it MUST be a directory path element
+            #
+            if [[ -z "${PATH_DIR}" ]]; then
+                PATH_DIR=${1}
+                shift
+                OPTIND=1
+            else
+                # However, a second non-switch is a screw-up:
+                ERR=true
+                shift
+                OPTIND=1
+            fi
+
+        elif [[ ${SWITCH} == "?" ]]; then
+
+            # It's a switch, but it's not one we recognize...
+            #
+            ERR=true
+            shift
+            OPTIND=1
+        else
+            case ${SWITCH} in
+            "e")
+                [[ ${E_SET} ]] || OPTIONS=${OPTIONS}"e"
+                E_SET=true
+                ;;
+            "i")
+                [[ ${I_SET} ]] || OPTIONS=${OPTIONS}"i"
+                I_SET=true
+                ;;
+            *)
+                echo 1>&2 "error: Internal error parsing the CLI ! "
+                exit 1
+                ;;
+            esac
+            shift
+            OPTIND=1
+        fi
+    done
+
+    #
+    # Any errors encountered while parsing the cmd line get a usage prompt:
+    #
+    if [[ -z "${PATH_DIR}" || ${ERR} ]]; then
+        cat << __USAGE
+usage: ${FUNCNAME} [-e] [-i] <pwd_dir_ref>
+    Go back to a earlier/higher directory in the pwd hierarchy.
+    Allows partial naming, unless '-e' is used for exact match.
+    Performs case-sensitive matches, unless '-i' is used.
+    Allows forms such as $ ls \`${FUNCNAME} <dirname>\`, etc.
+__USAGE
+        return
+    fi
+
+    #
+    # Based on the switches, determine the new directory path:
+    #
+    case ${OPTIONS} in
+    'ei' | 'ie' )
+        # Allow a full-word specification with case-insensitivity
+        NEW_PWD=$( printf "%s" ${OLD_PWD} | \
+                perl -pe 's|(.*/'${PATH_DIR}'/).*|$1|i' )
+        ;;
+    'e' )
+        # Require full-word specification with case-sensitivity
+        NEW_PWD=$( printf "%s" ${OLD_PWD} | \
+                sed 's|\(.*/'${PATH_DIR}'/\).*|\1|' )
+        ;;
+    'i' )
+        # Allow a partial-word specification with case-insensitivity
+        NEW_PWD=$( printf "%s" ${OLD_PWD} | \
+                perl -pe 's|(.*/'${PATH_DIR}'[^/]*/).*|$1|i' )
+        ;;
+    * )
+        # Allow a partial-word specification with case-sensitivity
+        NEW_PWD=$( printf "%s" ${OLD_PWD} | \
+                sed 's|\(.*/'${PATH_DIR}'[^/]*/\).*|\1|' )
+        ;;
+    esac
+
+    #
+    # What did we get?
+    #
+    if [[ "$NEW_PWD" == "${OLD_PWD}" ]]; then
+        echo "No prior occurrence "
+    else
+        echo ${NEW_PWD}
+        cd "${NEW_PWD}"
+    fi
+
+    #unset NEW_PWD
+}
+
+###############################################################################
+#
+# Blast a file to the home directories of users on other platforms
+#
+blast() {
+    FILE_LIST=()
+    EXCLUDE_HOSTS=( $( uname -n ) )
+    EXCLUDE_SWITCH=""
+
+    if [[ -z "$*" ]]; then
+        echo -n "usage: blast [-h | <filename>] [..<filename>] "
+        echo "[-- <exclude-host> [..<exclude-host>]] "
+        return
+    fi
+
+    if [[ "$*" == "-h" ]]; then
+        echo
+        echo "account@host targets: "
+        for (( HOST_IDX=NUM_BLAST; HOST_IDX > 0; HOST_IDX-- )); do
+
+            THIS_USER=${HOST_DATA[${HOST_IDX},user]}
+            THIS_HOST=${HOST_DATA[${HOST_IDX},host]}
+
+            echo "    ${THIS_USER}@${THIS_HOST} "
+        done
+        echo
+        return
+    fi
+
+    for PARAM in "$@"; do
+        SWITCH=$( printf "%s" "${PARAM}" | cut -c 1 )
+
+        if [[ "${SWITCH}" == "-" ]]; then
+
+            if [[ -n "${EXCLUDE_SWITCH}" ]]; then
+                echo -n "usage: blast <filename> [.. <filename>] "
+                echo "[-- <exclude-host> [.. <exclude-host>]] "
+                return
+            fi
+            EXCLUDE_SWITCH=${PARAM}
+
+        elif [ -n "${EXCLUDE_SWITCH}" ]; then
+
+            EXCLUDE_HOSTS+=( ${PARAM} )
+        else
+            FILE_LIST+=( \"${PARAM}\" )
+        fi
+    done
+
+    if (( ${#FILE_LIST[@]} == 0 )); then
+        echo "At least one file is required ! "
+        return
+    fi
+
+    # For each acct@host, SCP the file to the target:
+    #
+    for (( HOST_IDX=NUM_BLAST; HOST_IDX > 0; HOST_IDX-- )); do
+
+        THIS_USER=${HOST_DATA[${HOST_IDX},user]}
+        THIS_HOST=${HOST_DATA[${HOST_IDX},host]}
+        EXCLUDE_THIS_HOST=false
+
+        # Don't transfer to hosts on the excludes list; this host on the list?
+        #
+        for IGNORE_HOST in "${EXCLUDE_HOSTS[@]}"; do
+            if [[ "${THIS_HOST}" == "${IGNORE_HOST}" ]]; then
+                EXCLUDE_THIS_HOST=true
+                break
+            fi
+        done
+
+        # If this host is not excluded, do the transfer:
+        #
+        if [[ ${EXCLUDE_THIS_HOST} == false ]]; then
+
+            read -p "Transfer to ${THIS_USER}@${THIS_HOST} (Y/n)? " UINPUT
+            UINPUT=$( printf "%s" ${UINPUT} | cut -c 1 )
+
+            if [[ "${UINPUT}" == 'n' || "${UINPUT}" == 'N' ]]; then
+                continue
+            fi
+
+            # Assume the host is not on the local LAN:
+            #
+            FQ_REM_PATH=${FQDN[${THIS_HOST}]}:
+            RSH_PORT=${PORT[${THIS_HOST}]}
+
+            # Then test to see if it is on the local LAN:
+            #
+            grep ${THIS_HOST} "${HOSTS_FILE}" 1>/dev/null 2>&1
+
+            if (( $? == 0 )); then
+                FQ_REM_PATH=${THIS_HOST}:
+                RSH_PORT=${PORT_SSH_LOCAL}
+            fi
+
+            # If the <host> isn't in the '.bash_hosts' file, then
+            # form a canonical connection but use a remote port:
+            #
+            if [[ "${FQ_REM_PATH}" == ":" || -z "${RSH_PORT}" ]]; then
+                FQ_REM_PATH=${THIS_HOST}:
+                RSH_PORT=${PORT_SSH_REMOTE}
+            fi
+
+            echo -n "${FILE_LIST[@]}" ${THIS_USER}@${FQ_REM_PATH} \
+                    | xargs scp -P ${RSH_PORT}
+        fi
+    done
+}
+
+################################################################################
+#
+# Delete useless notification files in '/run'
+#
+killfire() {
+    local SEARCH_DIR=/run
+    local SEARCH_TERM="firefox"
+
+    # Is there a directory?  Does it have anything in it?
+    #
+    RESULT=$( ls -1 "${SEARCH_DIR}" )
+    (( $? == 0 )) || return
+
+    if [[ -z "${RESULT}" ]]; then
+        echo "'${SEARCH_DIR}' has nothing in it! "
+        return
+    fi
+
+    # There are files... Do any of them contain the search term?
+    #
+    RESULT=$( printf "%s" "${RESULT}" | grep ${SEARCH_TERM} )
+
+    if [[ -z "${RESULT}" ]]; then
+        echo "No notifications for '${SEARCH_TERM}' in '${SEARCH_DIR}' "
+        return
+    fi
+
+    # It's there, but don't remove the notification if Firefox is running...
+    #
+    RESULT=$( ps -ef | grep ${SEARCH_TERM} | grep -v ' grep ' )
+
+    if [[ -n "${RESULT}" ]]; then
+        echo "'${SEARCH_TERM}' appears to be running: "
+        echo ${RESULT}
+        return
+    fi
+
+    # Okay, remove the file, then show the results
+    #
+    sudo rm /run/*${SEARCH_TERM}*
+    remk
+}
+
+################################################################################
+#
+# Display any required actions based on files in '/run'
+#
+__Display_Kernel_Files() {
+    local VBOX_GUEST_ADDITIONS_DIR=/opt/VBoxGuestAdditions
+    ls -lF /boot
+    ls -lF /usr/src
+    
+    ll -d ${VBOX_GUEST_ADDITIONS_DIR}* &> /dev/null
+    (( $? == 0 )) && ls -dl ${VBOX_GUEST_ADDITIONS_DIR}*
+    
+    uname -r
+}
+
+__Display_Required_Notifications() {
+    [[ -d /run ]] && ls -1 /run/ | grep required
+}
+
+################################################################################
+#
+# Fixup root soft links; show the results if $1=="-l"
+#
+fixroot() {
+  local VMLINUZ_GREP="^vmlinuz"
+  local INITRD_GREP="^initrd"
+
+  local VMLINUZ=()
+  local INITRD=()
+  local FOUND=()
+  local KERNEL_FILE
+
+  # Get list of installed kernels as three lists, the 'vmlinuz' files,
+  # the 'initrd' files, and a combined list (for verification).  Note
+  # that we sort the directory listing in order to get the kernels in
+  # order, with the most recent first.
+  #
+  while read -r KERNEL_FILE; do
+
+    printf "%s" "${KERNEL_FILE}" | grep -q "${VMLINUZ_GREP}"
+
+    if (( $? == 0 )); then
+      VMLINUZ+=( "${KERNEL_FILE}" )
+      FOUND+=( "${KERNEL_FILE}" )
+      continue
+    fi
+
+    printf "%s" "${KERNEL_FILE}" | grep -q "${INITRD_GREP}"
+
+    if (( $? == 0 )); then
+      INITRD+=( "${KERNEL_FILE}" )
+      FOUND+=( "${KERNEL_FILE}" )
+      continue
+    fi
+
+  done < <( ls /boot | sort -r )
+
+  # This function won't work unless there are at least two kernels installed;
+  # Check for two of each file type:
+  #
+  if (( ${#VMLINUZ[@]} < 2 || ${#INITRD[@]} < 2 )); then
+    __Display_Kernel_Files
+    echo
+    echo "'/boot' does not contain two full sets of kernel files ! "
+    return
+  fi
+
+  # Since we're deleting & regenerating system files (links), be extra
+  # sure that we have actual kernel files in our lists:
+  #
+  for KERNEL_FILE in "${FOUND[@]}"; do
+    [[ -f "/boot/${KERNEL_FILE}" ]] && continue
+    echo "Cannot read '/boot/${KERNEL_FILE}' ! "
+    return
+  done
+
+  # Now remove the old links (if they exist) and create the new ones:
+  #
+  sudo rm -f /initrd*
+  sudo ln -s "/boot/${INITRD[0]}" /initrd.img
+  sudo ln -s "/boot/${INITRD[1]}" /initrd.img.old
+
+  sudo rm -f /vmlinuz*
+  sudo ln -s "/boot/${VMLINUZ[0]}" /vmlinuz
+  sudo ln -s "/boot/${VMLINUZ[1]}" /vmlinuz.old
+
+  # Finally, if the user called this with an "-l" switch, show the results:
+  #
+  [[ "${1}" == "-l" ]] && ls -alF /
+}
+
+################################################################################
+#
+# Repair missing kernel packages / install a new kernel
+#
+fixk() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    if [[ "${1}" == "-h" ]]; then
+        echo "usage: fixk X.Y.Z [ -l ] <list of patch levels> "
+        echo "example: fixk 4.13.0 38 "
+        return
+    fi
+
+    # If called with no arguments, just display the file set:
+    #
+    if [[ -z "${1}" ]]; then
+        __Display_Kernel_Files
+        __Display_Required_Notifications
+        return
+    fi
+
+    KERPKG=""
+    KERNEL=${1}
+    shift
+
+    # If given a kernel number, patch numbers are required in order to
+    # create an installation package name:
+    #
+    if [[ -z "$*" ]]; then
+        __Display_Kernel_Files
+        echo
+        echo "No kernel packages to install !"
+        return
+    fi
+
+    # Provide an option to install the low-latency version of the kernel:
+    #
+    unset LOWLATENCY
+    if [[ "${1}" == "-l" ]]; then
+        shift
+        LOWLATENCY=true
+    fi
+
+    for PATCHLEVEL in "$@"; do
+      THISKER="linux-headers-${KERNEL}-${PATCHLEVEL} "
+      THISKER="${THISKER} linux-headers-${KERNEL}-${PATCHLEVEL}-generic "
+      THISKER="${THISKER} linux-image-${KERNEL}-${PATCHLEVEL}-generic "
+      THISKER="${THISKER} linux-tools-${KERNEL}-${PATCHLEVEL}-generic "
+
+      # Some kernels install a "extras" packages, but not all do:
+      #
+      RESULT=$( got linux-image-extra-${KERNEL}-${PATCHLEVEL}-generic )
+      [[ -n "${RESULT}" ]] && \
+      THISKER="${THISKER} linux-image-extra-${KERNEL}-${PATCHLEVEL}-generic "
+
+      if [[ ${LOWLATENCY} ]]; then
+        THISKER="${THISKER} linux-headers-${KERNEL}-${PATCHLEVEL}-lowlatency "
+        THISKER="${THISKER} linux-image-${KERNEL}-${PATCHLEVEL}-lowlatency "
+        THISKER="${THISKER} linux-tools-${KERNEL}-${PATCHLEVEL}-lowlatency "
+      fi
+
+      KERPKG="${KERPKG} ${THISKER}"
+    done
+
+    if [[ -z "${KERPKG}" ]]; then
+        __Display_Kernel_Files
+        echo
+        echo "No kernel packages to install !"
+        return
+    fi
+
+    # Install the list of packages. Note: Do NOT quote ${KERPKG} !!
+    #
+    sudo apt-get install -y ${KERPKG}
+    (( $? == 0 )) || return 1
+
+    fixroot
+    __Display_Kernel_Files
+    __Display_Required_Notifications
+}
+
+################################################################################
+#
+# Remove obsolete kernel packages
+#
+remk() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    if [[ "${1}" == "-h" ]]; then
+        echo "usage: remk X.Y.Z <list of patch levels> "
+        echo "example: remk 4.13.0 32 36 37 "
+        return
+    fi
+
+    # If called with no arguments, just display the file set:
+    #
+    if [[ -z "${1}" ]]; then
+        __Display_Kernel_Files
+        __Display_Required_Notifications
+        return
+    fi
+
+    REMKER=""
+    REMHDR=""
+    KERNEL=${1}
+    shift
+
+    # If called with just a kernel number, then suggest removing all files
+    # in '/boot' for that particular kernel series.  If called with an
+    # argument of "old", then suggest all files ending with "old".  (ZFS will
+    # create these as backups of the 'initrd' files, for example.)
+    #
+    [[ -z "$*" ]] && REMKER=$( ls /boot/*${KERNEL}* )
+
+    [[ "${KERNEL}" == "old" ]] && REMKER=$( ls /boot/*old )
+
+    if [[ -n "${REMKER}" ]]; then
+        echo "Okay to remove these files from '/boot'?"
+        echo "${REMKER}"
+
+        read -p "(y/N)? " UINPUT
+        UINPUT=$( printf "%s" "${UINPUT,,}" | cut -c 1 )
+
+        if [[ "${UINPUT}" == "y" ]]; then
+
+          echo "${REMKER}" | while read -r KERNEL_FILE; do
+            sudo rm -rf "${KERNEL_FILE}"
+          done
+
+        fixroot
+        fi
+
+        __Display_Kernel_Files
+        __Display_Required_Notifications
+        return
+    fi
+
+    # Otherwise, if there is a list following, then assume this is a kernel
+    # number following by a set of patch numbers; accumulate these into a
+    # single string list for 'apt-get' to purge:
+    #
+    KERNEL_LIST=()
+    PKG_LIST=()
+
+    for PATCHLEVEL in "$@"; do
+        
+        # Form the kernel-patch number, e.g., 4.15.0-39
+        #
+        KERNEL_LIST+=( "${KERNEL}-${PATCHLEVEL}" )
+        
+        # Create a grep string for all possible packages of the above version:
+        #
+        PKG_GREP="(-image)?(-modules)?(-headers)?(-hwe)?(-tools)?(-extra)?"
+        PKG_GREP="\<linux${PKG_GREP}"
+        PKG_GREP="${PKG_GREP}-${KERNEL}-${PATCHLEVEL}"
+        PKG_GREP="${PKG_GREP}-?(generic|generic-pae|lowlatency)*"
+        
+        # Break out each package found (one per line) into array elements
+        #
+        while read -r PACKAGE; do
+            PKG_LIST+=( "${PACKAGE}" )
+            
+        done < <( dpkg -l | egrep -o "${PKG_GREP}" )
+    done
+
+    # If the resulting array is empty, then we didn't find anything...
+    #
+    if (( ${#PKG_LIST[@]} == 0 )); then
+        __Display_Kernel_Files
+        echo
+        echo "No kernel packages to remove !"
+        return
+    fi
+    
+    # One-by-one, assemble a single-line string of the packages:
+    #
+    PACKAGE_LIST=
+    for (( i=0; i<${#PKG_LIST[@]}; i+=1 )); do
+
+        PACKAGE_LIST="${PACKAGE_LIST} ${PKG_LIST[i]}"
+    done
+    
+    # Now as a unit, remove the obsolete packages:
+    #
+    sudo apt-get purge ${PACKAGE_LIST}
+    
+    # Ubuntu has a tendency to leave behind detritus from removed kernels...
+    #
+    for KERNEL in "${KERNEL_LIST[@]}"; do
+        sudo rm -rf /boot/*${KERNEL}*
+        sudo rm -rf /lib/modules/${KERNEL}*
+        sudo rm -rf /var/lib/initramfs-tools/${KERNEL}*
+    done
+
+    fixroot
+    __Display_Kernel_Files
+    __Display_Required_Notifications
+}
+
+################################################################################

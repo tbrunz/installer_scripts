@@ -1,0 +1,16 @@
+# /etc/fstab
+#
+#
+# 1. Create '/srv/Mounts/' and copy "MULTIBOOT_64.img" there; 
+#
+# 2. Create '/srv/MULTIBOOT_64/' to serve as a mount point;
+#
+# 3. Add the following line to '/etc/fstab' to auto-mount on boot;
+#    (Note that you need to change "user" to match your username);
+#
+# 4. Suggest adding a softlink in '/home/user/' to point to the mount;
+#    (The 'sync' scripts assume "ln -s /srv/MULTIBOOT_64 ~/a64");
+#
+#
+/srv/Mounts/MULTIBOOT_64.img      /srv/MULTIBOOT_64      vfat    loop,offset=1048576,uid=user,gid=user,umask=007  0  0
+#

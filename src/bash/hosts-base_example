@@ -1,0 +1,42 @@
+#
+# hosts file for internal LAN
+# 
+# Last update 20 MAY 2019
+# This update 03 OCT 2019
+
+# Be sure to synchronize the set of 'hosts' files with 
+# configuration files for GUFW, FWKNOP, and SSH.
+#
+# Note: The domain for the home network is 'example.com'
+#
+# Test IP = http://18.62.0.96/ = http://www.eecs.mit.edu/
+#
+127.0.0.1	localhost	localhost.localdomain
+::1		localhost6	localhost6.localdomain6
+
+
+# Project-specific (temporary) hosts
+#
+
+
+
+# Non-project-specific (permanent) hosts
+#
+
+
+
+# Lost w/ DNS issues
+#
+
+
+
+# Additional host blocking
+#
+127.1.1.1       tiny.cc
+
+
+# DNS Servers
+#
+
+
+
