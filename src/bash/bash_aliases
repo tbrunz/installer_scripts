@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------------
 # bash 'aliases' file
 # ----------------------------------------------------------------------------
+#
 
 #
 # This file is automatically sourced from the '~/.bashrc' file,
@@ -15,8 +16,8 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
-echo "Last update 16 NOV 2019 "
-echo "This update 24 NOV 2019 "
+echo "Last update 24 NOV 2019 "
+echo "This update 14 DEC 2019 "
 }
 
 __alist_linux_1() {
@@ -2137,18 +2138,86 @@ killfire() {
 # Display any required actions based on files in '/run'
 #
 __Display_Kernel_Files() {
-    local VBOX_GUEST_ADDITIONS_DIR=/opt/VBoxGuestAdditions
+    local VBOX_GUEST_ADDS_DIR=/opt/VBoxGuestAdditions
     ls -lF /boot
     ls -lF /usr/src
     
-    ll -d ${VBOX_GUEST_ADDITIONS_DIR}* &> /dev/null
-    (( $? == 0 )) && ls -dl ${VBOX_GUEST_ADDITIONS_DIR}*
+    ll -d "${VBOX_GUEST_ADDS_DIR}"* &> /dev/null
+    (( $? == 0 )) && ls -dl "${VBOX_GUEST_ADDS_DIR}"*
     
     uname -r
 }
 
 __Display_Required_Notifications() {
     [[ -d /run ]] && ls -1 /run/ | grep required
+}
+
+################################################################################
+#
+# Repair failure of VirtualBox Guest's 'vboxsf' kernel module to install
+#
+fixv() {
+    local SHARE_NAME=Host
+    local MOUNT_POINT=/media/sf_host
+    local GUEST_USER=user
+    local VBOX_MODULE=vboxsf
+    local VBOX_GUEST_ADDS_DIR=/opt/VBoxGuestAdditions
+    
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+    
+    # This module does not get installed on the host platform!
+    RESULT=$( ls "${VBOX_GUEST_ADDS_DIR}"* )
+    if (( $? != 0 )); then
+        echo 1>&2 "error: this script is not for the Vbox host OS ! "
+        return -1
+    fi
+
+    # Did the vbox module install correctly?
+    RESULT=$( lsmod | grep "${VBOX_MODULE}" )
+
+    if (( $? != 0 )); then
+        #
+        # No; Install the vbox module:
+        RESULT=$( sudo modprobe -a "${VBOX_MODULE}" )
+        if (( $? != 0 )); then
+            echo 1>&2 "error: Can't install '${VBOX_MODULE}' ! "
+            return -1
+        fi
+        
+        RESULT=$( lsmod | grep "${VBOX_MODULE}" )
+        if (( $? != 0 )); then
+            echo 1>&2 "error: '${VBOX_MODULE}' did not install ! "
+            return -1
+        fi
+    fi
+    
+    # Is the shared folder already mounted?
+    ll -d "${MOUNT_POINT}"/* &> /dev/null
+    if (( $? == 0 )); then
+        echo "ll ${MOUNT_POINT}"
+        ll "${MOUNT_POINT}"
+        return
+    fi
+    
+    # Mount it & check that it mounts correctly:
+    sudo mount -t vboxsf -o uid=${GUEST_USER},gid=${GUEST_USER} \
+        "${SHARE_NAME}" "${MOUNT_POINT}"
+    
+    if (( $? != 0 )); then
+        echo 1>&2 "error: '${SHARE_NAME}' did not mount on '${MOUNT_POINT}' ! "
+        return -1
+    fi
+    
+    # Really, did it?
+    ll -d "${MOUNT_POINT}"/* &> /dev/null
+    
+    if (( $? != 0 )); then
+        echo 1>&2 "error: '${SHARE_NAME}' mis-mounted on '${MOUNT_POINT}' ! "
+        return -1
+    fi
+    
+    echo "ll ${MOUNT_POINT}"
+    ll "${MOUNT_POINT}"
 }
 
 ################################################################################
