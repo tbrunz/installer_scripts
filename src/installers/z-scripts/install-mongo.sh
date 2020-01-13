@@ -61,9 +61,9 @@ EDIT_COMMAND="
 "
 
 TEST_RESPONSE="
-        admin  0.000GB
+        admin   0.000GB
         config  0.000GB
-        local  0.000GB
+        local   0.000GB
 "
 
 if (( MAJOR < 17 )); then
@@ -122,7 +122,7 @@ ${EDIT_COMMAND}
         sudo systemctl status ${SERVICE_NAME}
 
 * Connect without credentials to verify actions are restricted.  The 'show'
-  command should throw a 'not authorized on admin to execute command' error:
+  command should throw an 'Unauthorized' error:
         mongo
         > show dbs
 

@@ -79,28 +79,14 @@ fi
 #
 ICON_DIR_NAME="icons"
 #ICON_FILE_NAME="pharo-launcher.png"
-ICON_FILE_NAME="Pharo.png"
+ICON_FILE_NAME="PharoIOT.png"
 
 LAUNCHER_DIR_PATH=~/.local/share/applications
 
 # Determine which package to install -- for the dev host or for the SBC server?
 #
-PROMPT="Do you want to install the host or server image? [H/s] "
-DEFAULT='h'
-unset REPLY
-unset INSTALL_HOST
-until [[ "${REPLY}" == "h" || "${REPLY}" == "s" ]]; do
-
-    read -e -r -p "${PROMPT}"
-
-    if [[ -z "${REPLY}" ]]
-    then
-        REPLY=${DEFAULT}
-    else
-        REPLY=${REPLY:0:1}
-        REPLY=${REPLY,,}
-    fi
-done
+Get_YesNo_Defaulted "[h/s]" -h \
+    "Do you want to install the host or server image?"
 
 [[ "$REPLY" == "h" ]] && INSTALL_HOST=true
 

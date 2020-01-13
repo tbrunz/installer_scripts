@@ -68,6 +68,7 @@ if [[ ${ARCH} =~ "64" ]]; then
     sudo dpkg --add-architecture i386
 
     PACKAGE_SET="${PACKAGE_SET}
+    libavfilter6:i386  libavformat57:i386  libtesseract4:i386  
     libfontconfig1:i386  libgphoto2-6:i386  libgphoto2-port12:i386
     libgsm1:i386  libmpg123-0:i386  libopenal1:i386  libosmesa6:i386
     libsane:i386  libtiff5:i386  libv4l-0:i386  libxcomposite1:i386
@@ -94,14 +95,14 @@ if (( MAJOR < 18 )); then
     libchromaprint0:i386  libopencv-contrib2.4v5:i386  
     libopencv-highgui2.4v5:i386  libopencv-legacy2.4v5:i386  
     libopencv-objdetect2.4v5:i386  libsidplay1v5:i386  "
+else
+    REPO_NAME="sdl2-backport"
+    REPO_URL="ppa:cybermax-dexter/sdl2-backport"
+    REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"
 fi
 
 #SIGNING_KEY=https://dl.winehq.org/wine-builds/Release.key
 #SIGNING_KEY=../wine/winehq.key
-
-REPO_NAME="sdl2-backport"
-REPO_URL="ppa:cybermax-dexter/sdl2-backport"
-REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"
 
 SOURCE_GLOB="*deb"
 

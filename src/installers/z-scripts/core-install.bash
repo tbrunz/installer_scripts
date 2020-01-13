@@ -415,7 +415,7 @@ if [[ -z "${3}" ]]; then
 elif [[ -z "${4}" ]]; then
     USER=$( printf "%s" "${3}" | cut -d ':' -f 1 )
     GROUP=$( printf "%s" "${3}" | cut -d ':' -f 2 )
-    
+
     sudo chown ${USER}:${GROUP} ${1}
 else
     sudo chown ${3}:${4} ${1}
@@ -549,34 +549,119 @@ exit 0
 
 ############################################################################
 #
-# Display a prompt asking a Yes/No question, repeat until a valid input
+# Test to see if $1 is a member of $2
 #
-# Allows for a blank input to be defaulted.  Automatically appends "(y/n)"
-# to the prompt, capitalized according to the value of DEF_INPUT
-#
-# $1 = Default input, (y|n|<don't care>)
-# $2 = Prompt
-#
-# Returns 0 if Yes, 1 if No
-#
-Get_YesNo_Defaulted() {
-    local DEFAULT=${1##-}
-    local PROMPT=${2}
+isSubString () {
+    local SUB=${1}
+    local STR=${2}
 
-    DEFAULT=${DEFAULT,,}
-    DEFAULT=${DEFAULT:0:1}
+    [[ -z "${SUB}" ]] && return 0
+    [[ -z "${STR}" ]] && return 1
 
-    case ${DEFAULT} in
-    y )
-        PROMPT=${PROMPT}" [Y/n] "
-        ;;
-    n )
-        PROMPT=${PROMPT}" [y/N] "
-        ;;
-    * )
-        PROMPT=${PROMPT}" "
-        ;;
-    esac
+    printf "%s" "${STR}" | grep -i "${SUB}" &>/dev/null
+}
+
+
+############################################################################
+#
+# Convert the argument from '-Xyz' to 'x', 'A' to 'a', '' to ''
+#
+GetOpt () {
+    local OPT=${1}
+
+    if [[ -n "${OPT}" ]]; then
+        OPT=${OPT##-}
+        OPT=${OPT,,}
+        OPT=${OPT:0:1}
+    fi
+
+    printf "%s" "${OPT}"
+}
+
+
+############################################################################
+#
+# Display a prompt asking for a one-char response, repeat until a valid input
+#
+# Automatically appends the default to the prompt, capitalized.
+# Allows for a blank input, which is interpreted as the default.
+#
+# $1 = Default input (-x | x) | List of options | Prompt
+# $2 = list of [<options>] | Prompt
+# $3 = Prompt
+#
+# Returns 0 if input==default, 1 otherwise
+# The first character of the user's input, lowercased, goes into $REPLY
+#
+# GetUserChoice --> "Continue? [Y/n]"
+# GetUserChoice "<prompt>" --> "<prompt> [Y/n]"
+# GetUserChoice (y|n|-y|-n) "<prompt>" --> "<prompt> ([Y/n]|[y/N])"
+#
+# GetUserChoice "[<list>]" "<prompt>" --> "<prompt> [<list>]"
+#     No default; requires an input in the list, returned in $REPLY
+#
+# GetUserChoice <def> "[<list>]" "<prompt>" --> "<prompt> [<list>]"
+#     Defaulted input; requires an input in the list, returned in $REPLY
+#
+Get_YesNo_Defaulted () {
+    local OPTIONS
+    local DEFAULT="y"
+    local PROMPT
+
+    if (( $# == 0 )); then
+        PROMPT="Continue?"
+
+    elif (( $# == 1 )); then
+        PROMPT=${1}
+
+    elif (( $# == 2 )); then
+        PROMPT=${2}
+        DEFAULT=$( GetOpt "${1}" )
+
+        if [[ "${DEFAULT}" == "[" ]]; then
+            DEFAULT=
+            OPTIONS=${1}
+            OPTIONS=${OPTIONS##[}
+            OPTIONS=${OPTIONS%%]}
+        fi
+    else
+        PROMPT=${3}
+        DEFAULT=$( GetOpt "${1}" )
+        OPTIONS=${2}
+
+        if [[ "${DEFAULT}" == "[" ]]; then
+            DEFAULT=$( GetOpt "${2}" )
+            OPTIONS=${1}
+        fi
+
+        OPTIONS=${OPTIONS##[}
+        OPTIONS=${OPTIONS%%]}
+
+        isSubString "${DEFAULT}" "${OPTIONS}"
+        (( $? == 0 )) || DEFAULT=
+    fi
+
+    if [[ ${OPTIONS} ]]; then
+        OPTIONS=${OPTIONS,,}
+
+        if [[ ${DEFAULT} ]]; then
+            OPTIONS=${OPTIONS/${DEFAULT}/${DEFAULT^}}
+        fi
+
+        PROMPT=${PROMPT}" [${OPTIONS}] "
+    else
+        case ${DEFAULT} in
+        y )
+            PROMPT=${PROMPT}" [Y/n] "
+            ;;
+        n )
+            PROMPT=${PROMPT}" [y/N] "
+            ;;
+        * )
+            PROMPT=${PROMPT}" [${DEFAULT^}]"
+            ;;
+        esac
+    fi
 
     unset REPLY
     until [[ "${REPLY}" == "y" || "${REPLY}" == "n" ]]; do
@@ -587,8 +672,16 @@ Get_YesNo_Defaulted() {
         then
             REPLY=${DEFAULT}
         else
-            REPLY=${REPLY:0:1}
-            REPLY=${REPLY,,}
+            REPLY=$( GetOpt "${REPLY}" )
+            [[ "${REPLY}" == "/" ]] && REPLY=
+        fi
+
+        if [[ ${OPTIONS} && -n "${REPLY}" ]]; then
+            isSubString "${REPLY}" "${OPTIONS}"
+
+            if (( $? == 0 )); then return
+            else REPLY=
+            fi
         fi
     done
 

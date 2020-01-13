@@ -95,17 +95,16 @@ if [[ "${FLAVOR}" == "xfce" ]]; then
     done
 fi
 
-: <<'__COMMENT'
-# Are we a Zesty (or ???) installation?
+# Are we a Xenial (or later) installation?
 #
-if [[ ${RELEASE} =~ "17.04" ]]; then
+if (( MAJOR >= 16 )); then
 
-PACKAGE_SET="${PACKAGE_SET}
-%%
-%SPECIFIC TO UBUNTU 16.04:%
-    "
+    for PACKAGE_TO_RETRACT in ntp
+    do
+        PACKAGE_SET=$( printf %s "${PACKAGE_SET}" | \
+               sed -e "s/  ${PACKAGE_TO_RETRACT}//" )
+    done
 fi
-__COMMENT
 
 # Are we a Trusty (or later) installation?
 #

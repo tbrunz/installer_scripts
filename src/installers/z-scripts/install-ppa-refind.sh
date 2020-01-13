@@ -45,7 +45,67 @@ Features:
     * Secure Boot support (requires separate shim or PreLoader program).
     * Includes EFI drivers for ext2/3/4fs, ReiserFS, Btrfs, HFS+, and ISO-9660.
 
+Refer to the post-install notes regarding important requirements & procedures.
+
 http://www.rodsbooks.com/refind/
+"
+
+POST_INSTALL="
+Note the following requirements & procedures for enabling rEFInd to boot Linux:
+
+    * NOTE! If you are installing your Linux distro using LVM, and plan to boot 
+      with rEFInd using a stub loader, you *MUST* create a separate non-LVM boot 
+      partition to be mounted as '/boot'.  Although GRUB is now able to read LVM 
+      partitions to find Linux root file systems, rEFInd is currently unable to 
+      do so.  rEFInd can read most of the popular Linux & non-Linux file system 
+      formats, but only in static partitions.  No LVM logical volumes will be 
+      searched by rEFInd on bootup.
+          
+    * Given the above, if RAID is to be used for the installation, then the boot 
+      partition must be built using RAID-1 with --metadata=0.90 so that rEFInd 
+      can read a single mirror as though it were a non-RAID partition.  (This is 
+      also the appropriate RAID configuration for allowing the system to boot if 
+      one of its boot partition RAID-1 mirrors were to fail.)
+    
+    * The Ubuntu installer application, Ubiquity, can install Ubuntu with either 
+      a GRUB boot loader or a UEFI boot loader, depending on whether or not the 
+      installer itself was booted using UEFI.  However, Ubiquity cannot install 
+      rEFInd (or detect it) as part of its installation process; it installs a 
+      'shim loader' to be compatible with Secure Boot (assumed to be enabled). 
+      
+    * Consequently, rEFInd must be installed manually.  The best time to do this 
+      is after the OS has been installed, but prior to the first 'boot into your 
+      new operation system' event.  This implies that you should install Ubuntu 
+      by booting into 'Try Ubuntu' mode rather than selecting 'Install Ubuntu'.  
+      In this way, you have the Ubuntu GUI to use in defining/inspecting disk 
+      partitions, installing Ubuntu, downloading/installing rEFInd, & verifying 
+      the entire configuration before your first reboot.
+    
+    * After the OS has been installed and rEFInd has been installed (using this 
+      script), you may need to reconfigure your system's NVRAM to point to the 
+      rEFInd bootloader.  (Until then, both Windows' and Ubuntu's bootloaders 
+      will compete for booting the system exclusively.)  Details on how to edit 
+      your NVRAM depends on your system's UEFI BIOS; refer to your system's 
+      documentation for these procedures.
+    
+    * When the rEFInd boot manager is launched by the UEFI BIOS, it will look 
+      for loadable OSes and their boot loaders; this includes 'stub loaders' for
+      loading Linux distros.  (This is the easiest way to specify Linux OSes for
+      loading in UEFI.)  These stub loaders are text files that must be copied 
+      into each Linux distro's '/boot' directory, then customized to locate the 
+      distro's root partition.  Note that neither the rEFInd installer nor this 
+      script will automatically install these stub loaders.  You must do this as 
+      a manual post-install step.
+    
+    * A template stub loader, 'installers/linux/refind/refind_linux.conf', can 
+      be copied to '/boot' & edited for this purpose.  This template allows for 
+      Linux root partitions to be installed in either static partitions or in 
+      LVM logical volumes.  Uncomment the appropriate pair of lines and edit 
+      the '%<partition-spec>%' variables to match your system's installation 
+      location.  The first quoted string in each line provides a name that will
+      be used by rEFInd to display a boot option; if selected, the remainder of 
+      the line will be passed to the kernel as the 'cmdline' string (which can 
+      be displayed post-boot using 'cat /proc/cmdline').
 "
 
 SET_NAME="rEFInd"

@@ -339,7 +339,8 @@ fi
 if [[ ${ERR} == true ]]; then
 
     echo 1>&2 -n "usage: ${SCRIPT} [ update | "
-    echo 1>&2    "[ to | from [[<user>@]host:]<dir> ] [-n] [-c] [-m] [<port>] "
+    echo 1>&2 -n "[ to | from [[<user>@]host:]<dir> ] "
+    echo 1>&2    "[-d <path> | [-n] [-c] [-m] [<port>]] "
     exit ${ERR_USAGE}
 fi
 

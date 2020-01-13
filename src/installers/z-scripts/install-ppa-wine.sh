@@ -184,9 +184,11 @@ fi
 #
 # Install the SDL2 backport (Ubuntu dropped 'libfaudio0' from its repos):
 #
-REPO_NAME="sdl2-backport"
-REPO_URL="ppa:cybermax-dexter/sdl2-backport"
-REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"
+if (( MAJOR > 16 )); then
+    REPO_NAME="sdl2-backport"
+    REPO_URL="ppa:cybermax-dexter/sdl2-backport"
+    REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"
+fi
 
 PerformAppInstallation "-r" "$@"
 
