@@ -57,7 +57,7 @@ https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-mongo
 EDIT_COMMAND="
 * Edit the MongoDB configuration file to enable authentication;
   Find the line '#auth = true' and remove the '#' character, then save:
-        sudo vi /etc/mongod.conf
+        sudo vi /etc/mongodb.conf
 "
 
 TEST_RESPONSE="

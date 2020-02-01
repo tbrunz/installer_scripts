@@ -73,7 +73,7 @@ libudf0  udftools  nmap  zenmap  kpartx  testdisk
 seahorse-nautilus
 %%
 %APPLICATIONS:%
-dillo  elinks  elinks-doc  grpn  cheese
+dillo  lynx  links  links2  grpn  cheese
 gnumeric-plugins-extra %(installs all of Gnumeric)%
 abiword-plugin-grammar %(installs all of AbiWord)%  "
 

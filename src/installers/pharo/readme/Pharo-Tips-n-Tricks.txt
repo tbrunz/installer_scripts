@@ -1,0 +1,16 @@
+
+Pharo - Tips & Tricks
+===============================================================================
+
+-----
+
+Scaling for HiDPI in Pharo:
+Evaluating "MenubarMorph reset" will fix the menu bar scaling factor.  
+There's a SQUEAK_FAKEBIGCURSOR env var which you can set to 1 to have the VM 
+display the cursor twice as big as normal. I've no idea why the word 'FAKE' is 
+part of this; from the source it looks like it just creates a normal X11 cursor 
+that's twice as big as normal. This should work with Cuis, Squeak, and Pharo, 
+as it's part of the VM.
+
+-----
+

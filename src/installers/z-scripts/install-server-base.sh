@@ -51,25 +51,23 @@ PACKAGE_SET="
     libudf0  udftools  cryptsetup  pmount
 
 %APPLICATIONS:%
-    elinks  elinks-doc  "
+    lynx  links  links2  elinks  elinks-doc  "
 
 #
 # Add items for specific distros:
 #
 GetOSversion
 
-# Adjustments for Vivid & later
+# Are we a Xenial (or later) installation?
 #
-: <<'__COMMENT'
-if (( MAJOR > 14 )); then
+if (( MAJOR >= 16 )); then
 
-    for PACKAGE_TO_RETRACT in  <put packages here>
+    for PACKAGE_TO_RETRACT in ntp
     do
         PACKAGE_SET=$( printf %s "${PACKAGE_SET}" | \
-               sed -e "s/${PACKAGE_TO_RETRACT}//" )
+               sed -e "s/  ${PACKAGE_TO_RETRACT}//" )
     done
 fi
-__COMMENT
 
 #
 # Strip out (only) the individual '%' characters for usage display,
