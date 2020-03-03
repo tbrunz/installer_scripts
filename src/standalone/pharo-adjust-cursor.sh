@@ -3,24 +3,20 @@
 echo 1>&2 "This script isn't finished yet!"
 #exit 1
 
-# Tags to match in file names that will uniquely indentify the type of
-# Pharo application a directory holds, such as Pharo Launcher and Pharo IOT:
-LAUNCHER_TAG="launcher"
-THINGS_TAG="Things"
-
-# Create an associative array of the Pharo application tags to allow
-# use of a loop to locate a matching application file name.
+# Create an associative array of tags to be matched in file names, which
+# will uniquely indentify the type of Pharo application a directory holds.
+# An array will allow use of a loop to locate the matching app file names.
 declare -A PHARO_APP_KEYWORDS=(
-    ["KEYWORD_APP_PHARO_LAUNCHER"]=${LAUNCHER_TAG}
-    ["KEYWORD_APP_PHARO_THINGS"]=${THINGS_TAG}
+    ["KEYWORD_APP_PHARO_LAUNCHER"]="launcher"
+    ["KEYWORD_APP_PHARO_THINGS"]="Things"
 )
 
 # Create an associative array of Pharo application name scrings.
 # These allow us to translate a tag that matches a file name to a
 # string which is more suitable for use in user messages.
 declare -A PHARO_APP_NAMES=(
-    [ ${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]} ]="Pharo Launcher"
-    [ ${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]} ]="Pharo IoT"
+    ["${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}"]="Pharo Launcher"
+    ["${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}"]="Pharo IoT"
 )
 
 # Create an associative array of file names of the bash scripts that
@@ -253,19 +249,43 @@ PharoUI_RemoveBigCursor () {
 # The keys to these will be assembled dynamically at run-time and
 # used to select the function for modifying the target bash script.
 #
-declare -A CONVERSIONS=(
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}]="PharoLauncher_InstallBigCursor"
+declare -A CONVERSIONS
 
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}]="PharoLauncher_RemoveBigCursor"
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
 
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}]="PharoIOT_InstallBigCursor"
+CONVERSIONS[${KEY}]="PharoLauncher_InstallBigCursor"
 
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}]="PharoIOT_RemoveBigCursor"
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
 
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}]="PharoUI_InstallBigCursor"
+CONVERSIONS[${KEY}]="PharoLauncher_RemoveBigCursor"
 
-    [${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}]="PharoUI_RemoveBigCursor"
-)
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+
+CONVERSIONS[${KEY}]="PharoIOT_InstallBigCursor"
+
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+
+CONVERSIONS[${KEY}]="PharoIOT_RemoveBigCursor"
+
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+
+CONVERSIONS[${KEY}]="PharoUI_InstallBigCursor"
+
+       KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
+KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}
+KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+
+CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 
 
 ###############################################################################
