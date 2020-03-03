@@ -24,6 +24,15 @@ GetOSversion
 
 ##############################################################################
 #
+# Disable the "you can upgrade your distro now" nag-mails.
+#
+QualifySudo
+[[ -f "/etc/update-motd.d/91-release-upgrade" ]] && \
+    sudo chmod -x /etc/update-motd.d/91-release-upgrade
+
+
+##############################################################################
+#
 # Fix the bad icon reference for the 'grpn' calculator app,
 # (Only if it's actually installed, of course.)
 #
