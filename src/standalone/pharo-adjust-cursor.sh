@@ -92,7 +92,7 @@ Warn_If_Not_Pharo_Directory () {
     # application directory, then we "fail to warn".  Having
     # already matched an application keyword in a filename is
     # a sufficient indication of this situation.
-    [[ ${THIS_APP_KEYWORD} ]] && return 1
+    [[ -n "${THIS_APP_KEYWORD}" ]] && return 1
 
     # If this is not a Pharo app directory, then we require the
     # working directory to have at least one subdirectory;
@@ -154,18 +154,19 @@ Ensure_is_a_Directory () {
 VM_TAG="vm"
 
 Ensure_is_Not_a_VM_Directory () {
+    local THIS_DIR=${1}
     local ERROR_MSG
 
     # First, we must have an argument, and it must be a directory path:
-    Ensure_is_a_Directory "${1}"
+    Ensure_is_a_Directory "${THIS_DIR}"
 
     # Additionally, the path must not match a string indicating a Pharo VM.
-    [[ ! "${1}" =~ ${VM_TAG} ]] && return
+    [[ ! "${THIS_DIR}" =~ ${VM_TAG} ]] && return
 
     # If it appears to be a VM path, warn the user and continue.
-    printf -v ERROR_MSG "%s \n%s \n" \
-        "Directory ${1} appears to be a virtual machine directory" \
-        "and so will be ignored... "
+    printf -v ERROR_MSG "%s %s \n" \
+        "Ignoring directory '${THIS_DIR}':" \
+        "virtual machine directory?"
 
     Display_Error "${ERROR_MSG}"
 }
@@ -365,7 +366,7 @@ Examine_Directory () {
             # If it's a directory, do NOT accumulate it in the list of
             # subdirectories UNLESS we're examining a top-level directory.
             # Otherwise, we would clobber an array being used in a loop!
-            [[ ! ${TOP_LEVEL} ]] && SUBDIRECTORIES+=( "${FILE_PATH}" )
+            [[ -n "${TOP_LEVEL}" ]] && SUBDIRECTORIES+=( "${FILE_PATH}" )
         else
             PHARO_FILE_PATHS+=( "${FILE_PATH}" )
         fi
@@ -415,7 +416,7 @@ Process_Pharo_Files () {
     # one bash script.  Process the set, modifying those scripts that we
     # recognize, according to the user's action and the script type.
     for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
-        Edit_Pharo_Script "${FILE_PATH}" || return 1
+        Edit_Pharo_Script "${FILE_PATH}"
     done
 }
 
@@ -430,7 +431,7 @@ Process_Subdirectories () {
     # subdirectories of other Pharo applications.  Having matched a
     # Pharo application keyword previously is sufficient indication
     # of this situation, so just ignore any subdirectories & return.
-    [[ ${THIS_APP_KEYWORD} ]] && return 2
+    [[ -n "${THIS_APP_KEYWORD}" ]] || return 2
 
     # Otherwise, we require that at least one subdirectory exists to
     # examine recursively.  If none were found, we're not able to
@@ -440,7 +441,7 @@ Process_Subdirectories () {
     # Important: Since we're about to recur into a set of subdirectories,
     # we *must* set a flag to *not* mess with ${SUBDIRECTORIES[@]},
     # because we're using it here to track our recursions.
-    TOP_LEVEL=false
+    TOP_LEVEL=
     for SUBDIRECTORY in "${SUBDIRECTORIES[@]}"; do
         # Examine each subdirectory, one-by-one, but only check the
         # bash scripts we find in them; do not recur further into any
