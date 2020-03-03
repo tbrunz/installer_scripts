@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 #
 echo 1>&2 "This script isn't finished yet!"
-#exit 1
+
 
 # Create an associative array of tags to be matched in file names, which
 # will uniquely indentify the type of Pharo application a directory holds.
@@ -73,8 +73,9 @@ Warn_If_Directory_Not_Writable () {
     local SCRIPT_PATH=${1}
     local ERROR_MSG
 
-    ERROR_MSG="Cannot write files in directory"
-    ERROR_MSG="${ERROR_MSG} '$( dirname "${SCRIPT_PATH}" )'! Skipping... "
+    printf -v ERROR_MSG "%s %s \n" \
+        "Cannot write files in directory" \
+        "'$( dirname "${SCRIPT_PATH}" )'! Skipping..."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -104,8 +105,10 @@ Warn_If_Not_Pharo_Directory () {
     # it has no subdirectories -- this is an error condition,
     # so display the error and return 0 to trigger follow-on
     # error handling:
-    ERROR_MSG="Directory '${WORKING_DIRECTORY}' does not appear to be a Pharo"
-    ERROR_MSG="${ERROR_MSG} directory and has no Pharo subdirectories! "
+    printf -v ERROR_MSG "%s %s \n%s \n" \
+        "Directory '${WORKING_DIRECTORY}'" \
+        "does not appear to be a Pharo directory." \
+        "(Nor does it have any Pharo subdirectories.)"
 
     Display_Error "${ERROR_MSG}"
 }
@@ -123,9 +126,10 @@ Warn_If_App_Without_Scripts () {
 
     # Otherwise, assemble a descriptive warning message and display it.
     # Name the directory and say which Pharo app we believe it contains.
-    ERROR_MSG="Directory '${WORKING_DIRECTORY}' appears to be a"
-    ERROR_MSG="${ERROR_MSG} ${PHARO_APP_NAMES[ ${THIS_APP_KEYWORD} ]}"
-    ERROR_MSG="${ERROR_MSG} directory, but it doesn't have any scripts! "
+    printf -v ERROR_MSG "%s %s \n%s \n" \
+        "Directory '${WORKING_DIRECTORY}' appears to be a" \
+        "${PHARO_APP_NAMES[ ${THIS_APP_KEYWORD} ]}" \
+        "directory, but it doesn't have any scripts!"
 
     Display_Error "${ERROR_MSG}"
 }
@@ -159,8 +163,9 @@ Ensure_is_Not_a_VM_Directory () {
     [[ ! "${1}" =~ ${VM_TAG} ]] && return
 
     # If it appears to be a VM path, warn the user and continue.
-    ERROR_MSG="Directory ${1} appears to be a virtual machine directory"
-    ERROR_MSG="${ERROR_MSG} and so will be ignored... "
+    printf -v ERROR_MSG "%s \n%s \n" \
+        "Directory ${1} appears to be a virtual machine directory" \
+        "and so will be ignored... "
 
     Display_Error "${ERROR_MSG}"
 }
@@ -410,10 +415,7 @@ Process_Pharo_Files () {
     # one bash script.  Process the set, modifying those scripts that we
     # recognize, according to the user's action and the script type.
     for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
-        #Edit_Pharo_Script "${FILE_PATH}" || return 1
-        Edit_Pharo_Script "${FILE_PATH}"
-        (( $? == 0 )) && continue
-        Display_Error "Failed edit for '${FILE_PATH}'... "
+        Edit_Pharo_Script "${FILE_PATH}" || return 1
     done
 }
 
@@ -473,5 +475,12 @@ Main () {
     Process_Pharo_Files
     Process_Subdirectories
 }
+
+
+# Debug code -- this needs to be prompted for or read from the CLI.
+SCRIPT_EDIT_ACTION=${1}
+
+[[ -n "${SCRIPT_EDIT_ACTION}" ]] || \
+    SCRIPT_EDIT_ACTION=${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
 
 Main
