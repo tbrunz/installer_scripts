@@ -38,9 +38,9 @@ declare -A PHARO_SCRIPT_NAMES=(
 
 # Create an associative array of arbitrary tags that will be used to
 # select the editing action for bash scripts that are to be modified.
-declare -A PHARO_EDIT_ACTIONS=(
-    ["INSERT_BIG_CURSOR"]="insert"
-    ["REMOVE_BIG_CURSOR"]="remove"
+declare -A SCRIPT_EDIT_ACTIONS=(
+    ["INSERT_BIG_CURSOR"]="inserted"
+    ["REMOVE_BIG_CURSOR"]="removed"
 )
 
 
@@ -126,15 +126,14 @@ Warn_of_Bad_Return_Code () {
 #
 # Notify the user of files that we're modifying.
 #
-Notify_of_File_Being_Modified () {
+Notify_of_File_Modified () {
     local FILE_PATH=${1}
+    local EDIT_RESULT=${2}
 
-    if [[ -n "${FILE_PATH}" ]]
-    then
-        echo "Editing file '${FILE_PATH}'... "
-    else
-        Display_Error "File name required! "
-    fi
+    [[ -z "${FILE_PATH}" ]] && \
+        Warn_of_Bad_Argument "Notify_of_File_Modified" && return
+
+    echo "Editing file '${FILE_PATH}'...  ${EDIT_RESULT}."
 }
 
 
@@ -340,37 +339,37 @@ declare -A CONVERSIONS
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoLauncher_InstallBigCursor"
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_LAUNCHER"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_LAUNCHER"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoLauncher_RemoveBigCursor"
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoIOT_InstallBigCursor"
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_APP"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoIOT_RemoveBigCursor"
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoUI_InstallBigCursor"
 
        KEY=${PHARO_APP_KEYWORDS["KEYWORD_APP_PHARO_THINGS"]}
 KEY=${KEY}_${PHARO_SCRIPT_NAMES["SCRIPT_NAME_PHARO_THINGS_GUI"]}
-KEY=${KEY}_${PHARO_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+KEY=${KEY}_${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
 
 CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 
@@ -382,6 +381,7 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 Edit_Pharo_Script () {
     local SCRIPT_PATH=${1}
     local SCRIPT_NAME
+    local BACKUP_PATH
     local EDIT_FUNCTION_KEY
     local EDIT_FUNCTION
 
@@ -401,23 +401,38 @@ Edit_Pharo_Script () {
     [[ -n "${EDIT_FUNCTION}" ]] || return $IGNORED
 
     # Make a name for backing up the script file before editing.
+    BACKUP_PATH=${SCRIPT_PATH}.$( date +%s )
+
     # Back up the script file here instead of via 'sed',
     # so we only need this code in one place.
-    cp -a "${SCRIPT_PATH}" "${SCRIPT_PATH}.$( date +%s )"
+    cp -a "${SCRIPT_PATH}" "${BACKUP_PATH}"
 
     # If that failed, we won't be able to edit the script either...
-    (( $? != 0 )) && Warn_Directory_Not_Writable "${SCRIPT_PATH}" && return $CANT_WRITE
-
-    # Echo the name of the script being modified, for reassurance.
-    Notify_of_File_Being_Modified "${SCRIPT_PATH}"
+    (( $? == 0 )) || return $CANT_WRITE
 
     # Here's the payoff, the moment we've been waiting for...
     SCRIPT_PATH_TO_EDIT=${SCRIPT_PATH}
     ${EDIT_FUNCTION}
 
-    # Enhancement: Compare the edit result to the backup file; if these
+    # If the edit failed, then return the error code it produced.
+    RESULT=$?
+    (( RESULT != 0 )) && return $RESULT
+
+    # Success! Compare the edit result to the backup file; if these
     # two files are identical, then delete the backup and display a
     # message that no change was made to the script file.
+    diff "${SCRIPT_PATH}" "${BACKUP_PATH}" &>/dev/null
+
+    if (( $? == 0 )); then
+        # Delete the backup and display a message that no change was made.
+        rm -f "${BACKUP_PATH}"
+        Notify_of_File_Modified "${SCRIPT_PATH}" \
+            "No changes made"
+    else
+        # Keep the backup & echo the name of the script being modified.
+        Notify_of_File_Modified "${SCRIPT_PATH}" \
+            "Code was ${SCRIPT_EDIT_ACTION}"
+    fi
 }
 
 
@@ -657,9 +672,17 @@ Main () {
 
 
 # Debug code -- this needs to be prompted for or read from the CLI.
-SCRIPT_EDIT_ACTION=${1}
+SCRIPT_EDIT_ACTION=${1,,}
 
-[[ -n "${SCRIPT_EDIT_ACTION}" ]] || \
-    SCRIPT_EDIT_ACTION=${PHARO_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+case ${SCRIPT_EDIT_ACTION:0:1} in
+    'i' )
+    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+    ;;
+    'r' )
+    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+    ;;
+    * )
+    Display_Error "Can't decipher action to take" && die
+esac
 
 Main
