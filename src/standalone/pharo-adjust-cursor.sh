@@ -38,6 +38,27 @@ declare -A PHARO_EDIT_ACTIONS=(
 
 ###############################################################################
 #
+# Return codes
+#
+SUCCESS=0
+NOT_APP=1
+IS_APP=2
+HAS_DIRS=3
+NO_DIRS=4
+VM_DIR=5
+
+
+###############################################################################
+#
+die () {
+    [[ -z "${1}" ]] && exit 1
+    (( ${1} == 0 )) && exit
+    exit ${1}
+}
+
+
+###############################################################################
+#
 # Echo the argument to the Standard Error stream.
 #
 Display_Error () {
@@ -49,7 +70,20 @@ Display_Error () {
 
     # Display the error message; if $2 is defined, the quit the script.
     echo 1>&2 "${ERROR_MSG}"
-    [[ -n "${EXIT_SIGNAL}" ]] && exit 1
+    [[ -n "${EXIT_SIGNAL}" ]] && die
+}
+
+
+###############################################################################
+#
+# Notify the user of what's likely a programming bug: Unexpected return code.
+#
+Warn_of_Bad_Return_Code () {
+    local FUNCTION_NAME=${1}
+
+    [[ -n "${FUNCTION_NAME}" ]] || FUNCTION_NAME="<unnamed function>"
+
+    Display_Error "Bad return code from '${FUNCTION_NAME}'!"
 }
 
 
@@ -73,7 +107,7 @@ Notify_of_File_Being_Modified () {
 #
 # Warn about directories that we don't have write permission for.
 #
-Warn_If_Directory_Not_Writable () {
+Warn_of_Directory_Not_Writable () {
     local SCRIPT_PATH=${1}
     local ERROR_MSG
 
@@ -120,9 +154,25 @@ Warn_If_Not_Pharo_Directory () {
 
 ###############################################################################
 #
+# Warn if the working directory appears to be a virtual machine directory.
+#
+Warn_of_Virtual_Machine_Directory () {
+    local ERROR_MSG
+
+    # If it appears to be a VM path, warn the user and continue.
+    printf -v ERROR_MSG "%s %s " \
+        "Ignoring directory '${WORKING_DIRECTORY}':" \
+        "virtual machine directory?"
+
+    Display_Error "${ERROR_MSG}" && return 1
+}
+
+
+###############################################################################
+#
 # Warn about recognized Pharo app directories that have no scripts in them.
 #
-Warn_If_App_Without_Scripts () {
+Warn_of_App_Without_Scripts () {
     local TARGET=${1}
     local ERROR_MSG
 
@@ -164,14 +214,7 @@ Ensure_is_Not_a_VM_Directory () {
     Ensure_is_a_Directory "${THIS_DIR}"
 
     # Additionally, the path must not match a string indicating a Pharo VM.
-    [[ ! "${THIS_DIR}" =~ ${VM_TAG} ]] && return
-
-    # If it appears to be a VM path, warn the user and continue.
-    printf -v ERROR_MSG "%s %s " \
-        "Ignoring directory '${THIS_DIR}':" \
-        "virtual machine directory?"
-
-    Display_Error "${ERROR_MSG}"
+    [[ "${THIS_DIR}" =~ ${VM_TAG} ]] && return 1
 }
 
 
@@ -357,7 +400,7 @@ Process_Pharo_Files () {
     # do here, since we won't modify scripts that are not the scripts
     # of a Pharo application.  This isn't fatal, and is expected,
     # so don't display a warning or quit; just move on to the next.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] || return 1
+    [[ -n "${PHARO_APP_KEYWORD}" ]] || return ${NOT_APP}
 
     # This is a directory that corresponds to a Pharo application
     # that we recognize.  Get its display name (for messages).
@@ -366,7 +409,7 @@ Process_Pharo_Files () {
     # If there aren't any files in this directory, issue a warning,
     # then abandon this directory and move on to the next one.
     (( ${#PHARO_FILE_PATHS[@]} < 1 )) && \
-        Warn_If_App_Without_Scripts "files" && return 1
+        Warn_of_App_Without_Scripts "files" && return 1
 
     # Since this directory contains files, we expect to find at least
     # one target bash script to edit.  Check if the list of files
@@ -389,7 +432,7 @@ Process_Pharo_Files () {
     # since we recognized this directory as a known Pharo application,
     # so there should have been at least one bash script to edit.
     (( NUM_PROCESSED < 1 )) && \
-        Warn_If_App_Without_Scripts "bash scripts" && return 1
+        Warn_of_App_Without_Scripts "bash scripts" && return 1
 }
 
 
@@ -403,7 +446,7 @@ Process_Subdirectories () {
     # subdirectories of other Pharo applications.  Having matched a
     # Pharo application keyword previously is sufficient indication
     # of this situation, so just ignore any subdirectories & return.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] && return 1
+    [[ -n "${PHARO_APP_KEYWORD}" ]] && Warn_If_Not_Pharo_Directory && return 1
 
     # Important: Since we're about to recur into a set of subdirectories,
     # we *must* set a flag to *not* mess with ${SUBDIRECTORIES[@]},
@@ -418,23 +461,28 @@ Process_Subdirectories () {
         # too high up in the directory tree, the above error trap will
         # be triggered, warning the user, and nothing will be done.
         Examine_Directory "${SUBDIRECTORY}"
-        Process_Pharo_Files
+        (( $? == IS_APP )) && Process_Pharo_Files
     done
 }
 
 
 ###############################################################################
 #
-# Obtain a list of paths to bash scripts in the working directory.
-# Also create a list of subdirectories if this is the top-level directory.
+# Obtain a list of paths to files in the working directory, plus a list
+# of subdirectories (but only if this is the top-level directory).
+# Return fail if the directory appears to be a virtual machine directory,
+# or if the directory does not appear to be a Pharo application directory.
 #
 Examine_Directory () {
+    local FILE_NAME
+
     WORKING_DIRECTORY=${1}
     PHARO_APP_KEYWORD=""
     PHARO_FILE_PATHS=()
 
-    # Check that the directory is a directory, but not a Pharo VM directory:
-    Ensure_is_Not_a_VM_Directory "${WORKING_DIRECTORY}" || return 1
+    # Check that the directory is a directory, but not a Pharo VM directory.
+    # Fatal error if not a directory.  Return 2 if a VM directory.
+    Ensure_is_Not_a_VM_Directory "${WORKING_DIRECTORY}" || return ${VM_DIR}
 
     # One by one, examine each item found in the working directory:
     for FILE_PATH in "${WORKING_DIRECTORY}"/*; do
@@ -454,6 +502,8 @@ Examine_Directory () {
         # the filename against the list of known application keywords
         # that uniquely identify which Pharo app this directory holds.
         if [[ -z "${PHARO_APP_KEYWORD}" ]]; then
+            # Examine just the file/directory name, not the full path.
+            FILE_NAME=$( basename "${FILE_PATH}" )
 
             # Iterate through the list of keywords for known Phara apps.
             for APP_KEYWORD in "${PHARO_APP_KEYWORDS[@]}"; do
@@ -461,7 +511,7 @@ Examine_Directory () {
                 # Try to match against just the filename, since the full
                 # path could contain directory names that falsely match.
                 PHARO_APP_KEYWORD=$( printf "%s" \
-                    "$( basename "${FILE_PATH}" )" | grep -o "${APP_KEYWORD}" )
+                    "${FILE_NAME}" | grep -o "${APP_KEYWORD}" )
 
                 # If this file doesn't identify a Pharo app, then it will
                 # remain an empty string, enabling the test on the next file.
@@ -470,6 +520,15 @@ Examine_Directory () {
             done
         fi
     done
+
+    # If a keyword was matched, this is a recognized Pharo application.
+    [[ -n "${PHARO_APP_KEYWORD}" ]] && return ${IS_APP}
+
+    # Otherwise, if we found subdirectories, some could be Pharo apps.
+    (( ${#SUBDIRECTORIES[@]} > 0 )) && return ${HAS_DIRS}
+
+    # Otherwise, this isn't an app directory and it has no subdirectories.
+    return ${NO_DIRS}
 }
 
 
@@ -485,14 +544,30 @@ Main () {
     TOP_LEVEL=true
     SUBDIRECTORIES=( )
 
-    # Examine the top-level directory contents, then do one of two things:
-    # If it's a Pharo application directory, modify its bash scripts;
+    # Examine the top-level directory contents, then decide what to do.
+    Examine_Directory "${TOP_LEVEL_DIRECTORY}"
+
+    # If this is a Pharo application directory, modify its bash scripts;
     # otherwise, examine every subdirectory and for those that contain
     # Pharo applications, modify their bash scripts accordingly.
-    Examine_Directory "${TOP_LEVEL_DIRECTORY}" || return 1
-
-    Process_Pharo_Files || Process_Subdirectories || \
-        Warn_If_Not_Pharo_Directory
+    # If it's a Pharo virtual machine directory, then warn and quit.
+    case $? in
+        ${IS_APP} )
+        Process_Pharo_Files
+        ;;
+        ${HAS_DIRS} )
+        Process_Subdirectories
+        ;;
+        ${NO_DIRS} )
+        Warn_If_Not_Pharo_Directory && die
+        ;;
+        ${VM_DIR} )
+        Warn_of_Virtual_Machine_Directory && die
+        ;;
+        * )
+        Warn_of_Bad_Return_Code "Examine_Directory" && die
+        ;;
+    esac
 }
 
 
