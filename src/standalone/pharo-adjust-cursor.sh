@@ -83,16 +83,19 @@ Display_Error () {
     local ERROR_MSG=${1}
     local EXIT_SIGNAL=${2}
 
-    # If $1 is not defined, we have a programming error...
     if [[ -n "${ERROR_MSG}" ]]; then
-        # Otherwise, display the error message.
+        # If $1 is provided, display it as an error message.
         echo 1>&2 "${ERROR_MSG}"
     else
+        # If $1 is not defined, we have a programming error...
         Warn_of_Bad_Argument "Display_Error"
     fi
 
-    # If $2 is defined, then quit the script, using it as the exit code.
-    [[ -n "${EXIT_SIGNAL}" ]] && die $(( ${EXIT_SIGNAL} ))
+    # If $2 is not provided, resume the script after displaying the message.
+    [[ -z "${EXIT_SIGNAL}" ]] && return
+
+    # If $2 is defined, then quit the script, using $2 as the exit code.
+    die $(( ${EXIT_SIGNAL} ))
 }
 
 
@@ -130,10 +133,12 @@ Notify_of_File_Modified () {
     local FILE_PATH=${1}
     local EDIT_RESULT=${2}
 
-    [[ -z "${FILE_PATH}" ]] && \
-        Warn_of_Bad_Argument "Notify_of_File_Modified" && return
+    # If there are any arguments, the first one must be a file...
+    [[ -z "${FILE_PATH}" || ! -f "${FILE_PATH}" ]] && \
+        FILE_PATH="<argument not provided>"
 
-    echo "Editing file '${FILE_PATH}'...  ${EDIT_RESULT}."
+    # Note that $2 is optional, and if missing, has no side effect.
+    echo "Editing file '${FILE_PATH}'... ${EDIT_RESULT}"
 }
 
 
@@ -143,11 +148,17 @@ Notify_of_File_Modified () {
 #
 Warn_of_Directory_Not_Writable () {
     local SCRIPT_PATH=${1}
+    local SCRIPT_DIR
     local ERROR_MSG
 
-    printf -v ERROR_MSG "%s %s " \
-        "Cannot write files in directory" \
-        "'$( dirname "${SCRIPT_PATH}" )', Skipping..."
+    if [[ -n "${SCRIPT_PATH}" ]]; then
+        SCRIPT_DIR="directory '$( dirname "${SCRIPT_PATH}" )'"
+    else
+        SCRIPT_DIR="<argument not provided>"
+    fi
+
+    printf -v ERROR_MSG "%s " \
+        "Cannot write files in ${SCRIPT_DIR}, Skipping..."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -158,27 +169,17 @@ Warn_of_Directory_Not_Writable () {
 # Warn about directories that aren't Pharo apps, yet have no subdirectories.
 #
 Warn_If_Not_Pharo_Directory () {
+    local THIS_DIR=${1}
     local ERROR_MSG
 
-    # If we determine that the working directory is a Pharo
-    # application directory, then don't show a warning.  Having
-    # already matched an application keyword in a filename is
-    # a sufficient indication of this situation.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] && return 1
+    if [[ -n "${THIS_DIR}" ]]; then
+        THIS_DIR="'${THIS_DIR}'"
+    else
+        THIS_DIR="<argument not provided>"
+    fi
 
-    # If this is not a Pharo app directory, then we require the
-    # working directory to have at least one subdirectory;
-    # We will examine these in turn for Pharo applications.
-    # If the subdirectories array has at least one element,
-    # then return without displaying a warning.
-    (( ${#SUBDIRECTORIES[@]} > 0 )) && return 1
-
-    # The working directory is not a Pharo app directory, and
-    # it has no subdirectories -- this is an error condition,
-    # so display the error and return 0 to trigger follow-on
-    # error handling:
     printf -v ERROR_MSG "%s %s \n%s " \
-        "Directory '${WORKING_DIRECTORY}'" \
+        "Directory '${THIS_DIR}'" \
         "does not appear to be a Pharo directory." \
         "(Nor does it have any Pharo subdirectories.)"
 
@@ -191,12 +192,17 @@ Warn_If_Not_Pharo_Directory () {
 # Warn if the working directory appears to be a virtual machine directory.
 #
 Warn_of_Virtual_Machine_Directory () {
+    local VM_DIRECTORY=${1}
     local ERROR_MSG
 
-    # If it appears to be a VM path, warn the user and continue.
-    printf -v ERROR_MSG "%s %s " \
-        "Ignoring directory '${WORKING_DIRECTORY}':" \
-        "virtual machine directory?"
+    if [[ -n "${VM_DIRECTORY}" ]]; then
+        VM_DIRECTORY="'${VM_DIRECTORY}'"
+    else
+        VM_DIRECTORY="<argument not provided>"
+    fi
+
+    printf -v ERROR_MSG "%s " \
+        "Ignoring directory ${VM_DIRECTORY}: virtual machine directory?"
 
     Display_Error "${ERROR_MSG}"
 }
@@ -216,7 +222,7 @@ Warn_of_App_Without_Scripts () {
     printf -v ERROR_MSG "%s %s \n%s " \
         "Directory '${WORKING_DIRECTORY}'" \
         "appears to be a ${PHARO_APP_NAME}" \
-        "directory, but it doesn't containing any ${TARGET}."
+        "directory, but it doesn't contain any ${TARGET}."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -228,9 +234,9 @@ Warn_of_App_Without_Scripts () {
 #
 Ensure_is_a_Directory () {
 
-    [[ -z "${1}" ]] && Display_Error "Directory path required! " "fatal"
+    [[ -n "${1}" &&  -d "${1}" ]] && return
 
-    [[ -d "${1}" ]] || Display_Error "Argument not a directory! " "fatal"
+    Warn_of_Bad_Argument "${FUNCNAME}" && die
 }
 
 
@@ -248,7 +254,9 @@ Ensure_is_Not_a_VM_Directory () {
     Ensure_is_a_Directory "${THIS_DIR}"
 
     # Additionally, the path must not match a string indicating a Pharo VM.
-    [[ "${THIS_DIR}" =~ ${VM_TAG} ]] && return ${VM_DIR}
+    [[ ! "${THIS_DIR}" =~ ${VM_TAG} ]] && return
+
+    return ${VM_DIR}
 }
 
 
@@ -617,18 +625,12 @@ Examine_Directory () {
 
 ###############################################################################
 #
-Main () {
-    local TOP_LEVEL_DIRECTORY
+Process_Directory () {
+    local THIS_DIRECTORY=${1}
 
-    # Start with the assumption that the working directory is a top-lovel
-    # directory, which may be either a Pharo application directory, or a
-    # directory containing one or more Pharo applications in subdirectories.
-    TOP_LEVEL_DIRECTORY=$( pwd )
-    TOP_LEVEL=true
-    SUBDIRECTORIES=( )
-
-    # Examine the top-level directory contents, then decide what to do.
-    Examine_Directory "${TOP_LEVEL_DIRECTORY}"
+    # Consider this directory to be the top-level directory.
+    # Examine its contents, then decide what to do.
+    Examine_Directory "${THIS_DIRECTORY}"
 
     # If this is a Pharo application directory, modify its bash scripts;
     # otherwise, examine every subdirectory and for those that contain
@@ -660,10 +662,10 @@ Main () {
         Warn_of_Bad_Return_Code "Process_Subdirectories" && die
         ;;
     ${NO_DIRS} )
-        Warn_If_Not_Pharo_Directory && die
+        Warn_If_Not_Pharo_Directory "${WORKING_DIRECTORY}" && die
         ;;
     ${VM_DIR} )
-        Warn_of_Virtual_Machine_Directory && die
+        Warn_of_Virtual_Machine_Directory "${WORKING_DIRECTORY}" && die
         ;;
     * )
         Warn_of_Bad_Return_Code "Examine_Directory" && die
@@ -671,18 +673,33 @@ Main () {
 }
 
 
-# Debug code -- this needs to be prompted for or read from the CLI.
-SCRIPT_EDIT_ACTION=${1,,}
+###############################################################################
+#
+Main () {
+    # Start with the assumption that the working directory is a top-lovel
+    # directory, which may be either a Pharo application directory, or a
+    # directory containing one or more Pharo applications in subdirectories.
+    TOP_LEVEL_DIRECTORY=$( pwd )
+    TOP_LEVEL=true
+    SUBDIRECTORIES=( )
 
-case ${SCRIPT_EDIT_ACTION:0:1} in
+    # Debug code -- this needs to be prompted for or read from the CLI.
+    SCRIPT_EDIT_ACTION=${1,,}
+    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTION##-}
+    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTION##-}
+
+    case ${SCRIPT_EDIT_ACTION:0:1} in
     'i' )
-    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
-    ;;
+        SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
+        ;;
     'r' )
-    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
-    ;;
+        SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
+        ;;
     * )
-    Display_Error "Can't decipher action to take" && die
-esac
+        Display_Error "Can't decipher action to take!" && die
+    esac
 
-Main
+    Process_Directory "${TOP_LEVEL_DIRECTORY}"
+}
+
+Main "$@"
