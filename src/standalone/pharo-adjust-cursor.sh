@@ -7,8 +7,8 @@ echo 1>&2 "This script isn't finished yet!"
 # will uniquely indentify the type of Pharo application a directory holds.
 # An array will allow use of a loop to locate the matching app file names.
 declare -A PHARO_APP_KEYWORDS=(
-    ["KEYWORD_APP_PHARO_LAUNCHER"]="launcher"
-    ["KEYWORD_APP_PHARO_THINGS"]="Things"
+    ["KEYWORD_APP_PHARO_LAUNCHER"]="pharo-launcher"
+    ["KEYWORD_APP_PHARO_THINGS"]="PharoThings"
 )
 
 # Create an associative array of Pharo application name scrings.
@@ -42,13 +42,14 @@ declare -A PHARO_EDIT_ACTIONS=(
 #
 Display_Error () {
     local ERROR_MSG=${1}
+    local EXIT_SIGNAL=${2}
 
     # If $1 is not defined, we have a programming error...
-    [[ ${ERROR_MSG} ]] || ERROR_MSG="Undefined error!"
+    [[ -n "${ERROR_MSG}" ]] || ERROR_MSG="Undefined error!"
 
     # Display the error message; if $2 is defined, the quit the script.
-    echo 1>&2 "${1}"
-    [[ ${2} ]] && exit 1
+    echo 1>&2 "${ERROR_MSG}"
+    [[ -n "${EXIT_SIGNAL}" ]] && exit 1
 }
 
 
@@ -59,9 +60,12 @@ Display_Error () {
 Notify_of_File_Being_Modified () {
     local FILE_PATH=${1}
 
-    [[ -n "${FILE_PATH}" ]] && echo "Editing file '${1}'... " && return
-
-    Display_Error "File name required! "
+    if [[ -n "${FILE_PATH}" ]]
+    then
+        echo "Editing file '${FILE_PATH}'... "
+    else
+        Display_Error "File name required! "
+    fi
 }
 
 
@@ -73,9 +77,9 @@ Warn_If_Directory_Not_Writable () {
     local SCRIPT_PATH=${1}
     local ERROR_MSG
 
-    printf -v ERROR_MSG "%s %s \n" \
+    printf -v ERROR_MSG "%s %s " \
         "Cannot write files in directory" \
-        "'$( dirname "${SCRIPT_PATH}" )'! Skipping..."
+        "'$( dirname "${SCRIPT_PATH}" )', Skipping..."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -89,23 +93,23 @@ Warn_If_Not_Pharo_Directory () {
     local ERROR_MSG
 
     # If we determine that the working directory is a Pharo
-    # application directory, then we "fail to warn".  Having
+    # application directory, then don't show a warning.  Having
     # already matched an application keyword in a filename is
     # a sufficient indication of this situation.
-    [[ -n "${THIS_APP_KEYWORD}" ]] && return 1
+    [[ -n "${PHARO_APP_KEYWORD}" ]] && return 1
 
     # If this is not a Pharo app directory, then we require the
     # working directory to have at least one subdirectory;
     # We will examine these in turn for Pharo applications.
     # If the subdirectories array has at least one element,
-    # then we also "fail to warn":
+    # then return without displaying a warning.
     (( ${#SUBDIRECTORIES[@]} > 0 )) && return 1
 
     # The working directory is not a Pharo app directory, and
     # it has no subdirectories -- this is an error condition,
     # so display the error and return 0 to trigger follow-on
     # error handling:
-    printf -v ERROR_MSG "%s %s \n%s \n" \
+    printf -v ERROR_MSG "%s %s \n%s " \
         "Directory '${WORKING_DIRECTORY}'" \
         "does not appear to be a Pharo directory." \
         "(Nor does it have any Pharo subdirectories.)"
@@ -116,20 +120,19 @@ Warn_If_Not_Pharo_Directory () {
 
 ###############################################################################
 #
-# Warn about Pharo app directories we recognize that have no scripts in them.
+# Warn about recognized Pharo app directories that have no scripts in them.
 #
 Warn_If_App_Without_Scripts () {
+    local TARGET=${1}
     local ERROR_MSG
 
-    # If there is at least one script file present, don't warn.
-    (( ${#PHARO_FILE_PATHS[@]} > 0 )) && return 1
-
-    # Otherwise, assemble a descriptive warning message and display it.
-    # Name the directory and say which Pharo app we believe it contains.
-    printf -v ERROR_MSG "%s %s \n%s \n" \
-        "Directory '${WORKING_DIRECTORY}' appears to be a" \
-        "${PHARO_APP_NAMES[ ${THIS_APP_KEYWORD} ]}" \
-        "directory, but it doesn't have any scripts!"
+    # Assemble a descriptive warning message and display it.
+    # Name the directory say which Pharo app we believe it contains,
+    # and whether or not we found files/bash script files.
+    printf -v ERROR_MSG "%s %s \n%s " \
+        "Directory '${WORKING_DIRECTORY}'" \
+        "appears to be a ${PHARO_APP_NAME}" \
+        "directory, but it doesn't containing any ${TARGET}."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -164,7 +167,7 @@ Ensure_is_Not_a_VM_Directory () {
     [[ ! "${THIS_DIR}" =~ ${VM_TAG} ]] && return
 
     # If it appears to be a VM path, warn the user and continue.
-    printf -v ERROR_MSG "%s %s \n" \
+    printf -v ERROR_MSG "%s %s " \
         "Ignoring directory '${THIS_DIR}':" \
         "virtual machine directory?"
 
@@ -306,19 +309,12 @@ Edit_Pharo_Script () {
     local EDIT_FUNCTION_KEY
     local EDIT_FUNCTION
 
-    # Must ensure that the argument is a valid path to a regular file.
-    [[ -f "${SCRIPT_PATH}" ]] || return 1
-
-    # We only edit bash script files; reject if it's not a bash script.
-    file "${SCRIPT_PATH}" | grep -q "${BASH_TAG}"
-    (( $? == 0 )) || return 1
-
     # We need the file name to form a key to look up the edit function.
     SCRIPT_NAME=$( basename "${SCRIPT_PATH}" )
 
     # Form an associate array key from the Pharo application type, the
     # script name, and the editing action desired by the user.
-    EDIT_FUNCTION_KEY=${THIS_APP_KEYWORD}_${SCRIPT_NAME}_${SCRIPT_EDIT_ACTION}
+    EDIT_FUNCTION_KEY=${PHARO_APP_KEYWORD}_${SCRIPT_NAME}_${SCRIPT_EDIT_ACTION}
 
     # Use the key to resolve the name of the function needed to edit the file.
     EDIT_FUNCTION=${CONVERSIONS["${EDIT_FUNCTION_KEY}"]}
@@ -341,6 +337,89 @@ Edit_Pharo_Script () {
     # Here's the payoff, the moment we've been waiting for...
     SCRIPT_PATH_TO_EDIT=${SCRIPT_PATH}
     ${EDIT_FUNCTION}
+
+    # Enhancement: Compare the edit result to the backup file; if these
+    # two files are identical, then delete the backup and display a
+    # message that no change was made to the script file.
+}
+
+
+###############################################################################
+#
+# Process the set of files that were found in a Pharo app directory.
+#
+Process_Pharo_Files () {
+    local NUM_PROCESSED=0
+
+    # Having collected a list of files in the working directory,
+    # we require that at least one filename matched a keyword for a
+    # Pharo application.  If this is not the case, there's nothing to
+    # do here, since we won't modify scripts that are not the scripts
+    # of a Pharo application.  This isn't fatal, and is expected,
+    # so don't display a warning or quit; just move on to the next.
+    [[ -n "${PHARO_APP_KEYWORD}" ]] || return 1
+
+    # This is a directory that corresponds to a Pharo application
+    # that we recognize.  Get its display name (for messages).
+    PHARO_APP_NAME=${PHARO_APP_NAMES["${PHARO_APP_KEYWORD}"]}
+
+    # If there aren't any files in this directory, issue a warning,
+    # then abandon this directory and move on to the next one.
+    (( ${#PHARO_FILE_PATHS[@]} < 1 )) && \
+        Warn_If_App_Without_Scripts "files" && return 1
+
+    # Since this directory contains files, we expect to find at least
+    # one target bash script to edit.  Check if the list of files
+    # we've accumulated has at least one script.  If not, then issue
+    # a warning; otherwise, edit each bash script found.
+    for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
+        # Must ensure that the argument is a valid path to a regular file.
+        # Enhancement: Resolve links to scripts and treat as '-f'.
+        [[ -f "${FILE_PATH}" ]] || continue
+
+        # We only edit bash script files; reject otherwise.
+        file "${FILE_PATH}" | grep -q "${BASH_TAG}" || continue
+
+        # This file is a bash script, so attempt to edit it.  If it
+        # was successfully edited, then increment our counter.
+        Edit_Pharo_Script "${FILE_PATH}" && (( NUM_PROCESSED++ ))
+    done
+
+    # If we didn't edit any scripts, issue a warning; this is unexpected,
+    # since we recognized this directory as a known Pharo application,
+    # so there should have been at least one bash script to edit.
+    (( NUM_PROCESSED < 1 )) && \
+        Warn_If_App_Without_Scripts "bash scripts" && return 1
+}
+
+
+###############################################################################
+#
+# Recur one level into subdirectories, processing those that have Pharo apps.
+#
+Process_Subdirectories () {
+    # Do not process the subdirectories of a Pharo application directory.
+    # Why? Because a Pharo application directory should not contain
+    # subdirectories of other Pharo applications.  Having matched a
+    # Pharo application keyword previously is sufficient indication
+    # of this situation, so just ignore any subdirectories & return.
+    [[ -n "${PHARO_APP_KEYWORD}" ]] && return 1
+
+    # Important: Since we're about to recur into a set of subdirectories,
+    # we *must* set a flag to *not* mess with ${SUBDIRECTORIES[@]},
+    # because we're using it here to track our recursions.
+    TOP_LEVEL=
+    for SUBDIRECTORY in "${SUBDIRECTORIES[@]}"; do
+        # Examine each subdirectory, one-by-one, but only check the
+        # bash scripts we find in them; do not recur further into any
+        # subdirectories.  (Bash doesn't really do recursion well.)
+        # The user must launch this script from either a Pharo app dir,
+        # or from a directory containing Pharo app subdirs.  If launched
+        # too high up in the directory tree, the above error trap will
+        # be triggered, warning the user, and nothing will be done.
+        Examine_Directory "${SUBDIRECTORY}"
+        Process_Pharo_Files
+    done
 }
 
 
@@ -351,7 +430,7 @@ Edit_Pharo_Script () {
 #
 Examine_Directory () {
     WORKING_DIRECTORY=${1}
-    THIS_APP_KEYWORD=""
+    PHARO_APP_KEYWORD=""
     PHARO_FILE_PATHS=()
 
     # Check that the directory is a directory, but not a Pharo VM directory:
@@ -374,84 +453,22 @@ Examine_Directory () {
         # If we haven't yet matched an application keyword, then check
         # the filename against the list of known application keywords
         # that uniquely identify which Pharo app this directory holds.
-        if [[ -z "${THIS_APP_KEYWORD}" ]]; then
+        if [[ -z "${PHARO_APP_KEYWORD}" ]]; then
 
             # Iterate through the list of keywords for known Phara apps.
             for APP_KEYWORD in "${PHARO_APP_KEYWORDS[@]}"; do
 
                 # Try to match against just the filename, since the full
                 # path could contain directory names that falsely match.
-                THIS_APP_KEYWORD=$( printf "%s" \
+                PHARO_APP_KEYWORD=$( printf "%s" \
                     "$( basename "${FILE_PATH}" )" | grep -o "${APP_KEYWORD}" )
 
                 # If this file doesn't identify a Pharo app, then it will
                 # remain an empty string, enabling the test on the next file.
                 # Once we've made a match, stop checking in this directory.
-                [[ -n "${THIS_APP_KEYWORD}" ]] && break
+                [[ -n "${PHARO_APP_KEYWORD}" ]] && break
             done
         fi
-    done
-}
-
-
-###############################################################################
-#
-# Process the set of bash scripts that were found in a Pharo app directory.
-#
-Process_Pharo_Files () {
-    # Having collected a list of bash scripts in the working directory,
-    # we require that at least one filename matched a keyword for a
-    # Pharo application.  If this is not the case, there's nothing to
-    # do here, since we won't modify scripts that are not the scripts
-    # of a Pharo application.  This isn't fatal; just try the next one.
-    [[ -n "${THIS_APP_KEYWORD}" ]] || return 1
-
-    # On the other hand, if this is a Pharo application directory, then
-    # we expect to find a target bash script.  Verify that the list of
-    # bash scripts we've accumulated has at least one member.  If not,
-    # then warn the user of this anomaly and bail out of this function.
-    Warn_If_App_Without_Scripts && return 1
-
-    # Otherwise, we have a known Pharo application and we found at least
-    # one bash script.  Process the set, modifying those scripts that we
-    # recognize, according to the user's action and the script type.
-    for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
-        Edit_Pharo_Script "${FILE_PATH}"
-    done
-}
-
-
-###############################################################################
-#
-# Recur one level into subdirectories, processing those that have Pharo apps.
-#
-Process_Subdirectories () {
-    # Do not process the subdirectories of a Pharo application directory.
-    # Why? Because a Pharo application directory should not contain
-    # subdirectories of other Pharo applications.  Having matched a
-    # Pharo application keyword previously is sufficient indication
-    # of this situation, so just ignore any subdirectories & return.
-    [[ -n "${THIS_APP_KEYWORD}" ]] || return 2
-
-    # Otherwise, we require that at least one subdirectory exists to
-    # examine recursively.  If none were found, we're not able to
-    # examine any Pharo application directory -- warn the user & return.
-    Warn_If_Not_Pharo_Directory && return 1
-
-    # Important: Since we're about to recur into a set of subdirectories,
-    # we *must* set a flag to *not* mess with ${SUBDIRECTORIES[@]},
-    # because we're using it here to track our recursions.
-    TOP_LEVEL=
-    for SUBDIRECTORY in "${SUBDIRECTORIES[@]}"; do
-        # Examine each subdirectory, one-by-one, but only check the
-        # bash scripts we find in them; do not recur further into any
-        # subdirectories.  (Bash doesn't really do recursion well.)
-        # The user must launch this script from either a Pharo app dir,
-        # or from a directory containing Pharo app subdirs.  If launched
-        # too high up in the directory tree, the above error trap will
-        # be triggered, warning the user, and nothing will be done.
-        Examine_Directory "${SUBDIRECTORY}"
-        Process_Pharo_Files
     done
 }
 
@@ -472,9 +489,10 @@ Main () {
     # If it's a Pharo application directory, modify its bash scripts;
     # otherwise, examine every subdirectory and for those that contain
     # Pharo applications, modify their bash scripts accordingly.
-    Examine_Directory "${TOP_LEVEL_DIRECTORY}"
-    Process_Pharo_Files
-    Process_Subdirectories
+    Examine_Directory "${TOP_LEVEL_DIRECTORY}" || return 1
+
+    Process_Pharo_Files || Process_Subdirectories || \
+        Warn_If_Not_Pharo_Directory
 }
 
 
