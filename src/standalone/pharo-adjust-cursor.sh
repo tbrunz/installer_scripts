@@ -3,6 +3,14 @@
 echo 1>&2 "This script isn't finished yet!"
 
 
+###############################################################################
+#
+# Application-specific operating parameters
+#
+# These values should be valid over the long-term.
+# Edit & save the script to update if Pharo Project changes these.
+#
+
 # Create an associative array of tags to be matched in file names, which
 # will uniquely indentify the type of Pharo application a directory holds.
 # An array will allow use of a loop to locate the matching app file names.
@@ -41,36 +49,63 @@ declare -A PHARO_EDIT_ACTIONS=(
 # Return codes
 #
 SUCCESS=0
-NOT_APP=1
-IS_APP=2
-HAS_DIRS=3
-NO_DIRS=4
-VM_DIR=5
+IGNORED=1
+NOT_APP=2
+IS_APP=3
+NO_FILES=4
+NO_SCRIPTS=5
+HAS_DIRS=6
+NO_DIRS=7
+VM_DIR=8
+CANT_WRITE=9
 
 
 ###############################################################################
 #
+# This is the exit point for the script.
+#
 die () {
+    # If no parameter is supplied, default to '1' (not '0').
+    # Use 'exit $SUCCESS' (or 'exit Success') to quit with code True.
     [[ -z "${1}" ]] && exit 1
-    (( ${1} == 0 )) && exit
-    exit ${1}
+
+    # If $1 is a number, use that number as the exit code.
+    # If $1 is a string, '$(( ))' will resolve it as '0'.
+    exit $(( ${1} ))
 }
 
 
 ###############################################################################
 #
-# Echo the argument to the Standard Error stream.
+# Echo the argument to the Standard Error stream.  Optionally, die.
 #
 Display_Error () {
     local ERROR_MSG=${1}
     local EXIT_SIGNAL=${2}
 
     # If $1 is not defined, we have a programming error...
-    [[ -n "${ERROR_MSG}" ]] || ERROR_MSG="Undefined error!"
+    if [[ -n "${ERROR_MSG}" ]]; then
+        # Otherwise, display the error message.
+        echo 1>&2 "${ERROR_MSG}"
+    else
+        Warn_of_Bad_Argument "Display_Error"
+    fi
 
-    # Display the error message; if $2 is defined, the quit the script.
-    echo 1>&2 "${ERROR_MSG}"
-    [[ -n "${EXIT_SIGNAL}" ]] && die
+    # If $2 is defined, then quit the script, using it as the exit code.
+    [[ -n "${EXIT_SIGNAL}" ]] && die $(( ${EXIT_SIGNAL} ))
+}
+
+
+###############################################################################
+#
+# Notify the user of what's likely a programming bug: Bad/missing arguments.
+#
+Warn_of_Bad_Argument () {
+    local FUNCTION_NAME=${1}
+
+    [[ -n "${FUNCTION_NAME}" ]] || FUNCTION_NAME="<unnamed function>"
+
+    Display_Error "Bad/missing arguments invoking '${FUNCTION_NAME}'!"
 }
 
 
@@ -164,7 +199,7 @@ Warn_of_Virtual_Machine_Directory () {
         "Ignoring directory '${WORKING_DIRECTORY}':" \
         "virtual machine directory?"
 
-    Display_Error "${ERROR_MSG}" && return 1
+    Display_Error "${ERROR_MSG}"
 }
 
 
@@ -194,9 +229,9 @@ Warn_of_App_Without_Scripts () {
 #
 Ensure_is_a_Directory () {
 
-    [[ -z "${1}" ]] && Display_Error "Directory path required! " "die"
+    [[ -z "${1}" ]] && Display_Error "Directory path required! " "fatal"
 
-    [[ -d "${1}" ]] || Display_Error "Argument not a directory! " "die"
+    [[ -d "${1}" ]] || Display_Error "Argument not a directory! " "fatal"
 }
 
 
@@ -214,7 +249,7 @@ Ensure_is_Not_a_VM_Directory () {
     Ensure_is_a_Directory "${THIS_DIR}"
 
     # Additionally, the path must not match a string indicating a Pharo VM.
-    [[ "${THIS_DIR}" =~ ${VM_TAG} ]] && return 1
+    [[ "${THIS_DIR}" =~ ${VM_TAG} ]] && return ${VM_DIR}
 }
 
 
@@ -342,10 +377,8 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 
 ###############################################################################
 #
-# For bash scripts we recognize, apply the appropriate edit to fix the cursor.
+# For bash scripts we recognize, apply the requested edit action.
 #
-BASH_TAG="Bourne"
-
 Edit_Pharo_Script () {
     local SCRIPT_PATH=${1}
     local SCRIPT_NAME
@@ -355,8 +388,8 @@ Edit_Pharo_Script () {
     # We need the file name to form a key to look up the edit function.
     SCRIPT_NAME=$( basename "${SCRIPT_PATH}" )
 
-    # Form an associate array key from the Pharo application type, the
-    # script name, and the editing action desired by the user.
+    # Form an associative array key from the Pharo application type,
+    # the script name, and the editing action desired by the user.
     EDIT_FUNCTION_KEY=${PHARO_APP_KEYWORD}_${SCRIPT_NAME}_${SCRIPT_EDIT_ACTION}
 
     # Use the key to resolve the name of the function needed to edit the file.
@@ -364,7 +397,8 @@ Edit_Pharo_Script () {
 
     # If this key is bogus (i.e., the file is not a target bash script),
     # then the resolved function name will be a blank string.
-    [[ -n "${EDIT_FUNCTION}" ]] || return 1
+    # This situation is not an error; it just means "not our file".
+    [[ -n "${EDIT_FUNCTION}" ]] || return $IGNORED
 
     # Make a name for backing up the script file before editing.
     # Back up the script file here instead of via 'sed',
@@ -372,7 +406,7 @@ Edit_Pharo_Script () {
     cp -a "${SCRIPT_PATH}" "${SCRIPT_PATH}.$( date +%s )"
 
     # If that failed, we won't be able to edit the script either...
-    (( $? != 0 )) && Warn_Directory_Not_Writable "${SCRIPT_PATH}" && return 1
+    (( $? != 0 )) && Warn_Directory_Not_Writable "${SCRIPT_PATH}" && return $CANT_WRITE
 
     # Echo the name of the script being modified, for reassurance.
     Notify_of_File_Being_Modified "${SCRIPT_PATH}"
@@ -391,6 +425,8 @@ Edit_Pharo_Script () {
 #
 # Process the set of files that were found in a Pharo app directory.
 #
+BASH_TAG="Bourne"
+
 Process_Pharo_Files () {
     local NUM_PROCESSED=0
 
@@ -403,36 +439,48 @@ Process_Pharo_Files () {
     [[ -n "${PHARO_APP_KEYWORD}" ]] || return ${NOT_APP}
 
     # This is a directory that corresponds to a Pharo application
-    # that we recognize.  Get its display name (for messages).
+    # that we recognize.  'Globalize' its display name (for messages).
     PHARO_APP_NAME=${PHARO_APP_NAMES["${PHARO_APP_KEYWORD}"]}
 
     # If there aren't any files in this directory, issue a warning,
     # then abandon this directory and move on to the next one.
     (( ${#PHARO_FILE_PATHS[@]} < 1 )) && \
-        Warn_of_App_Without_Scripts "files" && return 1
+        Warn_of_App_Without_Scripts "files" && return $NO_FILES
 
     # Since this directory contains files, we expect to find at least
     # one target bash script to edit.  Check if the list of files
-    # we've accumulated has at least one script.  If not, then issue
-    # a warning; otherwise, edit each bash script found.
+    # we've accumulated has at least one script.  If not, then issue a
+    # warning; otherwise, assume it's a bash script and try to edit it.
     for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
         # Must ensure that the argument is a valid path to a regular file.
         # Enhancement: Resolve links to scripts and treat as '-f'.
         [[ -f "${FILE_PATH}" ]] || continue
 
-        # We only edit bash script files; reject otherwise.
+        # We only edit bash script files; skip other types of file.
         file "${FILE_PATH}" | grep -q "${BASH_TAG}" || continue
 
-        # This file is a bash script, so attempt to edit it.  If it
-        # was successfully edited, then increment our counter.
-        Edit_Pharo_Script "${FILE_PATH}" && (( NUM_PROCESSED++ ))
+        # This file is a bash script, so attempt to edit it.
+        Edit_Pharo_Script "${FILE_PATH}"
+
+        # If it was successfully edited, then increment our counter.
+        # If there's a write permissions issue, return that as an error.
+        case $? in
+        $SUCCESS )
+            (( NUM_PROCESSED++ ))
+            ;;
+        $CANT_WRITE )
+            return $CANT_WRITE
+            ;;
+        esac
     done
 
-    # If we didn't edit any scripts, issue a warning; this is unexpected,
+    # If we edited at least one script, we were successful...
+    (( NUM_PROCESSED > 0 )) && return
+
+    # If we didn't edit any scripts, return an error; this is unexpected,
     # since we recognized this directory as a known Pharo application,
     # so there should have been at least one bash script to edit.
-    (( NUM_PROCESSED < 1 )) && \
-        Warn_of_App_Without_Scripts "bash scripts" && return 1
+    return $NO_SCRIPTS
 }
 
 
@@ -446,22 +494,44 @@ Process_Subdirectories () {
     # subdirectories of other Pharo applications.  Having matched a
     # Pharo application keyword previously is sufficient indication
     # of this situation, so just ignore any subdirectories & return.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] && Warn_If_Not_Pharo_Directory && return 1
+    # (Bash doesn't do recursion (easily) anyway, so it's just as well.)
+    [[ -z "${PHARO_APP_KEYWORD}" ]] || return $IS_APP
+
+    # Verify that we have at least one subdirectory to examine.
+    (( ${#SUBDIRECTORIES[@]} > 0 )) || return $NO_DIRS
 
     # Important: Since we're about to recur into a set of subdirectories,
-    # we *must* set a flag to *not* mess with ${SUBDIRECTORIES[@]},
+    # we *must* set a flag to *not* mess with SUBDIRECTORIES[],
     # because we're using it here to track our recursions.
     TOP_LEVEL=
     for SUBDIRECTORY in "${SUBDIRECTORIES[@]}"; do
         # Examine each subdirectory, one-by-one, but only check the
-        # bash scripts we find in them; do not recur further into any
-        # subdirectories.  (Bash doesn't really do recursion well.)
+        # files we find in them; do not recur deeper in the filesystem.
         # The user must launch this script from either a Pharo app dir,
         # or from a directory containing Pharo app subdirs.  If launched
-        # too high up in the directory tree, the above error trap will
-        # be triggered, warning the user, and nothing will be done.
+        # too high up in the directory tree, the check above will be
+        # triggered, and nothing will be done (aside from a warning).
         Examine_Directory "${SUBDIRECTORY}"
-        (( $? == IS_APP )) && Process_Pharo_Files
+
+        # Don't process unless an app subdirectory is found, and if
+        # successful, move on to the next subdirectory.
+        (( $? == IS_APP )) || continue
+        Process_Pharo_Files && continue
+
+        # If the file processing failed, tell the user why.
+        case $? in
+        $NO_FILES )
+            Warn_of_App_Without_Scripts "files"
+            ;;
+        $NO_SCRIPTS )
+            Warn_of_App_Without_Scripts "bash scripts"
+            ;;
+        $CANT_WRITE )
+            Warn_of_Directory_Not_Writable "${WORKING_DIRECTORY}"
+            ;;
+        * )
+            Warn_of_Bad_Return_Code "Process_Pharo_Files"
+        esac
     done
 }
 
@@ -469,9 +539,8 @@ Process_Subdirectories () {
 ###############################################################################
 #
 # Obtain a list of paths to files in the working directory, plus a list
-# of subdirectories (but only if this is the top-level directory).
-# Return fail if the directory appears to be a virtual machine directory,
-# or if the directory does not appear to be a Pharo application directory.
+# of subdirectories (and then only if this is the top-level directory).
+# Data goes into globals.  Returns a code to indicate what was found.
 #
 Examine_Directory () {
     local FILE_NAME
@@ -481,7 +550,6 @@ Examine_Directory () {
     PHARO_FILE_PATHS=()
 
     # Check that the directory is a directory, but not a Pharo VM directory.
-    # Fatal error if not a directory.  Return 2 if a VM directory.
     Ensure_is_Not_a_VM_Directory "${WORKING_DIRECTORY}" || return ${VM_DIR}
 
     # One by one, examine each item found in the working directory:
@@ -552,21 +620,38 @@ Main () {
     # Pharo applications, modify their bash scripts accordingly.
     # If it's a Pharo virtual machine directory, then warn and quit.
     case $? in
-        ${IS_APP} )
-        Process_Pharo_Files
+    ${IS_APP} )
+        Process_Pharo_Files && return
+
+        # If the file processing failed, tell the user why.
+        case $? in
+        $NO_FILES )
+            Warn_of_App_Without_Scripts "files" && die
+            ;;
+        $NO_SCRIPTS )
+            Warn_of_App_Without_Scripts "bash scripts" && die
+            ;;
+        $CANT_WRITE )
+            Warn_of_Directory_Not_Writable "${WORKING_DIRECTORY}" && die
+            ;;
+        * )
+            Warn_of_Bad_Return_Code "Process_Pharo_Files" && die
+        esac
         ;;
-        ${HAS_DIRS} )
-        Process_Subdirectories
+    ${HAS_DIRS} )
+        Process_Subdirectories && return
+
+        # Any other return code than SUCCESS is a program bug.
+        Warn_of_Bad_Return_Code "Process_Subdirectories" && die
         ;;
-        ${NO_DIRS} )
+    ${NO_DIRS} )
         Warn_If_Not_Pharo_Directory && die
         ;;
-        ${VM_DIR} )
+    ${VM_DIR} )
         Warn_of_Virtual_Machine_Directory && die
         ;;
-        * )
+    * )
         Warn_of_Bad_Return_Code "Examine_Directory" && die
-        ;;
     esac
 }
 
