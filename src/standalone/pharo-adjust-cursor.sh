@@ -61,7 +61,6 @@ VM_DIR=8
 CANT_WRITE=9
 
 
-
 ###############################################################################
 #
 # This is the exit point for the script.
@@ -396,15 +395,95 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 #
 # For bash scripts we recognize, apply the requested edit action.
 #
+Cleanup_Script_Backup () {
+    # Compare the edit result to the backup file; if these two
+    # files are identical, then delete the backup and display a
+    # message that no change was made to the script file.
+    diff "${SCRIPT_PATH_TO_EDIT}" "${SCRIPT_BACKUP_PATH}" &>/dev/null
+
+    if (( $? == 0 )); then
+        # Display a message that no change was made.
+        Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+            "No changes made"
+
+        # Delete the backup, since it's not relevant.
+        rm -f "${SCRIPT_BACKUP_PATH}" && return
+        return $CANT_WRITE
+    fi
+
+    # Keep the backup & echo the name of the script being modified.
+    Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+        "Code was ${SCRIPT_EDIT_ACTION}"
+
+    # Compare the backup we just created to similiar previous backups.
+    # If we already have a backup of this configuration, delete ours.
+
+    # ${SCRIPT_EDIT_ACTION}
+    return $SUCCESS
+}
+
+
+###############################################################################
+#
+# Create a backup file name, which needs to be unique.
+#
+Make_Backup_Filename () {
+    # Create a unique name; The path to the backup file is a global.
+    SCRIPT_BACKUP_PATH=${SCRIPT_PATH_TO_EDIT}.$( date +%s )
+
+    # If the proposed backup path exists, we don't want to clobber it.
+    [[ ! -r "${SCRIPT_BACKUP_PATH}" ]] || return $CANT_WRITE
+}
+
+
+###############################################################################
+#
+# Create a backup for a file we're about to edit.
+#
+RETRY_LIMIT=3
+
+Backup_Script_File () {
+    # Start by making a backup file name &
+    Make_Backup_Filename
+
+    # If we duplicated a file name, run a re-try loop.
+    for (( CTR=RETRY_LIMIT; CTR>0; CTR-- )); do
+        # Allow the seconds of epoch to increment to a new number.
+        sleep 1
+        # Try again; if it's not an existing file, we quit this loop.
+        Make_Backup_Filename && break
+    done
+
+    # If the proposed backup path still exists, the copy will fail.
+    # Any other failure means we can't write in this directory.
+    cp -an "${SCRIPT_PATH_TO_EDIT}" \
+        "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
+}
+
+
+###############################################################################
+#
+# For bash scripts we recognize, apply the requested edit action.
+#
+BASH_TAG="Bourne"
+
 Edit_Pharo_Script () {
-    local SCRIPT_PATH=${1}
     local SCRIPT_NAME
-    local BACKUP_PATH
     local EDIT_FUNCTION_KEY
     local EDIT_FUNCTION
 
+    # The path to the script to edit is a global for the edit functions.
+    SCRIPT_PATH_TO_EDIT=${1}
+
+    # Must ensure that the argument is a valid path to a regular file.
+    # Enhancement: Resolve links to scripts and treat as '-f'.
+    [[ -f "${SCRIPT_PATH_TO_EDIT}" ]] || return $IGNORED
+
+    # We only edit bash script files; skip other types of file.
+    file "${SCRIPT_PATH_TO_EDIT}" | grep -q "${BASH_TAG}" || return $IGNORED
+
     # We need the file name to form a key to look up the edit function.
-    SCRIPT_NAME=$( basename "${SCRIPT_PATH}" )
+    SCRIPT_NAME=$( basename "${SCRIPT_PATH_TO_EDIT}" )
 
     # Form an associative array key from the Pharo application type,
     # the script name, and the editing action desired by the user.
@@ -418,47 +497,14 @@ Edit_Pharo_Script () {
     # This situation is not an error; it just means "not our file".
     [[ -n "${EDIT_FUNCTION}" ]] || return $IGNORED
 
-    # Make a name for backing up the script file before editing.
-    BACKUP_PATH=${SCRIPT_PATH}.$( date +%s )
-
-    # Back up the script file here instead of via 'sed',
-    # so we only need this code in one place.
-    cp -a "${SCRIPT_PATH}" "${BACKUP_PATH}"
-
-    # If that failed, we won't be able to edit the script either...
-    (( $? == 0 )) || return $CANT_WRITE
-
-    # The path to the script to edit is a global; set it.
-    SCRIPT_PATH_TO_EDIT=${SCRIPT_PATH}
+    # Create a backup of the file before we edit it!
+    Backup_Script_File || return $CANT_WRITE
 
     # Here's the payoff, the moment we've been waiting for...
     ${EDIT_FUNCTION} || return $CANT_WRITE
 
-    # Success! Compare the edit result to the backup file; if these
-    # two files are identical, then delete the backup and display a
-    # message that no change was made to the script file.
-    diff "${SCRIPT_PATH}" "${BACKUP_PATH}" &>/dev/null
-
-    if (( $? == 0 )); then
-        # Display a message that no change was made.
-        Notify_of_File_Modified "${SCRIPT_PATH}" \
-            "No changes made"
-
-        # Delete the backup, since it's not relevant.
-        rm -f "${BACKUP_PATH}" && return
-        return $CANT_WRITE
-    fi
-
-    # Keep the backup & echo the name of the script being modified.
-    Notify_of_File_Modified "${SCRIPT_PATH}" \
-        "Code was ${SCRIPT_EDIT_ACTION}"
-
-    # Compare the backup we just created to similiar previous backups.
-    # If we already have a backup of this configuration, delete ours.
-
-
-    # ${SCRIPT_EDIT_ACTION}
-    return $SUCCESS
+    # Clean up after ourselves -- Decide what to do with the backup file.
+    Cleanup_Script_Backup
 }
 
 
@@ -466,8 +512,6 @@ Edit_Pharo_Script () {
 #
 # Process the set of files that were found in a Pharo app directory.
 #
-BASH_TAG="Bourne"
-
 Process_Pharo_Files () {
     local NUM_PROCESSED=0
 
@@ -493,14 +537,7 @@ Process_Pharo_Files () {
     # we've accumulated has at least one script.  If not, then issue a
     # warning; otherwise, assume it's a bash script and try to edit it.
     for FILE_PATH in "${PHARO_FILE_PATHS[@]}"; do
-        # Must ensure that the argument is a valid path to a regular file.
-        # Enhancement: Resolve links to scripts and treat as '-f'.
-        [[ -f "${FILE_PATH}" ]] || continue
-
-        # We only edit bash script files; skip other types of file.
-        file "${FILE_PATH}" | grep -q "${BASH_TAG}" || continue
-
-        # This file is a bash script, so attempt to edit it.
+        # Assume each file is a bash script and attempt to edit it.
         Edit_Pharo_Script "${FILE_PATH}"
 
         # If it was successfully edited, then increment our counter.
@@ -510,6 +547,8 @@ Process_Pharo_Files () {
             (( NUM_PROCESSED++ ))
             ;;
         $CANT_WRITE )
+            # If we can't write/delete this file, we probably can't
+            # write/delete for anything else in this directory.
             return $CANT_WRITE
             ;;
         esac
