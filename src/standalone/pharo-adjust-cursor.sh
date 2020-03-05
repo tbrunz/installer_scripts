@@ -231,7 +231,7 @@ Warn_If_Not_Pharo_Directory () {
     fi
 
     printf -v ERROR_MSG "%s %s \n%s " \
-        "Directory '${THIS_DIR}'" \
+        "Directory ${THIS_DIR}" \
         "does not appear to be a Pharo directory." \
         "(Nor does it have any Pharo subdirectories.)"
 
@@ -308,7 +308,7 @@ Ensure_is_Not_a_VM_Directory () {
     # Additionally, the path must not match a string indicating a Pharo VM.
     [[ ! "${THIS_DIR}" =~ ${VM_TAG} ]] && return
 
-    return ${VM_DIR}
+    return $VM_DIR
 }
 
 
@@ -493,6 +493,8 @@ Edit_Pharo_Script () {
         Notify_of_File_Modified "${SCRIPT_PATH}" \
             "Code was ${SCRIPT_EDIT_ACTION}"
     fi
+
+    return $SUCCESS
 }
 
 
@@ -511,7 +513,7 @@ Process_Pharo_Files () {
     # do here, since we won't modify scripts that are not the scripts
     # of a Pharo application.  This isn't fatal, and is expected,
     # so don't display a warning or quit; just move on to the next.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] || return ${NOT_APP}
+    [[ -n "${PHARO_APP_KEYWORD}" ]] || return $NOT_APP
 
     # This is a directory that corresponds to a Pharo application
     # that we recognize.  'Globalize' its display name (for messages).
@@ -564,6 +566,8 @@ Process_Pharo_Files () {
 # Recur one level into subdirectories, processing those that have Pharo apps.
 #
 Process_Subdirectories () {
+    local NUM_PROCESSED=0
+
     # Do not process the subdirectories of a Pharo application directory.
     # Why? Because a Pharo application directory should not contain
     # subdirectories of other Pharo applications.  Having matched a
@@ -591,10 +595,17 @@ Process_Subdirectories () {
         # Don't process unless an app subdirectory is found, and if
         # successful, move on to the next subdirectory.
         (( $? == IS_APP )) || continue
-        Process_Pharo_Files && continue
 
-        # If the file processing failed, tell the user why.
+        # If the directory is a Pharo application, process its files.
+        Process_Pharo_Files
+
+        # If the file processing succeeds, increment the counter,
+        # and if it failed, tell the user why.
         case $? in
+        $SUCCESS )
+            (( NUM_PROCESSED++ ))
+            continue
+            ;;
         $NO_FILES )
             Warn_of_App_Without_Scripts "files"
             ;;
@@ -608,6 +619,9 @@ Process_Subdirectories () {
             Warn_of_Bad_Return_Code "Process_Pharo_Files"
         esac
     done
+
+    # If we successfully processed at least one directory, success...
+    (( NUM_PROCESSED > 0 )) && return
 }
 
 
@@ -625,7 +639,7 @@ Examine_Directory () {
     PHARO_FILE_PATHS=()
 
     # Check that the directory is a directory, but not a Pharo VM directory.
-    Ensure_is_Not_a_VM_Directory "${WORKING_DIRECTORY}" || return ${VM_DIR}
+    Ensure_is_Not_a_VM_Directory "${WORKING_DIRECTORY}" || return $VM_DIR
 
     # One by one, examine each item found in the working directory:
     for FILE_PATH in "${WORKING_DIRECTORY}"/*; do
@@ -665,13 +679,13 @@ Examine_Directory () {
     done
 
     # If a keyword was matched, this is a recognized Pharo application.
-    [[ -n "${PHARO_APP_KEYWORD}" ]] && return ${IS_APP}
+    [[ -n "${PHARO_APP_KEYWORD}" ]] && return $IS_APP
 
     # Otherwise, if we found subdirectories, some could be Pharo apps.
-    (( ${#SUBDIRECTORIES[@]} > 0 )) && return ${HAS_DIRS}
+    (( ${#SUBDIRECTORIES[@]} > 0 )) && return $HAS_DIRS
 
     # Otherwise, this isn't an app directory and it has no subdirectories.
-    return ${NO_DIRS}
+    return $NO_DIRS
 }
 
 
@@ -689,11 +703,14 @@ Process_Directory () {
     # Pharo applications, modify their bash scripts accordingly.
     # If it's a Pharo virtual machine directory, then warn and quit.
     case $? in
-    ${IS_APP} )
-        Process_Pharo_Files && return
+    $IS_APP )
+        Process_Pharo_Files
 
         # If the file processing failed, tell the user why.
         case $? in
+        $SUCCESS )
+            return
+            ;;
         $NO_FILES )
             Warn_of_App_Without_Scripts "files" && die
             ;;
@@ -707,16 +724,16 @@ Process_Directory () {
             Warn_of_Bad_Return_Code "Process_Pharo_Files" && die
         esac
         ;;
-    ${HAS_DIRS} )
+    $HAS_DIRS )
         Process_Subdirectories && return
 
-        # Any other return code than SUCCESS is a program bug.
-        Warn_of_Bad_Return_Code "Process_Subdirectories" && die
+        # Any other return code means nothing was edited.
+        Warn_If_Not_Pharo_Directory "${THIS_DIRECTORY}" && die
         ;;
-    ${NO_DIRS} )
+    $NO_DIRS )
         Warn_If_Not_Pharo_Directory "${WORKING_DIRECTORY}" && die
         ;;
-    ${VM_DIR} )
+    $VM_DIR )
         Warn_of_Virtual_Machine_Directory "${WORKING_DIRECTORY}" && die
         ;;
     * )
