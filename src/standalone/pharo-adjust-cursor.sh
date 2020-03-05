@@ -9,6 +9,9 @@
 # Edit & save the script to update if Pharo Project changes these.
 #
 
+# $VM_TAG is used to identify directory paths for Pharo virtual machines.
+VM_TAG="vm"
+
 # Create an associative array of tags to be matched in file names, which
 # will uniquely indentify the type of Pharo application a directory holds.
 # An array will allow use of a loop to locate the matching app file names.
@@ -76,6 +79,16 @@ die () {
 
 ###############################################################################
 #
+# Display a feedback message to the user.
+#
+Display_Message () {
+    # If no parameter is supplied, send it anyway (i.e., blank line).
+    echo "${@}"
+}
+
+
+###############################################################################
+#
 # Echo the argument to the Standard Error stream.  Optionally, die.
 #
 Display_Error () {
@@ -95,16 +108,6 @@ Display_Error () {
 
     # If $2 is defined, then quit the script, using $2 as the exit code.
     die $(( ${EXIT_SIGNAL} ))
-}
-
-
-###############################################################################
-#
-# Display a feedback message to the user.
-#
-Display_Message () {
-    # If no parameter is supplied, send it anyway (i.e., blank line).
-    echo "${@}"
 }
 
 
@@ -131,23 +134,6 @@ Warn_of_Bad_Return_Code () {
     [[ -n "${FUNCTION_NAME}" ]] || FUNCTION_NAME="<unnamed function>"
 
     Display_Error "Bad return code from '${FUNCTION_NAME}'!"
-}
-
-
-###############################################################################
-#
-# Notify the user of files that we're modifying.
-#
-Notify_of_File_Modified () {
-    local FILE_PATH=${1}
-    local EDIT_RESULT=${2}
-
-    # If there are any arguments, the first one must be a file...
-    [[ -z "${FILE_PATH}" || ! -f "${FILE_PATH}" ]] && \
-        FILE_PATH="<argument not provided>"
-
-    # Note that $2 is optional, and if missing, has no side effect.
-    Display_Message "Editing file '${FILE_PATH}'... ${EDIT_RESULT}"
 }
 
 
@@ -187,10 +173,10 @@ Warn_If_Not_Pharo_Directory () {
         THIS_DIR="<argument not provided>"
     fi
 
-    printf -v ERROR_MSG "%s %s \n%s " \
-        "Directory ${THIS_DIR}" \
-        "does not appear to be a Pharo directory." \
-        "(Nor does it have any Pharo subdirectories.)"
+    printf -v ERROR_MSG "%s \n%s %s " \
+        "Nothing to do!  Directory ${THIS_DIR}" \
+        "is not a Pharo application directory," \
+        "and it has no Pharo app subdirectories."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -225,9 +211,8 @@ Warn_of_App_Without_Scripts () {
     local TARGET=${1}
     local ERROR_MSG
 
-    # Assemble a descriptive warning message and display it.
-    # Name the directory say which Pharo app we believe it contains,
-    # and whether or not we found files/bash script files.
+    # Both WORKING_DIRECTORY & PHARO_APP_NAME should be defined
+    # if/when this function is called...
     printf -v ERROR_MSG "%s %s \n%s " \
         "Directory '${WORKING_DIRECTORY}'" \
         "appears to be a ${PHARO_APP_NAME}" \
@@ -239,10 +224,28 @@ Warn_of_App_Without_Scripts () {
 
 ###############################################################################
 #
+# Notify the user of files that we're modifying.
+#
+Notify_of_File_Modified () {
+    local FILE_PATH=${1}
+    local EDIT_RESULT=${2}
+
+    # If there are any arguments, the first one must be a file...
+    [[ -z "${FILE_PATH}" || ! -f "${FILE_PATH}" ]] && \
+        FILE_PATH="<argument not provided>"
+
+    # Note that $2 is optional, and if missing, there is no side effect.
+    Display_Message "Editing file '${FILE_PATH}'... ${EDIT_RESULT}"
+}
+
+
+###############################################################################
+#
 # Ensure the provided argument is a valid directory path.
 #
 Ensure_is_a_Directory () {
 
+    # $1 must be provided, and it must be a directory, else fatal error.
     [[ -n "${1}" &&  -d "${1}" ]] && return
 
     Warn_of_Bad_Argument "${FUNCNAME}" && die
@@ -253,8 +256,6 @@ Ensure_is_a_Directory () {
 #
 # Ensure that the provided argument is a valid directory, but not a VM dir.
 #
-VM_TAG="vm"
-
 Ensure_is_Not_a_VM_Directory () {
     local THIS_DIR=${1}
     local ERROR_MSG
@@ -455,7 +456,7 @@ Edit_Pharo_Script () {
     # Compare the backup we just created to similiar previous backups.
     # If we already have a backup of this configuration, delete ours.
 
-    
+
     # ${SCRIPT_EDIT_ACTION}
     return $SUCCESS
 }
