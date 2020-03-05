@@ -167,7 +167,7 @@ Warn_of_Directory_Not_Writable () {
     fi
 
     printf -v ERROR_MSG "%s " \
-        "Cannot write files in ${SCRIPT_DIR}, Skipping..."
+        "Cannot write/delete files in ${SCRIPT_DIR}, Skipping..."
 
     Display_Error "${ERROR_MSG}"
 }
@@ -427,13 +427,11 @@ Edit_Pharo_Script () {
     # If that failed, we won't be able to edit the script either...
     (( $? == 0 )) || return $CANT_WRITE
 
-    # Here's the payoff, the moment we've been waiting for...
+    # The path to the script to edit is a global; set it.
     SCRIPT_PATH_TO_EDIT=${SCRIPT_PATH}
-    ${EDIT_FUNCTION}
 
-    # If the edit failed, then return the error code it produced.
-    RESULT=$?
-    (( RESULT != 0 )) && return $RESULT
+    # Here's the payoff, the moment we've been waiting for...
+    ${EDIT_FUNCTION} || return $CANT_WRITE
 
     # Success! Compare the edit result to the backup file; if these
     # two files are identical, then delete the backup and display a
@@ -441,16 +439,24 @@ Edit_Pharo_Script () {
     diff "${SCRIPT_PATH}" "${BACKUP_PATH}" &>/dev/null
 
     if (( $? == 0 )); then
-        # Delete the backup and display a message that no change was made.
-        rm -f "${BACKUP_PATH}"
+        # Display a message that no change was made.
         Notify_of_File_Modified "${SCRIPT_PATH}" \
             "No changes made"
-    else
-        # Keep the backup & echo the name of the script being modified.
-        Notify_of_File_Modified "${SCRIPT_PATH}" \
-            "Code was ${SCRIPT_EDIT_ACTION}"
+
+        # Delete the backup, since it's not relevant.
+        rm -f "${BACKUP_PATH}" && return
+        return $CANT_WRITE
     fi
 
+    # Keep the backup & echo the name of the script being modified.
+    Notify_of_File_Modified "${SCRIPT_PATH}" \
+        "Code was ${SCRIPT_EDIT_ACTION}"
+
+    # Compare the backup we just created to similiar previous backups.
+    # If we already have a backup of this configuration, delete ours.
+
+    
+    # ${SCRIPT_EDIT_ACTION}
     return $SUCCESS
 }
 
