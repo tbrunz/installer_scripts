@@ -58,25 +58,12 @@ VM_DIR=8
 CANT_WRITE=9
 
 
-###############################################################################
-#
-# logging control codes
-#
-OPEN_LOG="open"
-CLOSE_LOG="close"
-ENABLE_LOG="enabled"
-DISABLE_LOG=""
-
-
 
 ###############################################################################
 #
 # This is the exit point for the script.
 #
 die () {
-    # Start by closing any open log files.
-    Log_Control $OPEN_LOG
-
     # If no parameter is supplied, default to '1' (not '0').
     # Use 'exit $SUCCESS' (or 'exit Success') to quit with code True.
     [[ -z "${1}" ]] && exit 1
@@ -97,10 +84,7 @@ Display_Error () {
 
     if [[ -n "${ERROR_MSG}" ]]; then
         # If $1 is provided, display it as an error message.
-        [[ -n "${LOG_TO_CLI}" ]] && echo 1>&2 "${ERROR_MSG}"
-
-        # And log it, if logging is enabled.
-        [[ -n "${LOG_TO_FILE}" ]] && Log_Message "${ERROR_MSG}"
+        echo 1>&2 "${ERROR_MSG}"
     else
         # If $1 is not defined, we have a programming error...
         Warn_of_Bad_Argument "Display_Error"
@@ -120,34 +104,7 @@ Display_Error () {
 #
 Display_Message () {
     # If no parameter is supplied, send it anyway (i.e., blank line).
-    [[ -n "${LOG_TO_CLI}" ]] && echo "${@}"
-
-    # And log it, if logging is enabled.
-    [[ -n "${LOG_TO_FILE}" ]] && Log_Message "${@}"
-}
-
-
-###############################################################################
-#
-# Log a message to a log file.
-#
-Log_Control () {
-    local CONTROL=${1}
-
-    LOG_TO_CLI=true
-    LOG_TO_FILE=
-    LOG_FILE=
-}
-
-
-###############################################################################
-#
-# Log a message to a log file.
-#
-Log_Message () {
-    local MESSAGE=${1}
-
-    [[ -w "${LOG_FILE}" ]] && echo "${MESSAGE}" >> "${LOG_FILE}"
+    echo "${@}"
 }
 
 
@@ -751,9 +708,6 @@ Main () {
     TOP_LEVEL_DIRECTORY=$( pwd )
     TOP_LEVEL=true
     SUBDIRECTORIES=( )
-
-    # Open a log file and enable CLI messages.
-    Log_Control "open" "path/to/file"
 
     # Debug code -- this needs to be prompted for or read from the CLI.
     SCRIPT_EDIT_ACTION=${1,,}
