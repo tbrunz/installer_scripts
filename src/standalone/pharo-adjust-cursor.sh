@@ -46,6 +46,7 @@ declare -A SCRIPT_EDIT_ACTIONS=(
 
 
 ###############################################################################
+###############################################################################
 #
 # Return codes
 #
@@ -270,6 +271,7 @@ Ensure_is_Not_a_VM_Directory () {
 
 
 ###############################################################################
+###############################################################################
 #
 # Patterns in the Pharo scripts to search for and replace with:
 #
@@ -392,6 +394,7 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 
 
 ###############################################################################
+###############################################################################
 #
 # For bash scripts we recognize, apply the requested edit action.
 #
@@ -440,19 +443,9 @@ Make_Backup_Filename () {
 #
 # Create a backup for a file we're about to edit.
 #
-RETRY_LIMIT=3
-
 Backup_Script_File () {
     # Start by making a backup file name &
     Make_Backup_Filename
-
-    # If we duplicated a file name, run a re-try loop.
-    for (( CTR=RETRY_LIMIT; CTR>0; CTR-- )); do
-        # Allow the seconds of epoch to increment to a new number.
-        sleep 1
-        # Try again; if it's not an existing file, we quit this loop.
-        Make_Backup_Filename && break
-    done
 
     # If the proposed backup path still exists, the copy will fail.
     # Any other failure means we can't write in this directory.
