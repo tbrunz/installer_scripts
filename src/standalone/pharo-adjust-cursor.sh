@@ -403,14 +403,20 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 ###############################################################################
 ###############################################################################
 #
-# Create a backup file name, which needs to be unique.
+# Backup file constants
+#
+DEFAULT_FILE="tmp"
+TEMPLATE_EXT="XXXX"
+
+###############################################################################
+#
+# Clone the file to be edited to a new file with a unique name.
 #
 Make_Backup_File () {
+    # If a backup extension is provided, TARGET_BACKUP_PATH will be defined.
     local BACKUP_EXTENSION=${2}
-    local DEFAULT_FILE="tmp"
-    local TEMPLATE_EXT="XXXX"
 
-    # The backup file path becomes the return value as a global.
+    # The backup file path becomes the return value -- as a global.
     BACKUP_FILE_PATH=${1}
 
     # If no file/dir path parameter is provided, default it.
@@ -458,77 +464,59 @@ Make_Backup_File () {
 
 ###############################################################################
 #
-# For bash scripts we recognize, apply the requested edit action.
+# Decide if we keep the backup file, and if so, make the name sensible.
 #
 Cleanup_Script_Backup () {
-    local BACKUP_FILE_PATH
-    local FILE_EXTENSION
+    local OLDER_BACKUP_PATH
 
-    # Compare the edit result to the backup file; if these two
-    # files are identical, then delete the backup and display a
-    # message that no change was made to the script file.
-    diff "${SCRIPT_PATH_TO_EDIT}" "${BACKUP_FILE_PATH}" &>/dev/null
+    # Compare the edit result to the backup file; if these two files are
+    # identical, then delete the useless backup file and we're done.
+    diff "${BACKUP_FILE_PATH}" "${SCRIPT_PATH_TO_EDIT}" &>/dev/null
+
     if (( $? == 0 )); then
-        # Display a message that no change was made.
         Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
             "No changes made"
 
-        # Delete the backup, since it's not relevant.
+        # Delete the backup we just created, as it's no longer relevant.
         rm -f "${BACKUP_FILE_PATH}" && return
         return $CANT_WRITE
     fi
 
     # The edited file differs from the original, so keep the backup.
-    # Create a meaningful extension name for the backup file.
-    BACKUP_FILE_PATH=${BACKUP_FILE_PATH}
-    FILE_EXTENSION=${SCRIPT_BACKUP_EXTENSIONS["${SCRIPT_EDIT_ACTION}"]}
+    # Notify the user that the script file was changed & how.
+    Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+        "Code was ${SCRIPT_EDIT_ACTION}"
 
-    # Attempt to make a backup file using this desired name.
-    Make_Backup_File "${SCRIPT_PATH_TO_EDIT}" "${FILE_EXTENSION}"
+    # If the backup file path is the same as the target path, we're done.
+    [[ "${BACKUP_FILE_PATH}" == "${TARGET_BACKUP_PATH}" ]] && return
 
-    # It's possible we didn't get the backup name we just requested,
-    # because it may have been created during a previous edit; check this.
-    if [[ "${BACKUP_EXTENSION}" == "${FILE_EXTENSION}" ]]; then
-        # It wasn't already in use, so move our backup to use this file name.
-        mv "${BACKUP_FILE_PATH}" "${BACKUP_FILE_PATH}" || return $CANT_WRITE
+    # If not, then the desired path is already in use by another file.
+    # But it's possible that our backup matches this other file.
+    # If this is the case, then we can delete our backup & we're done.
+    diff "${BACKUP_FILE_PATH}" "${TARGET_BACKUP_PATH}" &>/dev/null
 
-        # The script file was edited & backed up, so notify the user.
-        Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
-            "Code was ${SCRIPT_EDIT_ACTION}"
-
-        # The 'mv' deleted the temporary backup file, so we're done here.
-        return $SUCCESS
-    fi
-
-    # There already exists a backup file with the desired name.
-    # Delete the trial backup, since its name was mangled (to be unique).
-    rm -f "${BACKUP_FILE_PATH}" &>/dev/null
-
-    # But it's possible that our backup is the same as the older one.
-    diff "${BACKUP_FILE_PATH}" "${EXISTING_FILE_PATH}" &>/dev/null
     if (( $? == 0 )); then
-        # Display a message that script file was edited.
-        Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
-            "Code was ${SCRIPT_EDIT_ACTION}"
+        # Appropriate the older backup by updating its date-time stamp.
+        touch "${TARGET_BACKUP_PATH}" &>/dev/null
 
-        # Delete the trial backup, since it's a duplicate.
+        # Delete the backup we just created, as it's no longer relevant.
         rm -f "${BACKUP_FILE_PATH}" && return
         return $CANT_WRITE
     fi
 
-    # The desired backup filename is in use, and our backup doesn't match it.
-    # Rename the older file so that we can use the name for the newer file.
-    # Create a new backup file using a date code (and accept the result).
-    Make_Backup_File "${EXISTING_FILE_PATH}" "$( date +%s )"
+    # If our backup and the older backup are different, we need to keep
+    # both files, but we still want to appropriate the target pathname.
+    # Solution: Make another backup file with a randomized extension.
+    OLDER_BACKUP_PATH=$( mktemp "${TARGET_BACKUP_PATH}.${TEMPLATE_EXT}" ) || \
+        return $CANT_WRITE
 
-    # Move the old backup to the date-code extentioned file, then
-    # Move the backup file for our edit to use the desired name.
-    cp -a "${EXISTING_FILE_PATH}" "${BACKUP_FILE_PATH}" || return $CANT_WRITE
-    mv "${BACKUP_FILE_PATH}" "${EXISTING_FILE_PATH}" || return $CANT_WRITE
+    # Clone the older backup file to the file with the randomized extension.
+    cp -a "${TARGET_BACKUP_PATH}" "${OLDER_BACKUP_PATH}" || \
+        return $CANT_WRITE
 
-    # Display a message that script file was edited.
-    Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
-        "Code was ${SCRIPT_EDIT_ACTION}"
+    # And now rename our backup to have the target backup name.
+    mv "${BACKUP_FILE_PATH}" "${TARGET_BACKUP_PATH}" || \
+        return $CANT_WRITE
 }
 
 
