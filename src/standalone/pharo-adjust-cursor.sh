@@ -11,6 +11,7 @@
 
 # $VM_TAG is used to identify directory paths for Pharo virtual machines.
 VM_TAG="vm"
+VM_ENV_VAR="SQUEAK_FAKEBIGCURSOR"
 
 # Create an associative array of tags to be matched in file names, which
 # will uniquely indentify the type of Pharo application a directory holds.
@@ -51,6 +52,40 @@ declare -A SCRIPT_BACKUP_EXTENSIONS=(
     ["${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}"]="original"
     ["${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}"]="bigcursor"
 )
+
+
+###############################################################################
+###############################################################################
+#
+Display_Usage () {
+    local APP
+
+    APP=$( basename ${0} '.sh' )
+
+    echo "
+usage: ${APP} [i|b|f|a|y] (install big cursor) [r|s|o|d|n] (restore original)
+
+    This script will edit bash scripts that launch Pharo applications
+    (i.e., pharolauncher, pharoiot, etc.) to either enable or disable
+    enlarging the GUI pointer.  This is useful on Linux systems with
+    a 4K hi-DPI screen, since currently, Pharo can enlarge its fonts
+    and other GUI features, but not the cursor.
+
+    The cursor is enlarged by first setting an environment variable,
+    ${VM_ENV_VAR}, to a non-zero value prior to running the
+    application script (i.e., pharo-launcher, pharo-ui, etc.).  This
+    script achieves this by editing the app scripts to add an 'env'
+    prefix to the commands that launch a Pharo virtual machine.
+
+    ${APP} can edit the Pharo application scripts in both
+    directions, to add the 'env' prefix or remove it, depending on
+    the option switch included on the command line.  There are no
+    side-effects if the same command is issued multiple times in a
+    row.  Each edit will create a backup file, with a name extension
+    appended that reflects the script version backed up.  Restoring
+    a backup must be done manually.
+    "
+}
 
 
 ###############################################################################
@@ -283,8 +318,8 @@ Ensure_is_Not_a_VM_Directory () {
 #
 # Patterns in the Pharo scripts to search for and replace with:
 #
-PATTERN_0="env[[:space:]]+SQUEAK_FAKEBIGCURSOR=1"
-PATTERN_1="env SQUEAK_FAKEBIGCURSOR=1"
+PATTERN_0="env[[:space:]]+${VM_ENV_VAR}=1"
+PATTERN_1="env ${VM_ENV_VAR}=1"
 PATTERN_2='exec'
 PATTERN_3='"\$LINUX'
 PATTERN_4='vm\/\$VM'
@@ -826,30 +861,34 @@ Process_Directory () {
 ###############################################################################
 #
 Main () {
-    # Start with the assumption that the working directory is a top-lovel
-    # directory, which may be either a Pharo application directory, or a
-    # directory containing one or more Pharo applications in subdirectories.
-    TOP_LEVEL_DIRECTORY=$( pwd )
-    TOP_LEVEL=true
-    SUBDIRECTORIES=( )
+    # If no switch is provided, show the usage information.
+    (( $# == 0 )) && Display_Usage && die
 
-    # Debug code -- this needs to be prompted for or read from the CLI.
+    # Get the command line switches, as either '-s' or '--switch'.
     SCRIPT_EDIT_ACTION=${1,,}
-    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTION##-}
-    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTION##-}
+    SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTION##*-}
 
     case ${SCRIPT_EDIT_ACTION:0:1} in
-    'i' )
+    'h' )
+        Display_Usage && die
+        ;;
+    'i' | 'b' | 'f' | 'a' | 'y' )
         SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}
         ;;
-    'r' )
+    'r' | 's' | 'o' | 'd' | 'n' )
         SCRIPT_EDIT_ACTION=${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}
         ;;
     * )
         Display_Error "Can't decipher action to take!" && die
     esac
 
-    Process_Directory "${TOP_LEVEL_DIRECTORY}"
+    # Start with the assumption that the working directory is a top-lovel
+    # directory, which may be either a Pharo application directory, or a
+    # directory containing one or more Pharo applications in subdirectories.
+    TOP_LEVEL=true
+    SUBDIRECTORIES=( )
+
+    Process_Directory "${PWD}"
 }
 
 Main "$@"
