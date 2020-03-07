@@ -37,15 +37,16 @@ declare -A PHARO_SCRIPT_NAMES=(
     ["SCRIPT_NAME_PHARO_THINGS_GUI"]="pharo-ui"
 )
 
-# Create an associative array of arbitrary tags that will be used to
-# select the editing action for bash scripts that are to be modified.
+# Create an associative array of notification phrases that will be used to
+# select the editing action for bash scripts that are to be modified, and
+# will also be used in messages to notify the user what was done.
 declare -A SCRIPT_EDIT_ACTIONS=(
     ["INSERT_BIG_CURSOR"]="inserted"
     ["REMOVE_BIG_CURSOR"]="removed"
 )
 
 # Create an associative array of file name extensions that will be used
-# to name a backup file created before editing the original.
+# to name backup files created before editing the bash scripts.
 declare -A SCRIPT_BACKUP_EXTENSIONS=(
     ["${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}"]="original"
     ["${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}"]="bigcursor"
@@ -55,7 +56,7 @@ declare -A SCRIPT_BACKUP_EXTENSIONS=(
 ###############################################################################
 ###############################################################################
 #
-# Return codes
+# Function return codes
 #
 SUCCESS=0
 IGNORED=1
@@ -107,7 +108,7 @@ Display_Error () {
         echo 1>&2 "${ERROR_MSG}"
     else
         # If $1 is not defined, we have a programming error...
-        Warn_of_Bad_Argument "Display_Error"
+        Warn_of_Bad_Argument "${FUNCNAME}"
     fi
 
     # If $2 is not provided, resume the script after displaying the message.
@@ -699,7 +700,8 @@ Process_Subdirectories () {
         esac
     done
 
-    # If we successfully processed at least one directory, success...
+    # If we successfully processed at least one directory, success.
+    # Any other return code means nothing was edited.
     (( NUM_PROCESSED > 0 )) && return
 }
 
