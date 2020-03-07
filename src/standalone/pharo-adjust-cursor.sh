@@ -430,12 +430,37 @@ Cleanup_Script_Backup () {
 #
 # Create a backup file name, which needs to be unique.
 #
-Make_Backup_Filename () {
-    # Create a unique name; The path to the backup file is a global.
-    SCRIPT_BACKUP_PATH=${SCRIPT_PATH_TO_EDIT}.$( date +%s )
+Make_Backup_File () {
+    SCRIPT_BACKUP_PATH=${1}
+    BACKUP_EXTENSION=${2}
 
-    # If the proposed backup path exists, we don't want to clobber it.
-    [[ ! -r "${SCRIPT_BACKUP_PATH}" ]] || return $CANT_WRITE
+    # If no parameter is provided, then default it to 'tmp'.
+    [[ -n "${SCRIPT_BACKUP_PATH}" ]] || SCRIPT_BACKUP_PATH="tmp"
+
+    # Canonicalize the path to be a full absolute path (file or dir).
+    SCRIPT_BACKUP_PATH=$( readlink -f -n "${SCRIPT_BACKUP_PATH}" )
+
+    # If the path is a directory path, then default the file to 'tmp'.
+    [[ -d "${SCRIPT_BACKUP_PATH}" ]] && \
+        SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}/tmp"
+
+    if [[ -n "${BACKUP_EXTENSION}" ]]; then
+        # Try to create a file with this name -- might already exist!
+        echo "Fix me!"
+    fi
+
+    # Turn the path into a template for 'mktemp' to expand.
+    SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}.XXXXXXXX"
+
+    # Create an actual temp file with a unique name from our template.
+    SCRIPT_BACKUP_PATH=$( mktemp "${SCRIPT_BACKUP_PATH}" ) || \
+        return $CANT_WRITE
+
+    # Extract the template extension from the actual path string.
+    SCRIPT_BACKUP_ROOT=${SCRIPT_BACKUP_PATH%.*}
+
+    # Remove the extension from the actual (possibly defaulted) path string.
+    BACKUP_EXTENSION=${SCRIPT_BACKUP_PATH#${SCRIPT_BACKUP_ROOT}.}
 }
 
 
@@ -444,13 +469,21 @@ Make_Backup_Filename () {
 # Create a backup for a file we're about to edit.
 #
 Backup_Script_File () {
-    # Start by making a backup file name &
-    Make_Backup_Filename
+    # Start by making a backup file name.
+    Make_Backup_File "${SCRIPT_PATH_TO_EDIT}" || return $CANT_WRITE
 
     # If the proposed backup path still exists, the copy will fail.
     # Any other failure means we can't write in this directory.
-    cp -an "${SCRIPT_PATH_TO_EDIT}" \
+    cp -a "${SCRIPT_PATH_TO_EDIT}" \
         "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
+
+    return $SUCCESS
+
+    # Create a unique file path; The path to the backup file is a global.
+    SCRIPT_BACKUP_PATH=${SCRIPT_PATH_TO_EDIT}.$( date +%s )
+
+    # If the proposed backup path exists, we don't want to clobber it.
+    [[ ! -r "${SCRIPT_BACKUP_PATH}" ]] || return $CANT_WRITE
 }
 
 
