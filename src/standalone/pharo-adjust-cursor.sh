@@ -44,6 +44,13 @@ declare -A SCRIPT_EDIT_ACTIONS=(
     ["REMOVE_BIG_CURSOR"]="removed"
 )
 
+# Create an associative array of file name extensions that will be used
+# to name a backup file created before editing the original.
+declare -A SCRIPT_BACKUP_EXTENSIONS=(
+    ["${SCRIPT_EDIT_ACTIONS["INSERT_BIG_CURSOR"]}"]="original"
+    ["${SCRIPT_EDIT_ACTIONS["REMOVE_BIG_CURSOR"]}"]="bigcursor"
+)
+
 
 ###############################################################################
 ###############################################################################
@@ -396,14 +403,77 @@ CONVERSIONS[${KEY}]="PharoUI_RemoveBigCursor"
 ###############################################################################
 ###############################################################################
 #
+# Create a backup file name, which needs to be unique.
+#
+Make_Backup_File () {
+    local DEFAULT_FILE="tmp"
+    local TEMPLATE_EXT=".XXXX"
+
+    # The script path and backup extension parameters became globals.
+    SCRIPT_BACKUP_PATH=${1}
+    BACKUP_EXTENSION=${2}
+
+    # If no script path parameter is provided, then default it.
+    [[ -n "${SCRIPT_BACKUP_PATH}" ]] || SCRIPT_BACKUP_PATH=${DEFAULT_FILE}
+
+    # Canonicalize the path to be a full absolute path (file or dir).
+    SCRIPT_BACKUP_PATH=$( readlink -f -n "${SCRIPT_BACKUP_PATH}" )
+
+    # If the path is a directory path, then default the file name part.
+    [[ -d "${SCRIPT_BACKUP_PATH}" ]] && \
+        SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}/${DEFAULT_FILE}"
+
+    # If provided, try to create the backup file with a given extension.
+    if [[ -n "${BACKUP_EXTENSION}" ]]; then
+        # Adjust the file path by adding the extension string to it.
+        SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}.${BACKUP_EXTENSION}"
+
+        # The target file might already exist!  Check to see...
+        if [[ -x "${SCRIPT_BACKUP_PATH}" ]]; then
+            # The desired file path is already in use, so we must add
+            # random characters to the provided extension to make it unique.
+            # By blanking the extension string & removing the '.' from the
+            # template, we cause the next condition controlling the use of
+            # 'mktemp' to be selected, giving us '<path>.<ext><template>'.
+            EXISTING_FILE_PATH=${SCRIPT_BACKUP_PATH}
+            BACKUP_EXTENSION=""
+            TEMPLATE_EXT=${TEMPLATE_EXT#.}
+        else
+            # Otherwise, the path is unused, so create the file, and
+            # The following condition will therefore NOT be selected.
+            touch "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
+        fi
+    fi
+
+    if [[ -z "${BACKUP_EXTENSION}" ]]; then
+        # Turn the path into a template for 'mktemp' to expand.
+        SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}${TEMPLATE_EXT}"
+
+        # Create an actual temp file with a unique name from our template.
+        SCRIPT_BACKUP_PATH=$( mktemp "${SCRIPT_BACKUP_PATH}" ) || \
+            return $CANT_WRITE
+    fi
+
+    # Extract the template extension from the actual path string.
+    SCRIPT_BACKUP_ROOT=${SCRIPT_BACKUP_PATH%.*}
+
+    # Remove the extension from the actual (possibly defaulted) path string.
+    BACKUP_EXTENSION=${SCRIPT_BACKUP_PATH#${SCRIPT_BACKUP_ROOT}.}
+}
+
+
+###############################################################################
+#
 # For bash scripts we recognize, apply the requested edit action.
 #
 Cleanup_Script_Backup () {
+    local BACKUP_FILE_PATH
+    local FILE_EXTENSION
+
     # Compare the edit result to the backup file; if these two
     # files are identical, then delete the backup and display a
     # message that no change was made to the script file.
     diff "${SCRIPT_PATH_TO_EDIT}" "${SCRIPT_BACKUP_PATH}" &>/dev/null
-
     if (( $? == 0 )); then
         # Display a message that no change was made.
         Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
@@ -414,53 +484,57 @@ Cleanup_Script_Backup () {
         return $CANT_WRITE
     fi
 
-    # Keep the backup & echo the name of the script being modified.
-    Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
-        "Code was ${SCRIPT_EDIT_ACTION}"
+    # The edited file differs from the original, so keep the backup.
+    # Create a meaningful extension name for the backup file.
+    BACKUP_FILE_PATH=${SCRIPT_BACKUP_PATH}
+    FILE_EXTENSION=${SCRIPT_BACKUP_EXTENSIONS["${SCRIPT_EDIT_ACTION}"]}
 
-    # Compare the backup we just created to similiar previous backups.
-    # If we already have a backup of this configuration, delete ours.
+    # Attempt to make a backup file using this desired name.
+    Make_Backup_File "${SCRIPT_PATH_TO_EDIT}" "${FILE_EXTENSION}"
 
-    # ${SCRIPT_EDIT_ACTION}
-    return $SUCCESS
-}
+    # It's possible we didn't get the backup name we just requested,
+    # because it may have been created during a previous edit; check this.
+    if [[ "${BACKUP_EXTENSION}" == "${FILE_EXTENSION}" ]]; then
+        # It wasn't already in use, so move our backup to use this file name.
+        mv "${BACKUP_FILE_PATH}" "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
 
+        # The script file was edited & backed up, so notify the user.
+        Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+            "Code was ${SCRIPT_EDIT_ACTION}"
 
-###############################################################################
-#
-# Create a backup file name, which needs to be unique.
-#
-Make_Backup_File () {
-    SCRIPT_BACKUP_PATH=${1}
-    BACKUP_EXTENSION=${2}
-
-    # If no parameter is provided, then default it to 'tmp'.
-    [[ -n "${SCRIPT_BACKUP_PATH}" ]] || SCRIPT_BACKUP_PATH="tmp"
-
-    # Canonicalize the path to be a full absolute path (file or dir).
-    SCRIPT_BACKUP_PATH=$( readlink -f -n "${SCRIPT_BACKUP_PATH}" )
-
-    # If the path is a directory path, then default the file to 'tmp'.
-    [[ -d "${SCRIPT_BACKUP_PATH}" ]] && \
-        SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}/tmp"
-
-    if [[ -n "${BACKUP_EXTENSION}" ]]; then
-        # Try to create a file with this name -- might already exist!
-        echo "Fix me!"
+        # The 'mv' deleted the temporary backup file, so we're done here.
+        return $SUCCESS
     fi
 
-    # Turn the path into a template for 'mktemp' to expand.
-    SCRIPT_BACKUP_PATH="${SCRIPT_BACKUP_PATH}.XXXXXXXX"
+    # There already exists a backup file with the desired name.
+    # Delete the trial backup, since its name was mangled (to be unique).
+    rm -f "${SCRIPT_BACKUP_PATH}" &>/dev/null
 
-    # Create an actual temp file with a unique name from our template.
-    SCRIPT_BACKUP_PATH=$( mktemp "${SCRIPT_BACKUP_PATH}" ) || \
+    # But it's possible that our backup is the same as the older one.
+    diff "${BACKUP_FILE_PATH}" "${EXISTING_FILE_PATH}" &>/dev/null
+    if (( $? == 0 )); then
+        # Display a message that script file was edited.
+        Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+            "Code was ${SCRIPT_EDIT_ACTION}"
+
+        # Delete the trial backup, since it's a duplicate.
+        rm -f "${SCRIPT_BACKUP_PATH}" && return
         return $CANT_WRITE
+    fi
 
-    # Extract the template extension from the actual path string.
-    SCRIPT_BACKUP_ROOT=${SCRIPT_BACKUP_PATH%.*}
+    # The desired backup filename is in use, and our backup doesn't match it.
+    # Rename the older file so that we can use the name for the newer file.
+    # Create a new backup file using a date code (and accept the result).
+    Make_Backup_File "${EXISTING_FILE_PATH}" "$( date +%s )"
 
-    # Remove the extension from the actual (possibly defaulted) path string.
-    BACKUP_EXTENSION=${SCRIPT_BACKUP_PATH#${SCRIPT_BACKUP_ROOT}.}
+    # Move the old backup to the date-code extentioned file, then
+    # Move the backup file for our edit to use the desired name.
+    cp -a "${EXISTING_FILE_PATH}" "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
+    mv "${BACKUP_FILE_PATH}" "${EXISTING_FILE_PATH}" || return $CANT_WRITE
+
+    # Display a message that script file was edited.
+    Notify_of_File_Modified "${SCRIPT_PATH_TO_EDIT}" \
+        "Code was ${SCRIPT_EDIT_ACTION}"
 }
 
 
@@ -478,12 +552,6 @@ Backup_Script_File () {
         "${SCRIPT_BACKUP_PATH}" || return $CANT_WRITE
 
     return $SUCCESS
-
-    # Create a unique file path; The path to the backup file is a global.
-    SCRIPT_BACKUP_PATH=${SCRIPT_PATH_TO_EDIT}.$( date +%s )
-
-    # If the proposed backup path exists, we don't want to clobber it.
-    [[ ! -r "${SCRIPT_BACKUP_PATH}" ]] || return $CANT_WRITE
 }
 
 
