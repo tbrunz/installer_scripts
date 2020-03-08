@@ -23,4 +23,6 @@ The cursor is enlarged by first setting an environment variable, `SQUEAK_FAKEBIG
 
 This script can edit the Pharo application scripts in both directions, to add the `env` prefix or remove it, depending on the option switch included on the command line.  There are no side-effects if the same command is issued multiple times in a row.  Each edit will create a backup file, with a name extension appended that reflects the script version backed up.  Restoring a backup must be done manually.
 
+If run in a Pharo application directory (such as `pharolauncher`), this script will edit the Pharo scripts in just that directory.  If run in a directory that contains one or more Pharo app directories, it will search for and edit the scripts in each of them.  (If neither situation is met, it will complain, and will also complain if expected Pharo bash scripts aren't found.)
+
 As is typical with my scripts (and most bash scripts), adding the `-h` switch (or `--help`) will show the usage prompt, as will entering the command with no arguments.
