@@ -16,8 +16,8 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
-echo "Last update 28 DEC 2019 "
-echo "This update 20 JAN 2020 "
+echo "Last update 20 JAN 2020 "
+echo "This update 09 FEB 2020 "
 }
 
 __alist_linux_1() {
@@ -164,7 +164,12 @@ PATH_SCRIPT_PSYNC=~/${DIRNAME_MB_LOCAL}/${FILENAME_SCRIPT_PSYNC}
 
 DIR_SCRIPTS_MB=~/ascr
 
+DIR_DOCUMENTS=~/Documents
 DIR_DOWNLOADS=~/Downloads
+
+DIR_GIT_GITHUB=${DIR_DOCUMENTS}/Git
+DIR_EXERCISM=${DIR_DOCUMENTS}/Exercism
+
 DIR_BACKUP=${DIR_DOWNLOADS}/Backup
 
 DIR_SCRIPTS_CROUTON=${DIR_DOWNLOADS}/Crouton
@@ -422,17 +427,22 @@ __check_usb_repo() {
 
 ################################################################################
 #
-# Convenience 'cd' commands (all platforms)
+# Convenience commands (all platforms)
 #
 # Call the function to set script/USB thumbdrive variables and flag errors:
 #
 __check_usb_repo
 
-alias ips='ip -br -c a'
+alias  pz="pigz "
+alias ips="ip -br -c a"
 
 alias cda="cd ${DIR_MB_LOCAL} && ls -alF "
 alias cdz="cd ${DIR_MB_LOCAL}/Z-FILES && ls -alF "
 alias cds="cd ${DIR_SCRIPTS_MB} && ls -a "
+
+alias cdo="cd ${DIR_DOCUMENTS} && ls -alF"
+alias cdg="cd ${DIR_GIT_GITHUB} && ls -alF"
+alias cde="cd ${DIR_EXERCISM} && ls -alF "
 
 alias cdd="cd ${DIR_DOWNLOADS} && ls -alF -tr "
 alias cdu="cd ${DIR_MEDIA_USB} && ls -alF "
@@ -644,6 +654,11 @@ dlymnt() {
    printf "%s" "${RESULT}" | xargs -t -r -n 2 -L 1 sudo mount --bind
 }
 
+################################################################################
+#
+# bw:     Display the activity of each NIC in the system 
+# wazzup: Display the up/down state of each NIC in the system 
+#
 bw() {
    bwm-ng "$@"
 }
@@ -654,6 +669,10 @@ wazzup() {
    ip addr | grep 'state DOWN'
 }
 
+################################################################################
+#
+# Show/don't show mounted volumes in the Gnome dock
+#
 dockmnts() {
     if [[ "${1}" == "true" || "${1}" == "false" ]]; then
         gsettings set org.gnome.shell.extensions.dash-to-dock show-mounts ${1}
@@ -671,6 +690,7 @@ fm() {
     free -m
 }
 
+################################################################################
 #
 # Ubuntu 18.04++ uses snaps mounted as loop devices; fix 'df' to not display
 #
@@ -684,6 +704,7 @@ dfh() {
     sort | awk '{ print substr( $0, 5 ) }'
 }
 
+################################################################################
 #
 # Running 'gnome-terminal' in a Chromebook xiwi tab doesn't honor current xkbmap
 #
@@ -698,6 +719,7 @@ kbd() {
     setxkbmap ${LAYOUT}
 }
 
+################################################################################
 #
 # 'Fix' gedit for CLI launch
 #
@@ -714,8 +736,11 @@ gedit() {
     "${FILE_EDITOR_GUI}" 2>/dev/null "$@" &
 }
 
+################################################################################
 #
-# Calculate the MD5 hash for every '.md5' file found
+# md5: Calculate the MD5 hash for every '.md5' file found
+# sha: Calculate the SHA hash (default 256) for every '.sha' file found
+#      Types supported: sha1sum, sha224sum, sha256sum, sha384sum, sha512sum
 #
 md5() {
     if [[ "${1:0:1}" == "-" ]]; then    
@@ -725,11 +750,6 @@ md5() {
     fi
 }
 
-#
-# Calculate the SHA hash (default 256) for every '.sha' file found
-#
-# Types supported: sha1sum, sha224sum, sha256sum, sha384sum, sha512sum
-#
 sha() {
     local SHA_FORCE=${1}    
     local DEBUG=${2}
@@ -1013,7 +1033,9 @@ u2d() {
 
 ################################################################################
 #
-# Remove the "Recent Documents" list
+# remr: Remove the "Recent Documents" list
+# remt: Remove the thumbnail images
+# rema: Remove obsolete packages
 #
 remr() {
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
@@ -1022,9 +1044,6 @@ remr() {
     echo "Recent documents list (old style) cleared."
 }
 
-#
-# Remove the thumbnail images
-#
 remt() {
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
@@ -1034,9 +1053,6 @@ remt() {
     echo "Thumbnail images cleared."
 }
 
-#
-# Remove obsolete packages
-#
 rema() {
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
@@ -1046,9 +1062,10 @@ rema() {
 
 ################################################################################
 #
-# UPDATING THE DISTRO
+# upg:  Upgrade without first doing an update of repo packages
+# upd:  Update repo packages, then do a package upgrade
+# inst: Update repo packages, then install a given package
 #
-
 __fix_apt_for_chromeos() {
 
     # This function is currently unused...
@@ -1073,6 +1090,23 @@ upd() {
     sudo apt-get update && upg
 }
 
+inst() {
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    (( $# > 0 )) || \
+        { echo >&2 "usage: ${FUNCNAME} package [... package ] " ; return 1 ; }
+
+    sudo apt-get update && sudo apt-get install "$@"
+
+    [[ -d /run ]] && ls -1 /run/ | grep required
+}
+
+################################################################################
+#
+# vers:   Display the installed versions of a given package pattern
+# got:    Check the repo for a given package pattern
+# gotker: Display available kernels available for this distro
+#
 vers() {
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
@@ -1092,17 +1126,6 @@ vers() {
     fi
 
     printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP}"
-}
-
-inst() {
-    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
-
-    (( $# > 0 )) || \
-        { echo >&2 "usage: ${FUNCNAME} package [... package ] " ; return 1 ; }
-
-    sudo apt-get update && sudo apt-get install "$@"
-
-    [[ -d /run ]] && ls -1 /run/ | grep required
 }
 
 got() {
@@ -1129,11 +1152,28 @@ gotker() {
    elif [[ "${1}" =~ [[:digit:]] ]]; then
       VERS="5.${1}"
    else
-      VERS=4.18
+      VERS=$( uname -r | egrep -o '[[:digit:]]+[.][[:digit:]]+' 2>/dev/null )
    fi
    
    VERS="${VERS}.0"
    got "linux-image-un" "${VERS}.*gen" | sort | egrep "${VERS}-[[:digit:]]+"
+}
+
+################################################################################
+#
+# debver:   Display the version of a given package
+# show:     Display the repo description of a package
+# showtask: Display the packages in a 'tasksel' group
+#
+debver() {
+   local EXT=$( basename "${1}" | cut -d'.' -f 2 )
+
+   if [[ -z "${1}" || "${EXT}" != "deb" ]]; then
+      echo "usage: ${FUNCNAME} <DEB file> "
+      return 1
+   fi
+   
+   dpkg-deb -f "${1}" Version
 }
 
 show() {
@@ -1168,18 +1208,6 @@ showtask() {
         printf "%s" "${RESULT}" | grep -i "${2}"
     fi
 }
-
-debver() {
-   local EXT=$( basename "${1}" | cut -d'.' -f 2 )
-
-   if [[ -z "${1}" || "${EXT}" != "deb" ]]; then
-      echo "usage: ${FUNCNAME} <DEB file> "
-      return 1
-   fi
-   
-   dpkg-deb -f "${1}" Version
-}
-
 
 ################################################################################
 #
@@ -1265,7 +1293,8 @@ echopad() {
 
 ################################################################################
 #
-# idhost <host> = Return FQDN:Port for <host>
+# idhost: Return 'FQDN:Port' for a given host
+# lshost: Echo the list of known hosts
 #
 idhost() {
     (( $# == 1 )) || { echo >&2 "usage: ${FUNCNAME} <host> " ; return 1 ; }
@@ -1276,9 +1305,6 @@ idhost() {
     echo "${FQDN[${1}]}:${PORT[${1}]}"
 }
 
-#
-# Echo the list of known hosts
-#
 lshost() {
     for THIS_HOST in "${HOSTS[@]}"; do
         echo "$( echopad "${THIS_HOST}" 12 )$( idhost "${THIS_HOST}" )"
@@ -1291,7 +1317,6 @@ lshost() {
 #
 # ulhost <host>        = Unlock <host> using FWKNOP
 # gohost <user> <host> = SSH into <user> account on <host>
-# rdhost <user> <host> = SSH into <user> account on <host> & prep for Rem D/T
 #
 ulhost() {
     (( $# == 1 )) || { echo >&2 "usage: ${FUNCNAME} <host> " ; return 1 ; }
@@ -1997,7 +2022,7 @@ __USAGE
 
 ###############################################################################
 #
-# Blast a file to the home directories of users on other platforms
+# Blast a file(s) to the home directories of users on other platforms
 #
 blast() {
     FILE_LIST=()
