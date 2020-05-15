@@ -16,8 +16,8 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
-echo "Last update 20 JAN 2020 "
-echo "This update 09 FEB 2020 "
+echo "Last update 11 FEB 2020 "
+echo "This update 03 MAY 2020 "
 }
 
 __alist_linux_1() {
@@ -433,6 +433,7 @@ __check_usb_repo() {
 #
 __check_usb_repo
 
+alias  cl="clisp -i ~/.clisprc.lisp "
 alias  pz="pigz "
 alias ips="ip -br -c a"
 
@@ -601,7 +602,19 @@ puml () {
 }
 
 sts () {
-    local TERSE_GUIDE_TO_PHARO=~/Pharo/pharolauncher/TerseGuideToPharo.st
+    local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
+    
+    if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
+        gedit "${TERSE_GUIDE_TO_PHARO}"
+    else
+        echo "error: Cannot find '${TERSE_GUIDE_TO_PHARO}' ! "
+    fi
+}
+
+luam () {
+    MAN_PAGE=${1}
+    
+    local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
     
     if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
         gedit "${TERSE_GUIDE_TO_PHARO}"
