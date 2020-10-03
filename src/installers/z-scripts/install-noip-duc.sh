@@ -28,6 +28,7 @@ CONF_FILE=no-ip2.conf
 
 # We're going to make a Linux service.. Set up these files/directories:
 #
+MAKE_FILE=Makefile
 SCRIPT_NAME=noip2
 TARGET_SCRIPT=/etc/init.d/${SCRIPT_NAME}
 
@@ -57,35 +58,43 @@ PACKAGE_SET=""
 
 # Is our Linux service script in the installer repo?
 #
-[[ -r ${SERVICE_SCRIPT} ]] || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
+[[ -r "${SERVICE_SCRIPT}" ]] || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
         "Cannot locate the Linux service script, '${SERVICE_SCRIPT}' !"
 
 # Download the latest version to the source directory:
 #
-pushd "${LOCAL_SRC}" 1>/dev/null 2>&1
+pushd "${LOCAL_SRC}" &>/dev/null
 (( $? == 0 )) || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
         "Cannot change directory to '${LOCAL_SRC}' !"
 
 QualifySudo
-sudo wget ${NOIP_URL}/${NOIP_DUC_TARBALL}
+sudo wget "${NOIP_URL}/${NOIP_DUC_TARBALL}"
 
 # Unpack the tarball:
 #
-sudo tar zxf ${NOIP_DUC_TARBALL}
+sudo tar zxf "${NOIP_DUC_TARBALL}"
+sudo chown -R root.root ._noip* noip*
 
 # Find out which directory we created:
 #
-DIR=$( tar ztvf ${NOIP_DUC_TARBALL} | awk '{ print $6 }' | cut -d '/' -f 1 )
-DIR=$( printf "%s " ${DIR} | cut -d ' ' -f 2 )
+# la /usr/local/src
+# -rwxr-xr-x  1  501 staff    205 Nov 25  2008 ._noip-2.1.9-1*
+# drwxr-xr-x  3  501 staff   4096 Nov 25  2008 noip-2.1.9-1/
+# -rw-r--r--  1 root root  134188 Dec 20  2017 noip-duc-linux.tar.gz
+#
+DIR=$( tar ztvf "${NOIP_DUC_TARBALL}" | \
+    awk '/\/Makefile/ { print $6 }' | cut -d '/' -f 1 )
 
 # Validate it... Then 'cd' into it:
 #
 [[ -d "${LOCAL_SRC}/${DIR}" ]] || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
         "Cannot locate the expected source directory, '${LOCAL_SRC}/${DIR}' !"
 
+cd "${DIR}"
+
 # Compile & install the app:
 #
-cd ${DIR}
+##sudo make -f "${MAKE_FILE}" "${SCRIPT_NAME}"
 sudo make install
 
 (( $? == 0 )) || ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
@@ -93,22 +102,28 @@ sudo make install
 
 # Copy the service script, set it up, and make it a service:
 #
-popd 1>/dev/null 2>&1
+popd &>/dev/null
 (( $? == 0 )) || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
         "Cannot change directory to return from '${DIR}' !"
 
-copy ${SERVICE_SCRIPT} ${TARGET_SCRIPT}
-sudo chmod 755 ${TARGET_SCRIPT}
+copy "${SERVICE_SCRIPT}" "${TARGET_SCRIPT}"
+sudo chmod 755 "${TARGET_SCRIPT}"
 
-sudo update-rc.d ${SCRIPT_NAME} defaults 90 10
+# Remove the annoying MS ^M characters that screw up scripts:
+#
+sudo fromdos -o "${TARGET_SCRIPT}"
+
+# Install the script as a system service:
+#
+sudo update-rc.d "${SCRIPT_NAME}" defaults 90 10
 
 # Now set up the configuration file:
 #
-sudo chown nobody:nogroup ${LOCAL_ETC}/${CONF_FILE}
-sudo chmod 600 ${LOCAL_ETC}/${CONF_FILE}
+sudo chown nobody:nogroup "${LOCAL_ETC}/${CONF_FILE}"
+sudo chmod 600 "${LOCAL_ETC}/${CONF_FILE}"
 
 # And finally, launch the service to start the app:
 #
-sudo service ${SCRIPT_NAME} start
+sudo service "${SCRIPT_NAME}" start
 
 InstallComplete

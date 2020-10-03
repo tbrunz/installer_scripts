@@ -47,9 +47,14 @@ GetOSversion
 # determines which one is available to install...
 #
 if (( MAJOR > 16 )); then
-  PACKAGE_SET="${PACKAGE_SET}  libcurl4  "
+    PACKAGE_SET="${PACKAGE_SET}  libcurl4  "
+
+    if (( MAJOR > 19 )); then
+	ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
+	    "Cannot install in 20.04+; use 'install-atom' instead. "
+    fi
 else
-  PACKAGE_SET="${PACKAGE_SET}  libcurl3  "
+    PACKAGE_SET="${PACKAGE_SET}  libcurl3  "
 fi
 
 # Atom requires 64-bit for Linux...

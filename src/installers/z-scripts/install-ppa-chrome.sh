@@ -42,6 +42,7 @@ PACKAGE_SET="google-chrome-stable  "
 # Get the signing key & set up for a PPA installation:
 #
 SIGNING_KEY=https://dl-ssl.google.com/linux/linux_signing_key.pub
+##SIGNING_KEY=https://dl.google.com/linux/linux_signing_key.pub
 
 REPO_NAME="${SET_NAME}"
 REPO_URL="deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"

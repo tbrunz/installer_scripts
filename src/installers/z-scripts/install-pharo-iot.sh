@@ -5,6 +5,16 @@
 # ----------------------------------------------------------------------------
 #
 
+PHARO_DOCS_FILES=(
+    readme/DIP_Pharo-Settings.pdf
+    readme/Pharo-Tips-n-Tricks.txt
+    
+    tutorials/Pharo-Trifold-Brochure.pdf
+    tutorials/Pharo-getting-started.txt
+    tutorials/Pharo-ProfStef-Notes.txt
+    tutorials/TerseGuideToPharo.st
+)
+
 #
 # Source our includes, get our script name, etc. -- The usual...
 #
@@ -164,21 +174,31 @@ unzip "${APP_PKG_FILE}" -d "${APP_DIR_PATH}"
 (( $? == 0 )) || ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
     "Could not unzip the '${APP_PKG_FILE}' package to '${PHARO_DIR_PATH}' !"
 
+#
 # Move the contents of the zip payload directory into place & remove it.
 #
+rm -rf "${APP_DIR_PATH}/vm"
 mv "${APP_DIR_PATH}/${APP_ZIP_DIR_NAME}"/* "${APP_DIR_PATH}" && \
     rmdir "${APP_DIR_PATH}/${APP_ZIP_DIR_NAME}"
 
-# Add the Smalltalk cheat sheet
+# Copy the readme & tutorial documents into a 'docs' directory.
 #
-cp "${SOURCE_DIR}/${CHEAT_SHEET}" "${CHEAT_SHEET_DIR}"
-sudo chmod 644 "${CHEAT_SHEET_DIR}/${CHEAT_SHEET}"
+PHARO_DOCS_DIR=${PHARO_DIR_PATH}/docs
+
+makdir "${PHARO_DOCS_DIR}" 755 $(whoami)
+
+for DOCUMENT in "${PHARO_DOCS_FILES[@]}"; do
+
+    copy "${SOURCE_DIR}/${DOCUMENT}" "${PHARO_DOCS_DIR}"
+done
+
+sudo chown -R $(whoami).$(whoami) "${PHARO_DOCS_DIR}"
+sudo chmod -R 644 "${PHARO_DOCS_DIR}"/*
 
 # Allow for using the "Pharo" icon in place of the "Pharo-Launcher" icon:
 #
 copy "${SOURCE_DIR}/${ICON_FILE_NAME}" "${ICON_FILE_PATH}"
 
-#
 # Copy the .desktop launcher file into place and customize for this app:
 #
 ResolveGlobFilename "fullpath" "${APP_PKG_PATH}" 1 ${APP_LAUNCHER_NAME}
@@ -201,7 +221,6 @@ sudo desktop-file-install --dir=${LAUNCHER_DIR_PATH} --mode=644 \
 #
 sed -i -r -e "2 a\\\ncd ${APP_DIR_PATH}\n" "${APP_FILE_PATH}"
 
-#
 # Put a copy of the '.desktop' (launcher) file in the Pharo IoT 'icons'
 # directory as a backup.
 #
@@ -211,7 +230,6 @@ cp "${LAUNCHER_DIR_PATH}"/"$( basename ${APP_LAUNCHER_PATH} )" \
 (( $? == 0 )) || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
     "Could not copy the '.desktop' file to '${ICON_DIR_PATH}' !"
 
-#
 # Set the owner, icons, & desktop file permissions.
 #
 sudo chmod 644 "${LAUNCHER_DIR_PATH}"/*
@@ -220,7 +238,6 @@ sudo chown -R $( id -un ):$( id -gn ) "${LAUNCHER_DIR_PATH}"/*
 sudo chmod 644 "${ICON_DIR_PATH}"/*
 sudo chown -R $( id -un ):$( id -gn ) "${ICON_DIR_PATH}"/*
 
-#
 # Need the following for Linux systems to use the threaded heartbeat VM:
 #
 QualifySudo "to install the threaded heartbeat configuration for Pharo."

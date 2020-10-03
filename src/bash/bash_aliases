@@ -16,8 +16,13 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
+<<<<<<< HEAD
+echo "Last update 09 SEP 2020 "
+echo "This update 20 SEP 2020 "
+=======
 echo "Last update 11 FEB 2020 "
 echo "This update 03 MAY 2020 "
+>>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
 }
 
 __alist_linux_1() {
@@ -517,7 +522,7 @@ samus() {
 gitp() {
     local GIT_PROMPT_SCRIPT=~/.git-prompt.sh
     local GIT_COMPLETION_SCRIPT=~/.git-completion.bash
-    
+
     # See the header block of ${GIT_PROMPT_SCRIPT} for details...
     #
     GIT_PS1_SHOWDIRTYSTATE=true
@@ -560,7 +565,7 @@ gitp() {
 
 gitls () {
    ARGS="${@}"
-   
+
    RESULT=$( which git )
 
    if [[ $? == 0 && -n "${ARGS}" ]]; then
@@ -580,7 +585,7 @@ gitls () {
 
 puml () {
    RESULT=$( which java )
-   
+
    if (( $? != 0 )); then
       echo >&2 "PlantUML requires Java, which is not installed ! "
       return 1
@@ -590,8 +595,8 @@ puml () {
       echo "'${FUNCNAME} <text-file>' will generate an image file & return. "
       echo "'${FUNCNAME}' will start PlantUML & open GUI to monitor activity. "
       echo "    PlantUML will monitor all text files in the directory, "
-      echo "    creating a new image file each time a change is detected. " 
-      echo 
+      echo "    creating a new image file each time a change is detected. "
+      echo
       echo "Some options: "
       echo "    '-Djava.awt.headless=true' to run headless (should be first) "
       echo "    '-DPLANTUML_LIMIT_SIZE=8192' to expand max diagram size "
@@ -603,7 +608,11 @@ puml () {
 
 sts () {
     local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
     if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
         gedit "${TERSE_GUIDE_TO_PHARO}"
     else
@@ -613,9 +622,15 @@ sts () {
 
 luam () {
     MAN_PAGE=${1}
+<<<<<<< HEAD
+
+    local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
+
+=======
     
     local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
     
+>>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
     if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
         gedit "${TERSE_GUIDE_TO_PHARO}"
     else
@@ -661,16 +676,16 @@ mnth() {
 #
 dlymnt() {
    RESULT=$( sudo awk '/^###/ { print $2, $3 }' /etc/fstab )
-   
+
    [[ -n "${RESULT}" ]] || return 1
-   
+
    printf "%s" "${RESULT}" | xargs -t -r -n 2 -L 1 sudo mount --bind
 }
 
 ################################################################################
 #
-# bw:     Display the activity of each NIC in the system 
-# wazzup: Display the up/down state of each NIC in the system 
+# bw:     Display the activity of each NIC in the system
+# wazzup: Display the up/down state of each NIC in the system
 #
 bw() {
    bwm-ng "$@"
@@ -756,40 +771,40 @@ gedit() {
 #      Types supported: sha1sum, sha224sum, sha256sum, sha384sum, sha512sum
 #
 md5() {
-    if [[ "${1:0:1}" == "-" ]]; then    
+    if [[ "${1:0:1}" == "-" ]]; then
         md5sum -c *md5
-    else   
+    else
         md5sum -c *md5 2>/dev/null | grep -v 'open or read'
     fi
 }
 
 sha() {
-    local SHA_FORCE=${1}    
+    local SHA_FORCE=${1}
     local DEBUG=${2}
     local LENGTH
-    
+
     [[ -z "${DEBUG}" ]] && DEBUG=${SHA_FORCE}
-    
+
     ls *.sha* &>/dev/null
     if (( $? != 0 )); then
         echo >&2 "error: '${FUNCNAME}': can't find a SHA file ! "
         return 1
     fi
-    
+
     for SHA_FILE in *.sha*; do
 
        # Read & analyze the first line to determine the SHA size:
        #
        local LEN1=$( awk 'NR==1 {print  $1}' "${SHA_FILE}" | wc -c )
        local LEN2=$( awk 'NR==1 {print $NF}' "${SHA_FILE}" | wc -c )
-       
+
        LENGTH=${LEN2}
        (( LEN1 > LEN2)) && LENGTH=${LEN1}
-       
+
        if [[ "${DEBUG:0:1}" == "-" ]]; then
           echo "Determined code length of ${LENGTH} "
        fi
-       
+
        # The SHA type is either given (force it) or determined from above...
        #
        case ${SHA_FORCE} in
@@ -799,14 +814,14 @@ sha() {
            384) SHA_TYPE=384 ;;
            512) SHA_TYPE=512 ;;
            * )
-               case ${LENGTH} in 
+               case ${LENGTH} in
                   41 ) SHA_TYPE=1   ;;
                   57 ) SHA_TYPE=224 ;;
                   65 ) SHA_TYPE=256 ;;
                   97 ) SHA_TYPE=384 ;;
                   129) SHA_TYPE=512 ;;
                   *  ) echo >&2 "error: '${FUNCNAME}': can't find a SHA file ! "
-               esac 
+               esac
        esac
 
        # Now run the test on this file, optionally verbosely:
@@ -1167,7 +1182,7 @@ gotker() {
    else
       VERS=$( uname -r | egrep -o '[[:digit:]]+[.][[:digit:]]+' 2>/dev/null )
    fi
-   
+
    VERS="${VERS}.0"
    got "linux-image-un" "${VERS}.*gen" | sort | egrep "${VERS}-[[:digit:]]+"
 }
@@ -1185,7 +1200,7 @@ debver() {
       echo "usage: ${FUNCNAME} <DEB file> "
       return 1
    fi
-   
+
    dpkg-deb -f "${1}" Version
 }
 
@@ -1201,20 +1216,20 @@ show() {
 
 showtask() {
    local RESULT
-   
+
    if [[ -z "${1}" ]]; then
       RESULT=$( which tasksel )
-      
+
       if [[ -z "${RESULT}" ]]; then
          echo "usage: ${FUNCNAME} [<tasksel task> [<grep pattern>] ] "
       fi
-      
+
       tasksel --list-tasks
       return $?
    fi
-   
+
    RESULT=$( show ${1}^ | grep '^Package' | awk '{ print $2 }' | sort | uniq )
-   
+
     if [[ -z "${2}" ]]; then
         printf "%s\n" "${RESULT}"
     else
@@ -1293,14 +1308,14 @@ echopad() {
      local LEN=${#1}
      local SIZE=${2}
      local DIFF=$(( SIZE - LEN ))
-     
+
      __STRING=${1}
      if (( SIZE > 1 && SIZE > LEN && DIFF != 0 )); then
          while (( ${#__STRING} < SIZE )); do
               __STRING="${__STRING} "
          done
      fi
-     
+
      echo "${__STRING} "
 }
 
@@ -1706,7 +1721,7 @@ __psync_usb() {
 
         if [[ "${1}" == "-d" ]]; then
             FILE_PATH=${2}
-            
+
             if [[ "${ROUTE}" == "to" ]]; then
                 FR_REPO=${LOCAL_REPO}
                 TO_REPO=${DRIVE_REPO}
@@ -1714,7 +1729,7 @@ __psync_usb() {
                 FR_REPO=${DRIVE_REPO}
                 TO_REPO=${LOCAL_REPO}
             fi
-            
+
             diff -cs "${FR_REPO}/${FILE_PATH}" "${TO_REPO}/${FILE_PATH}"
         else
             bash ${PATH_SCRIPT_PSYNC} ${ROUTE} ${DIR_MB_USB} "$@"
@@ -2194,10 +2209,10 @@ __Display_Kernel_Files() {
     local VBOX_GUEST_ADDS_DIR=/opt/VBoxGuestAdditions
     ls -lF /boot
     ls -lF /usr/src
-    
+
     ll -d "${VBOX_GUEST_ADDS_DIR}"* &> /dev/null
     (( $? == 0 )) && ls -dl "${VBOX_GUEST_ADDS_DIR}"*
-    
+
     uname -r
 }
 
@@ -2224,9 +2239,9 @@ fixv() {
     local GUEST_USER=user
     local VBOX_MODULE=vboxsf
     local VBOX_GUEST_ADDS_DIR=/opt/VBoxGuestAdditions
-    
+
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
-    
+
     # This module does not get installed on the host platform!
     RESULT=$( ls "${VBOX_GUEST_ADDS_DIR}"* )
     if (( $? != 0 )); then
@@ -2245,21 +2260,21 @@ fixv() {
             echo 1>&2 "error: Can't install '${VBOX_MODULE}' ! "
             return -1
         fi
-        
+
         RESULT=$( lsmod | grep "${VBOX_MODULE}" )
         if (( $? != 0 )); then
             echo 1>&2 "error: '${VBOX_MODULE}' did not install ! "
             return -1
         fi
     fi
-    
+
     # Does the shared folder already exist?  If not, create it:
     if [[ ! -d "${MOUNT_POINT}" ]]; then
         sudo mkdir "${MOUNT_POINT}"
         sudo chown ${GUEST_USER}.${GUEST_USER} "${MOUNT_POINT}"
         sudo chmod 750 "${MOUNT_POINT}"
     fi
-    
+
     # Is the shared folder already mounted?
     ls -d "${MOUNT_POINT}"/* &> /dev/null
     if (( $? == 0 )); then
@@ -2267,24 +2282,24 @@ fixv() {
         ls -lF "${MOUNT_POINT}"
         return
     fi
-    
+
     # Mount it & check that it mounts correctly:
     sudo mount -t vboxsf -o uid=${GUEST_USER},gid=${GUEST_USER} \
         "${SHARE_NAME}" "${MOUNT_POINT}"
-    
+
     if (( $? != 0 )); then
         echo 1>&2 "error: '${SHARE_NAME}' did not mount on '${MOUNT_POINT}' ! "
         return -1
     fi
-    
+
     # Really, did it?
     ls -dlF "${MOUNT_POINT}"/* &> /dev/null
-    
+
     if (( $? != 0 )); then
         echo 1>&2 "error: '${SHARE_NAME}' mis-mounted on '${MOUNT_POINT}' ! "
         return -1
     fi
-    
+
     echo "ll ${MOUNT_POINT}"
     ls -lF "${MOUNT_POINT}"
 }
@@ -2294,13 +2309,26 @@ fixv() {
 # Fixup root soft links; show the results if $1=="-l"
 #
 fixroot() {
-  local VMLINUZ_GREP="^vmlinuz"
-  local INITRD_GREP="^initrd"
+  local VMLINUZ_GREP="vmlinuz"
+  local VMLINUZ_NONVERS_GREP="vmlinuz([.]|$)"
+  local VMLINUZ_VERS_GREP="vmlinuz-[[:digit:]]+[.][[:digit:]]+"
 
-  local VMLINUZ=()
-  local INITRD=()
+  local INITRD_GREP="initrd.img"
+  local INITRD_NONVERS_GREP="initrd.img([.]|$)"
+  local INITRD_VERS_GREP="initrd.img-[[:digit:]]+[.][[:digit:]]+"
+
+  local OLD_EXT="old"
+
+  local VMLINUZ_VERS=()
+  local INITRD_VERS=()
   local FOUND=()
   local KERNEL_FILE
+
+  # Example captures for ${VMLINUZ_GREP}:
+  #   vmlinuz.old
+  #   vmlinuz-5.4.0-47-generic
+  #   vmlinuz-5.4.0-45-generic
+  #   vmlinuz
 
   # Get list of installed kernels as three lists, the 'vmlinuz' files,
   # the 'initrd' files, and a combined list (for verification).  Note
@@ -2309,18 +2337,30 @@ fixroot() {
   #
   while read -r KERNEL_FILE; do
 
-    printf "%s" "${KERNEL_FILE}" | grep -q "${VMLINUZ_GREP}"
+    printf "%s" "${KERNEL_FILE}" | egrep -q "${VMLINUZ_NONVERS_GREP}"
 
     if (( $? == 0 )); then
-      VMLINUZ+=( "${KERNEL_FILE}" )
+      continue
+    fi
+
+    printf "%s" "${KERNEL_FILE}" | egrep -q "${INITRD_NONVERS_GREP}"
+
+    if (( $? == 0 )); then
+      continue
+    fi
+
+    printf "%s" "${KERNEL_FILE}" | egrep -q "${VMLINUZ_VERS_GREP}"
+
+    if (( $? == 0 )); then
+      VMLINUZ_VERS+=( "${KERNEL_FILE}" )
       FOUND+=( "${KERNEL_FILE}" )
       continue
     fi
 
-    printf "%s" "${KERNEL_FILE}" | grep -q "${INITRD_GREP}"
+    printf "%s" "${KERNEL_FILE}" | egrep -q "${INITRD_VERS_GREP}"
 
     if (( $? == 0 )); then
-      INITRD+=( "${KERNEL_FILE}" )
+      INITRD_VERS+=( "${KERNEL_FILE}" )
       FOUND+=( "${KERNEL_FILE}" )
       continue
     fi
@@ -2330,7 +2370,7 @@ fixroot() {
   # This function won't work unless there are at least two kernels installed;
   # Check for two of each file type:
   #
-  if (( ${#VMLINUZ[@]} < 2 || ${#INITRD[@]} < 2 )); then
+  if (( ${#VMLINUZ_VERS[@]} < 2 || ${#INITRD_VERS[@]} < 2 )); then
     __Display_Kernel_Files
     echo
     echo "'/boot' does not contain two full sets of kernel files ! "
@@ -2346,15 +2386,39 @@ fixroot() {
     return
   done
 
-  # Now remove the old links (if they exist) and create the new ones:
+  # Remove the old links in '/boot' (if they exist) & regenerate.
   #
-  sudo rm -f /initrd*
-  sudo ln -s "/boot/${INITRD[0]}" /initrd.img
-  sudo ln -s "/boot/${INITRD[1]}" /initrd.img.old
+  pushd /boot >/dev/null
 
-  sudo rm -f /vmlinuz*
-  sudo ln -s "/boot/${VMLINUZ[0]}" /vmlinuz
-  sudo ln -s "/boot/${VMLINUZ[1]}" /vmlinuz.old
+  sudo rm -f "${VMLINUZ_GREP}"
+  sudo rm -f "${VMLINUZ_GREP}.${OLD_EXT}"
+  sudo rm -f "${INITRD_GREP}"
+  sudo rm -f "${INITRD_GREP}.${OLD_EXT}"
+
+  # Regenerate the file links & root links.
+  #
+  sudo ln -s "${VMLINUZ_VERS[0]}" "${VMLINUZ_GREP}"
+  sudo ln -s "${VMLINUZ_VERS[1]}" "${VMLINUZ_GREP}.${OLD_EXT}"
+  sudo ln -s "${INITRD_VERS[0]}" "${INITRD_GREP}"
+  sudo ln -s "${INITRD_VERS[1]}" "${INITRD_GREP}.${OLD_EXT}"
+
+  popd >/dev/null
+
+  # Now remove the old links in the root (if they exist) & regenerate.
+  #
+  pushd / >/dev/null
+
+  sudo rm -f "/${VMLINUZ_GREP}"
+  sudo rm -f "/${VMLINUZ_GREP}.${OLD_EXT}"
+  sudo rm -f "/${INITRD_GREP}"
+  sudo rm -f "/${INITRD_GREP}.${OLD_EXT}"
+
+  sudo ln -s "/boot/${VMLINUZ_GREP}" .
+  sudo ln -s "/boot/${VMLINUZ_GREP}.${OLD_EXT}" .
+  sudo ln -s "/boot/${INITRD_GREP}" .
+  sudo ln -s "/boot/${INITRD_GREP}.${OLD_EXT}" .
+
+  popd >/dev/null
 
   # Finally, if the user called this with an "-l" switch, show the results:
   #
@@ -2506,23 +2570,23 @@ remk() {
     PKG_LIST=()
 
     for PATCHLEVEL in "$@"; do
-        
+
         # Form the kernel-patch number, e.g., 4.15.0-39
         #
         KERNEL_LIST+=( "${KERNEL}-${PATCHLEVEL}" )
-        
+
         # Create a grep string for all possible packages of the above version:
         #
         PKG_GREP="(-image)?(-modules)?(-headers)?(-hwe)?(-tools)?(-extra)?"
-        PKG_GREP="\<linux${PKG_GREP}"
+        PKG_GREP="\<linux${PKG_GREP}.*"
         PKG_GREP="${PKG_GREP}-${KERNEL}-${PATCHLEVEL}"
         PKG_GREP="${PKG_GREP}-?(generic|generic-pae|lowlatency)*"
-        
+
         # Break out each package found (one per line) into array elements
         #
         while read -r PACKAGE; do
             PKG_LIST+=( "${PACKAGE}" )
-            
+
         done < <( dpkg -l | egrep -o "${PKG_GREP}" )
     done
 
@@ -2534,7 +2598,7 @@ remk() {
         echo "No kernel packages to remove !"
         return
     fi
-    
+
     # One-by-one, assemble a single-line string of the packages:
     #
     PACKAGE_LIST=
@@ -2542,11 +2606,11 @@ remk() {
 
         PACKAGE_LIST="${PACKAGE_LIST} ${PKG_LIST[i]}"
     done
-    
+
     # Now as a unit, remove the obsolete packages:
     #
     sudo apt-get purge ${PACKAGE_LIST}
-    
+
     # Ubuntu has a tendency to leave behind detritus from removed kernels...
     #
     for KERNEL in "${KERNEL_LIST[@]}"; do

@@ -190,6 +190,16 @@ fi
 [[ -z "${1}" || "${1}" == "-i" ]] && PerformAppInstallation "$@"
 
 #
+# Things will go bad if we try to install in 20.04+
+#
+GetOSversion
+
+if (( MAJOR > 18 )); then
+    ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
+        "Cannot install in 20.04+; Python 2/3 issues! "
+fi
+
+#
 # Otherwise, get a list of the scripts to install:
 #
 SOURCE_DIR="../gedit"

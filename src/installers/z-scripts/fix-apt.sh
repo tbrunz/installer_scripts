@@ -42,6 +42,7 @@ Replace_Default_Repository_Sources() {
     COSMIC_URL_GLOB="cosmic"
     DISCO_URL_GLOB="disco"
     EOAN_URL_GLOB="eoan"
+    FOCAL_URL_GLOB="focal"
 
     # There's no need to programatically edit the original file;
     # We'll just swap it out with a pre-configured file.
@@ -107,6 +108,11 @@ Replace_Default_Repository_Sources() {
     elif [[ ${RELEASE} =~ 19.10 ]]; then
 
         NEW_FILE_GLOB=${EOAN_URL_GLOB}
+        INSTALL=true
+
+    elif [[ ${RELEASE} =~ 20.04 ]]; then
+
+        NEW_FILE_GLOB=${FOCAL_URL_GLOB}
         INSTALL=true
     fi
 
