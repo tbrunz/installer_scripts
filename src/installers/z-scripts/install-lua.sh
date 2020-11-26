@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 #
 
-SUGGEST_VERSION=5.1
+SUGGEST_VERSION=5.3
 
 INCLUDES="core-install.bash"
 

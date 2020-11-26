@@ -33,45 +33,33 @@ SYSTEM_LAUNCHER_DIR=/usr/share/applications
 USAGE="
 PlantUML is an open-source tool allowing users to create UML diagrams from
 a plain-text language.  Images can be generated in PNG, in SVG, or in LaTeX
-format.  It uses well-formed and human-readable code to render these types of
-UML diagrams:
-
-   Sequence diagram
-   Usecase diagram
-   Class diagram
-   Activity diagram
-   Component diagram
-   State diagram
-   Object diagram
-   Deployment diagram
-   Timing diagram
+format.  It uses well-formed and human-readable code to render these types 
+of UML diagrams:
+   Sequence diagram         Usecase diagram        Timing diagram
+   Class diagram            Activity diagram       Component diagram
+   Object diagram           Deployment diagram     State diagram
 
 The following non-UML diagrams are also supported:
-
-   Wireframe graphical interface
-   Archimate diagram
-   Specification and Description Language (SDL)
-   Ditaa diagram
-   Gantt diagram
-   MindMap diagram
-   Work Breakdown Structure diagram
-   Mathematic with AsciiMath or JLaTeXMath notation
+   Wireframe graphical interface        Archimate diagram
+   Ditaa diagram                        Gantt diagram
+   MindMap diagram                      Work Breakdown Structure diagram
    Entity Relationship diagram
+   Specification and Description Language (SDL)
+   Mathematic with AsciiMath or JLaTeXMath notation
 
 Diagrams are defined using a simple and intuitive language. (see PlantUML
 Language Reference Guide).  http://plantuml.com/en/guide
 
-PlantUML can be used within many other tools; there are various extensions or
-add-ons that incorporate PlantUML:
-
-   Atom has a community maintained PlantUML syntax highlighter and viewer.
-   Eclipse has a PlantUML plug-in.
-   Google Docs has a 'PlantUML Gizmo' add-on (works with the PlantUML server).
-   LaTeX, using the Tikz package, has limited support for PlantUML.
-   LibreOffice has a 'Libo_PlantUML' extension to use PlantUML diagrams.
-   Microsoft Word can use PlantUML diagrams via a Word Template Add-in.
-   Visual Studio Tools for Office has an add-in called 'PlantUML Gizmo'.
-   Visual Studio Code has a PlantUML plug-in for Microsoft IDE users.
+PlantUML can be used within many other tools; there are various extensions 
+or add-ons that incorporate PlantUML:
+   * Atom has a community maintained PlantUML syntax highlighter and viewer.
+   * Eclipse has a PlantUML plug-in.
+   * Google Docs has a 'PlantUML Gizmo' add-on (uses the PlantUML server).
+   * LaTeX, using the Tikz package, has limited support for PlantUML.
+   * LibreOffice has a 'Libo_PlantUML' extension to use PlantUML diagrams.
+   * Microsoft Word can use PlantUML diagrams via a Word Template Add-in.
+   * Visual Studio Tools for Office has an add-in called 'PlantUML Gizmo'.
+   * Visual Studio Code has a PlantUML plug-in for Microsoft IDE users.
 
 PlantUML is written in Java and uses Graphviz software to lay out its
 diagrams.  You will need to visit the PlantUML website to get updates
@@ -82,23 +70,8 @@ http://plantuml.com/download
 
 POST_INSTALL="
 You may wish to verify that everything has installed and configured correctly.
-Open a terminal and enter:
 
-   $ java -jar plantuml.jar -testdot
-
-You can also use this special diagram description in a file 'testdot.txt':
-
-   @startuml
-   testdot
-   @enduml
-
-then run
-
-   $ java -jar plantuml.jar testdot.txt
-
-and examine the output file, 'testdot.png'.
-
-You might wish to add a GraphViz environment variable:
+First, you might wish to add a GraphViz environment variable:
 
    $ export GRAPHVIZ_DOT=/usr/bin/dot
 
@@ -108,9 +81,25 @@ You can also extend your PATH variable to reduce typing:
 
 or add an alias, such as:
 
-   puml='java -Xmx1024m -jar ${INSTALL_DIR}/plantuml.jar '
+   alias puml='java -Xmx1024m -jar ${INSTALL_DIR}/plantuml.jar '
    
 after which you can run 'puml' to get the PlantUML GUI.
+
+To run a quick test, open a terminal and enter:
+
+   $ java -jar /opt/plantuml/plantuml.jar -testdot
+
+You can also use this special diagram description in a file 'testdot.txt':
+
+   @startuml
+   testdot
+   @enduml
+
+then run
+
+   $ java -jar /opt/plantuml/plantuml.jar testdot.txt
+
+and examine the output file, 'testdot.png'.
    
 For the Atom editor, recommended packages include
 

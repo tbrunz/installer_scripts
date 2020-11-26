@@ -57,8 +57,7 @@ SET_NAME="Crossover (deb)"
 
 [[ -z "${1}" || "${1}" == "-i" ]] && PerformAppInstallation "$@"
 
-PACKAGE_SET="python-dbus  python-gtk2  python-qt4
-    icoutils  apt-transport-https  ocl-icd-libopencl1  multiarch-support  "
+PACKAGE_SET="icoutils  apt-transport-https  ocl-icd-libopencl1  "
 
 SOURCE_DIR="../crossover"
 
@@ -99,6 +98,16 @@ else
     REPO_NAME="sdl2-backport"
     REPO_URL="ppa:cybermax-dexter/sdl2-backport"
     REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"
+fi
+
+if (( MAJOR < 20 )); then
+    PACKAGE_SET="${PACKAGE_SET}
+    python-dbus  python-gtk2  python-qt4  multiarch-support  "
+else
+    if (( MAJOR == 20 && MINOR == 04 )); then
+        PACKAGE_SET="${PACKAGE_SET}
+        python-dbus  multiarch-support  " 
+    fi
 fi
 
 #SIGNING_KEY=https://dl.winehq.org/wine-builds/Release.key

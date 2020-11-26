@@ -1,0 +1,48 @@
+
+HOW TO (re)installing Linux graphics drivers from the CLI
+===============================================================================
+
+If in a GUI, press <Ctrl><Alt><F2> to get a console.
+(Don't use <F1>, since GDM3 remapped the GUI session from <F7> to <F1>).
+
+Log into an account that has 'sudo' privileges.
+
+Use the below commands to install or re-install drivers.
+
+
+Nvidia graphics card drivers
+----------------------------------
+
+If Nvidia drivers are already installed, remove them first using
+
+    $ sudo apt-get purge *nvidia*
+
+
+Install the PPA with the latest drivers using
+
+    $ sudo add-apt-repository ppa:graphics-drivers/ppa 
+
+    $ sudo apt-get update 
+    
+    
+Find the latest versions using 
+
+    $ apt-cache search nvidia | grep nvidia-driver
+    
+    
+Review the list and select a driver package.  Then 
+
+    $ sudo apt-get install nvidia-${DRIVER_VERSION}
+    
+to install the driver.  (E.g., "sudo apt-get install nvidia-390".)
+
+
+Laptops with Optimus technology may benefit from installing the 
+"bumblebee" driver package.  If using the proprietary Nvidia graphics
+drivers, use package "bumblebee-nvidia" instead.
+
+
+Reboot to apply the changes. 
+
+-----
+

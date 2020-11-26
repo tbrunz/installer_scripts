@@ -47,21 +47,25 @@ SET_NAME="Base"
 #
 PACKAGE_SET="
 %SYSTEM FUNCTIONS:%
-ssh  ntp  dkms  exfat-utils  indicator-multiload
+ssh  dkms  exfat-utils  indicator-multiload
 gparted  indicator-cpufreq  apt-transport-https  
-nautilus-open-terminal  gnome-schedule  iptables-persistent
+nautilus-open-terminal  iptables-persistent  
+  gnome-schedule  
 %%
 %SYSTEM TOOLS:%
 byobu  ack-grep  ghex  hexer  tweak  ethtool
 partclone  gdebi  synaptic  bash-completion
-curl gdisk  txt2regex  bridge-utils  bwm-ng  
-tree  pv  zip  unzip  p7zip-rar  dolphin
+curl gdisk  txt2regex  bridge-utils  xsel  
+tree  pv  zip  unzip  pigz  p7zip-rar  dolphin
 %%
 %UTILITIES:%
-mutt  colordiff  gthumb  gpicview  rdesktop  pandoc
+colordiff  gthumb  gpicview  rdesktop  pandoc  
+mutt  bwm-ng  dconf-editor  atop  htop  iftop  
+stow  gnome-tweaks  
 %%
-%FILE CONVERTERS:%
-pdftk  tofrodos  pyrenamer  nautilus-image-converter
+%CONVERTERS:%
+tofrodos  pyrenamer  nautilus-image-converter
+pdftk  units
 %%
 %CD-DVD-ISO AUTHORING:%
 isomaster  cdrdao  cdck  normalize-audio
@@ -95,11 +99,11 @@ if [[ "${FLAVOR}" == "xfce" ]]; then
     done
 fi
 
-# Are we a Xenial (or later) installation?
+# Are we a Xenial installation?
 #
-if (( MAJOR >= 16 )); then
+if (( MAJOR == 16 )); then
 
-    for PACKAGE_TO_RETRACT in ntp
+    for PACKAGE_TO_RETRACT in gnome-tweaks
     do
         PACKAGE_SET=$( printf %s "${PACKAGE_SET}" | \
                sed -e "s/  ${PACKAGE_TO_RETRACT}//" )

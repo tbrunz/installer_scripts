@@ -2,7 +2,7 @@
 Notes on VirtualBox Virtual Machines
 ===============================================================================
 
-Updated 2018-1210
+Updated 2020-1126
 
 I recommend saving a copy of the VMs as templates or "master" copies.  Copy 
 them before using them (or better, use VBox to 'clone' them, which results 
@@ -32,9 +32,14 @@ lost.
 
 If you use Shared Folders for the Linux VMs, there's a bug in VBox (since 
 5.2.18 or so) that will cause it to not re-mount the SF's between reboots of 
-the VM.  The workaround is to re-install the Guest Additions, then they show 
+the VM.  The workaround was to re-install the Guest Additions, then they show 
 up.  (A small percentage of the time I've had to re-install more than once 
-in a row to recover my SF's.)
+in a row to recover my SF's.)  Even this doesn't seem to work any longer.  
+Therefore I added two functions, 'fixv' to repair the SF mounting, to be 
+followed by 'dlymnt' to mount the shared folders (which cannot be mounted 
+until 'fixv' is run to make them visible).  To prevent any attempts to mount 
+these 'missing' SF directories, I comment them out in '/etc/fstab' using 
+"### " as a prefix; the 'dlymnt' shell function mounts these.
 
 One strategy to avoid tracking and malware when using a VM is to snapshot 
 the state of the VM, then begin using the VM.  To reduce the effect of web 

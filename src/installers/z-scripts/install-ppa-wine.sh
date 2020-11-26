@@ -182,9 +182,9 @@ if [[ ${ARCH} == "x86_64" ]]; then
 fi
 
 #
-# Install the SDL2 backport (Ubuntu dropped 'libfaudio0' from its repos):
+# Install SDL2 backport for 18.04 (Ubuntu dropped 'libfaudio0' from its repos):
 #
-if (( MAJOR > 16 )); then
+if (( MAJOR > 16 && MAJOR < 20 )); then
     REPO_NAME="sdl2-backport"
     REPO_URL="ppa:cybermax-dexter/sdl2-backport"
     REPO_GREP="cybermax-dexter.*ubuntu.*${DISTRO}"

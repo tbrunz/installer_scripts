@@ -32,16 +32,17 @@ SET_NAME="Base"
 #
 PACKAGE_SET="
 %SYSTEM FUNCTIONS:%
-    ssh  ntp  dkms  exfat-utils  bash-completion
+    ssh  dkms  exfat-utils  bash-completion
     apt-transport-https  iptables-persistent  
 
 %SYSTEM TOOLS:%
-    txt2regex  tre-agrep  ack-grep  tweak  ethtool  
-    hexer  bridge-utils  curl  zip  unzip  p7zip-rar
-    nmap  pv  bwm-ng
+    txt2regex  tre-agrep  ack-grep  tweak  
+    ethtool  bridge-utils  curl  zip  unzip  
+    pigz  p7zip-rar  hexer  nmap  pv  bwm-ng  
 
 %UTILITIES:%
-    byobu  mutt  colordiff  kpartx  gdisk  tree
+    byobu  mutt  colordiff  kpartx  gdisk  
+    tree  stow  atop  htop  iftop  
 
 %FILE CONVERTERS:%
     pdftk  tofrodos
@@ -57,17 +58,6 @@ PACKAGE_SET="
 # Add items for specific distros:
 #
 GetOSversion
-
-# Are we a Xenial (or later) installation?
-#
-if (( MAJOR >= 16 )); then
-
-    for PACKAGE_TO_RETRACT in ntp
-    do
-        PACKAGE_SET=$( printf %s "${PACKAGE_SET}" | \
-               sed -e "s/  ${PACKAGE_TO_RETRACT}//" )
-    done
-fi
 
 #
 # Strip out (only) the individual '%' characters for usage display,

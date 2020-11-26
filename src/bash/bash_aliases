@@ -16,13 +16,8 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
-<<<<<<< HEAD
-echo "Last update 09 SEP 2020 "
-echo "This update 20 SEP 2020 "
-=======
-echo "Last update 11 FEB 2020 "
-echo "This update 03 MAY 2020 "
->>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
+echo "Last update 13 NOV 2020 "
+echo "This update 15 NOV 2020 "
 }
 
 __alist_linux_1() {
@@ -152,6 +147,8 @@ PORT_REMOTEBOX=18083
 # For IP (only) strings, could use IFS=. & printf to split octets:
 #
 IP_GREP="([[:digit:]]+[.][[:digit:]]+[.][[:digit:]]+[.][[:digit:]]+)"
+XYZ_GREP="[[:digit:]]+[.][[:digit:]]+[.][[:digit:]]+"
+XY_GREP="[[:digit:]]+[.][[:digit:]]+"
 
 # Set default scripts/apps/locations:
 #
@@ -608,11 +605,7 @@ puml () {
 
 sts () {
     local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
     if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
         gedit "${TERSE_GUIDE_TO_PHARO}"
     else
@@ -622,15 +615,9 @@ sts () {
 
 luam () {
     MAN_PAGE=${1}
-<<<<<<< HEAD
 
     local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
 
-=======
-    
-    local TERSE_GUIDE_TO_PHARO=~/Pharo/docs/TerseGuideToPharo.st
-    
->>>>>>> 0905c922f4b2d0c8502de294eede6a806550822d
     if [[ -r "${TERSE_GUIDE_TO_PHARO}" ]]; then
         gedit "${TERSE_GUIDE_TO_PHARO}"
     else
@@ -1136,43 +1123,143 @@ inst() {
 # gotker: Display available kernels available for this distro
 #
 vers() {
-    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+    local GREP_RESULT
 
-    (( $# > 0 )) || \
-        { echo >&2 "usage: ${FUNCNAME} package [ egrep-spec ] " ; return 1 ; }
-
-    SEARCH_GREP=${1}
-    shift
-
-    GREP_RESULT=$( dpkg -l | \
-        awk -v pattern="${SEARCH_GREP}" '$2 ~ pattern { print $0 }' )
-
-    if [[ -n "${1}" ]]; then
+    Iterate_Grep() {
+        local GREP_STR
         for GREP_STR in "${@}"; do
             GREP_RESULT=$( printf "%s" "${GREP_RESULT}" | egrep "${GREP_STR}" )
         done
+    }
+
+    __warn_if_os_is_chromeos ${FUNCNAME} && return 1
+
+    if (( $# < 1 )); then
+        echo >&2 "usage: ${FUNCNAME} <package> [-b] [ <egrep-spec> ... ] "
+        return 1
     fi
 
-    printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP}"
+    local GREP_STR
+    local SEARCH_GREP1=${1}
+    shift
+
+    GREP_RESULT=$( dpkg -l | \
+        awk -v pattern="${SEARCH_GREP1}" '$2 ~ pattern { print $0 }' )
+
+    local SEARCH_GREP2=${1}
+
+    if [[ -z "${2}" ]]; then
+        if [[ "${SEARCH_GREP2:0:2}" == "-b" ]]; then
+            GREP_RESULT=$( printf "%s" "${GREP_RESULT}" | \
+                egrep "^[^[:space:]]+[[:space:]]+${SEARCH_GREP1}" )
+        else
+            Iterate_Grep "${SEARCH_GREP2}"
+        fi
+
+    elif [[ "${SEARCH_GREP2:0:1}" == "-" ]]; then
+        shift
+        if [[ "${SEARCH_GREP2:1:1}" == "b" ]]; then
+            SEARCH_GREP2=${1}
+            shift
+            Iterate_Grep "^[^[:space:]]+[[:space:]]+${SEARCH_GREP2}" "${@}"
+
+        else { echo >&2 "bad switch: '${SEARCH_GREP2}' " ; return 1 ; }
+        fi
+    else
+        shift
+        local SEARCH_GREP3=${1}
+        if [[ "${SEARCH_GREP3:0:2}" == "-b" ]]; then
+            shift
+            Iterate_Grep "^[^[:space:]]+[[:space:]]+${SEARCH_GREP2}" "${@}"
+
+        else  # vers SG1 SG2 SG3=$1=<...>
+            Iterate_Grep "${SEARCH_GREP2}" "${@}"
+        fi
+    fi
+
+    printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP1}"
 }
 
 got() {
+    local GREP_RESULT
+
+    Iterate_Grep() {
+        local SEARCH_TYPE=${1}
+        shift
+        local SEARCH_TERM=${1}
+        shift
+
+        GREP_RESULT=$( apt-cache "${SEARCH_TYPE}" "${SEARCH_TERM}" )
+        [[ -z "${1}" ]] && return
+
+        local GREP_STR
+        for GREP_STR in "${@}"; do
+            GREP_RESULT=$( printf "%s" "${GREP_RESULT}" | egrep "${GREP_STR}" )
+        done
+    }
+
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
-    (( $# > 0 )) || \
-        { echo >&2 "usage: ${FUNCNAME} package [ egrep-spec ] " ; return 1 ; }
+    if (( $# < 1 )); then
+        echo >&2 "usage: ${FUNCNAME} <package> [-p | -b] [ <egrep-spec> ... ] "
+        return 1
+    fi
 
-    SEARCH_GREP=${1}
+    local SEARCH_GREP1=${1}
     shift
 
     if [[ -z "${1}" ]]; then
-        apt-cache search "${SEARCH_GREP}"
-    else
-        apt-cache search "${SEARCH_GREP}" | egrep "${@}"
+        Iterate_Grep 'search' "${SEARCH_GREP1}"
+        printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP1}"
+        return $?
     fi
+
+    local SEARCH_GREP2=${1}
+
+    if [[ -z "${2}" ]]; then
+        if [[ "${SEARCH_GREP2:0:2}" == "-b" ]]; then
+            Iterate_Grep 'search' "${SEARCH_GREP1}" "^${SEARCH_GREP1}"
+
+        elif [[ "${SEARCH_GREP2:0:2}" == "-p" ]]; then
+            Iterate_Grep 'policy' "${SEARCH_GREP1}"
+            echo "${GREP_RESULT}"
+            return
+        else
+            Iterate_Grep 'search' "${SEARCH_GREP1}" "${@}"
+        fi
+
+    elif [[ "${SEARCH_GREP2:0:1}" == "-" ]]; then
+        shift
+        if [[ "${SEARCH_GREP2:1:1}" == "p" ]]; then
+            Iterate_Grep 'policy' "${SEARCH_GREP1}" "${@}"
+            echo "${GREP_RESULT}"
+            return
+
+        elif [[ "${SEARCH_GREP2:1:1}" == "b" ]]; then
+            SEARCH_GREP2=${1}
+            shift
+            Iterate_Grep 'search' "${SEARCH_GREP1}" "^${SEARCH_GREP2}" "${@}"
+
+        else
+            echo >&2 "bad switch: '${SEARCH_GREP2}' "
+            return 1
+        fi
+    else
+        shift
+        local SEARCH_GREP3=${1}
+        if [[ "${SEARCH_GREP3:0:2}" == "-b" ]]; then
+            shift
+            Iterate_Grep 'search' "${SEARCH_GREP1}" "^${SEARCH_GREP2}" "${@}"
+        else
+            Iterate_Grep 'search' "${SEARCH_GREP1}" "${SEARCH_GREP2}" "${@}"
+        fi
+    fi
+
+    printf "%s" "${GREP_RESULT}" | egrep --color=auto "${SEARCH_GREP1}"
 }
 
 gotker() {
+   local VERS
    if [[ "${1}" =~ [[:digit:]][.][[:digit:]] ]]; then
       VERS=${1}
    elif [[ "${1}" =~ [[:digit:]][[:digit:]] ]]; then
@@ -1180,7 +1267,7 @@ gotker() {
    elif [[ "${1}" =~ [[:digit:]] ]]; then
       VERS="5.${1}"
    else
-      VERS=$( uname -r | egrep -o '[[:digit:]]+[.][[:digit:]]+' 2>/dev/null )
+      VERS=$( uname -r | egrep -o "${XY_GREP}" 2>/dev/null )
    fi
 
    VERS="${VERS}.0"
@@ -1210,7 +1297,7 @@ show() {
     if [[ -z "${2}" ]]; then
         apt-cache show "${1}"
     else
-        apt-cache show "${1}" | grep -i "${2}"
+        apt-cache show "${1}" | egrep -i "${2}"
     fi
 }
 
@@ -1228,12 +1315,12 @@ showtask() {
       return $?
    fi
 
-   RESULT=$( show ${1}^ | grep '^Package' | awk '{ print $2 }' | sort | uniq )
+   RESULT=$( show ${1}^ | egrep '^Package' | awk '{ print $2 }' | sort | uniq )
 
     if [[ -z "${2}" ]]; then
         printf "%s\n" "${RESULT}"
     else
-        printf "%s" "${RESULT}" | grep -i "${2}"
+        printf "%s" "${RESULT}" | egrep -i "${2}"
     fi
 }
 
@@ -2311,11 +2398,11 @@ fixv() {
 fixroot() {
   local VMLINUZ_GREP="vmlinuz"
   local VMLINUZ_NONVERS_GREP="vmlinuz([.]|$)"
-  local VMLINUZ_VERS_GREP="vmlinuz-[[:digit:]]+[.][[:digit:]]+"
+  local VMLINUZ_VERS_GREP="vmlinuz-${XY_GREP}"
 
   local INITRD_GREP="initrd.img"
   local INITRD_NONVERS_GREP="initrd.img([.]|$)"
-  local INITRD_VERS_GREP="initrd.img-[[:digit:]]+[.][[:digit:]]+"
+  local INITRD_VERS_GREP="initrd.img-${XY_GREP}"
 
   local OLD_EXT="old"
 
@@ -2430,15 +2517,48 @@ fixroot() {
 # Repair missing kernel packages / install a new kernel
 #
 fixk() {
+    add() {
+        # Parameters: PACKAGE KERNEL PATCH_LEVEL [KERNEL_TYPE]
+        #
+        if (( $# > 3 )); then 
+            RESULT=$( got "linux-${1}-${2}-${3}-${4}" )
+            
+            # If the package is in the repo, then add it to the list.
+            [[ -n "${RESULT}" ]] && \
+                PACKAGE_LIST+=( "linux-${1}-${2}-${3}-${4}" )
+            return
+            
+            # The below is not needed, as the generic is a dependency.
+            # If not the lowlatency kernel, then install the generic.
+            [[ "${LOWLATENCY}" == true ]] && return
+            
+            RESULT=$( got \
+                "linux-${1}-${2}-${3}" "linux-${1}-${2}-${3}[[:space:]]" )
+            
+            # If the package is in the repo, then add it to the list.
+            [[ -n "${RESULT}" ]] && \
+                PACKAGE_LIST+=( "linux-${1}-${2}-${3}" )
+            return
+        fi
+            
+        # If the last parameter is missing (blank), then use the alt form.
+        local KERNEL=${2}
+        KERNEL=${KERNEL%.0}
+        RESULT=$( got "linux-hwe-${KERNEL}-${1}-${2}-${3}" )
+        
+        [[ -n "${RESULT}" ]] && \
+            PACKAGE_LIST+=( "linux-hwe-${KERNEL}-${1}-${2}-${3}" )
+    }
+    
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
     if [[ "${1}" == "-h" ]]; then
-        echo "usage: fixk X.Y.Z [ -l ] <list of patch levels> "
-        echo "example: fixk 4.13.0 38 "
+        echo >&2 "usage: fixk X.Y[.Z] [ -l(owlatency) ] <list of patch levels> "
+        echo >&2 "example: 'fixk 5.8 25 28' to install 5.8.0-25 & 5.8.0-28 "
         return
     fi
 
-    # If called with no arguments, just display the file set:
+    # If called with no arguments, just display the file set.
     #
     if [[ -z "${1}" ]]; then
         __Display_Kernel_Files
@@ -2446,59 +2566,84 @@ fixk() {
         return
     fi
 
-    KERPKG=""
-    KERNEL=${1}
+    local KERPKG=""
+    local KERNEL=${1}
     shift
 
+    # Determine if we need to extend the kernel specification.
+    #
+    printf "%s" "${KERNEL}" | egrep -q "${XYZ_GREP}"
+    if (( $? > 0 )); then
+
+        printf "%s" "${KERNEL}" | egrep -q "${XY_GREP}"
+        if (( $? > 0 )); then
+            echo >&2 "${FUNCNAME}: error: kernel must be in form of X.Y[.Z] "
+            return 1
+        fi
+
+        # Input matches X.Y but not X.Y.Z -- Extend to SEMVER format.
+        KERNEL="${KERNEL}.0"
+    fi
+
     # If given a kernel number, patch numbers are required in order to
-    # create an installation package name:
+    # create an installation package name.
     #
     if [[ -z "$*" ]]; then
         __Display_Kernel_Files
         echo
-        echo "No kernel packages to install !"
+        echo >&2 "No kernel packages to install ! "
         return
     fi
 
-    # Provide an option to install the low-latency version of the kernel:
+    # Provide an option to install the low-latency version of the kernel.
     #
-    unset LOWLATENCY
+    local LOWLATENCY=false
     if [[ "${1}" == "-l" ]]; then
         shift
         LOWLATENCY=true
     fi
 
-    for PATCHLEVEL in "$@"; do
-      THISKER="linux-headers-${KERNEL}-${PATCHLEVEL} "
-      THISKER="${THISKER} linux-headers-${KERNEL}-${PATCHLEVEL}-generic "
-      THISKER="${THISKER} linux-image-${KERNEL}-${PATCHLEVEL}-generic "
-      THISKER="${THISKER} linux-tools-${KERNEL}-${PATCHLEVEL}-generic "
+    local PATCH_LEVEL
+    local KERNEL_TYPE
+    local PACKAGE
+    local KERNEL_PKG
+    local KERNEL_PKGS=""
+    local PACKAGE_LIST=()
 
-      # Some kernels install a "extras" packages, but not all do:
-      #
-      RESULT=$( got linux-image-extra-${KERNEL}-${PATCHLEVEL}-generic )
-      [[ -n "${RESULT}" ]] && \
-      THISKER="${THISKER} linux-image-extra-${KERNEL}-${PATCHLEVEL}-generic "
-
-      if [[ ${LOWLATENCY} ]]; then
-        THISKER="${THISKER} linux-headers-${KERNEL}-${PATCHLEVEL}-lowlatency "
-        THISKER="${THISKER} linux-image-${KERNEL}-${PATCHLEVEL}-lowlatency "
-        THISKER="${THISKER} linux-tools-${KERNEL}-${PATCHLEVEL}-lowlatency "
-      fi
-
-      KERPKG="${KERPKG} ${THISKER}"
+    # Accrete a list of packages that correspond to the desired kernels.
+    #
+    for PATCH_LEVEL in "$@"; do
+        for KERNEL_TYPE in "generic" "lowlatency"; do
+            for PACKAGE in "headers" "image" "modules" "tools" \
+                "image-extra" "modules-extra"; do
+                
+                add "${PACKAGE}" "${KERNEL}" "${PATCH_LEVEL}" "${KERNEL_TYPE}"
+            done
+            
+            # And some kernel packages have a different naming scheme.
+            #
+            for PACKAGE in "headers" "tools"; do
+                add "${PACKAGE}" "${KERNEL}" "${PATCH_LEVEL}"
+            done
+            
+            # Stop here, unless the lowlatency kernel is also desired.
+            #
+            [[ "${LOWLATENCY}" == true ]] || break
+        done
     done
-
-    if [[ -z "${KERPKG}" ]]; then
+    
+    # If no matching packages were found, tell the user & quit.
+    #
+    if (( ${#PACKAGE_LIST[@]} == 0 )); then 
         __Display_Kernel_Files
         echo
-        echo "No kernel packages to install !"
+        echo >&2 "No kernel packages to install !"
         return
     fi
 
-    # Install the list of packages. Note: Do NOT quote ${KERPKG} !!
+    # Otherwise, install the list of packages & fixup the root symlinks.
     #
-    sudo apt-get install -y ${KERPKG}
+    sudo apt-get install -y $( echo "${PACKAGE_LIST[@]}" )
     (( $? == 0 )) || return 1
 
     fixroot
@@ -2514,12 +2659,12 @@ remk() {
     __warn_if_os_is_chromeos ${FUNCNAME} && return 1
 
     if [[ "${1}" == "-h" ]]; then
-        echo "usage: remk X.Y.Z <list of patch levels> "
-        echo "example: remk 4.13.0 32 36 37 "
+        echo >&2 "usage: remk X.Y[.Z] <list of patch levels> "
+        echo >&2 "example: 'remk 5.4 32 36' to remove 5.4.0-32 & 5.4.0-36 "
         return
     fi
 
-    # If called with no arguments, just display the file set:
+    # If called with no arguments, just display the file set.
     #
     if [[ -z "${1}" ]]; then
         __Display_Kernel_Files
@@ -2527,20 +2672,38 @@ remk() {
         return
     fi
 
-    REMKER=""
-    REMHDR=""
-    KERNEL=${1}
+    local REMKER=""
+    local REMHDR=""
+    local KERNEL=${1}
     shift
 
-    # If called with just a kernel number, then suggest removing all files
-    # in '/boot' for that particular kernel series.  If called with an
-    # argument of "old", then suggest all files ending with "old".  (ZFS will
-    # create these as backups of the 'initrd' files, for example.)
+    # Determine if we need to extend the kernel specification.
     #
-    [[ -z "$*" ]] && REMKER=$( ls /boot/*${KERNEL}* )
+    if [[ "${KERNEL}" == "old" ]]; then
+        REMKER=$( ls /boot/*old )
+    else
+        printf "%s" "${KERNEL}" | egrep -q "${XYZ_GREP}"
+        if (( $? > 0 )); then
 
-    [[ "${KERNEL}" == "old" ]] && REMKER=$( ls /boot/*old )
+            printf "%s" "${KERNEL}" | egrep -q "${XY_GREP}"
+            if (( $? > 0 )); then
+                echo >&2 "${FUNCNAME}: error: kernel must be in form of X.Y[.Z]"
+                return 1
+            fi
+            # Input matches X.Y but not X.Y.Z -- Extend to SEMVER format.
+            KERNEL="${KERNEL}.0"
+        fi
 
+        # If called with just a kernel number, then suggest removing all files
+        # in '/boot' for that particular kernel series.  If called with an
+        # argument of "old", then suggest all files ending with "old".  (ZFS 
+        # will create these as backups of the 'initrd' files, for example.)
+        #
+        [[ -z "$*" ]] && REMKER=$( ls /boot/*${KERNEL}* )
+    fi
+
+    # If told to remove 'old' files, or an entire kernel version.
+    #
     if [[ -n "${REMKER}" ]]; then
         echo "Okay to remove these files from '/boot'?"
         echo "${REMKER}"
@@ -2550,9 +2713,9 @@ remk() {
 
         if [[ "${UINPUT}" == "y" ]]; then
 
-          echo "${REMKER}" | while read -r KERNEL_FILE; do
-            sudo rm -rf "${KERNEL_FILE}"
-          done
+            echo "${REMKER}" | while read -r KERNEL_FILE; do
+                sudo rm -rf "${KERNEL_FILE}"
+            done
 
         fixroot
         fi
@@ -2564,54 +2727,49 @@ remk() {
 
     # Otherwise, if there is a list following, then assume this is a kernel
     # number following by a set of patch numbers; accumulate these into a
-    # single string list for 'apt-get' to purge:
+    # single string list for 'apt-get' to purge.
     #
-    KERNEL_LIST=()
-    PKG_LIST=()
+    local KERNEL_LIST=()
+    local PKG_LIST=()
+    local PACKAGE
+    local PATCH_LEVEL
+    local PKG_GREP
 
-    for PATCHLEVEL in "$@"; do
+    for PATCH_LEVEL in "$@"; do
 
-        # Form the kernel-patch number, e.g., 4.15.0-39
+        # Form the kernel-patch number, e.g., 5.8.0-23.
         #
-        KERNEL_LIST+=( "${KERNEL}-${PATCHLEVEL}" )
+        KERNEL_LIST+=( "${KERNEL}-${PATCH_LEVEL}" )
 
-        # Create a grep string for all possible packages of the above version:
+        # Create a grep string for all possible packages of the above version.
         #
         PKG_GREP="(-image)?(-modules)?(-headers)?(-hwe)?(-tools)?(-extra)?"
         PKG_GREP="\<linux${PKG_GREP}.*"
-        PKG_GREP="${PKG_GREP}-${KERNEL}-${PATCHLEVEL}"
+        PKG_GREP="${PKG_GREP}-${KERNEL}-${PATCH_LEVEL}"
         PKG_GREP="${PKG_GREP}-?(generic|generic-pae|lowlatency)*"
 
-        # Break out each package found (one per line) into array elements
+        # Break out each package found (one per line) into array elements.
         #
         while read -r PACKAGE; do
             PKG_LIST+=( "${PACKAGE}" )
 
         done < <( dpkg -l | egrep -o "${PKG_GREP}" )
     done
-
-    # If the resulting array is empty, then we didn't find anything...
+    
+    # If none of the matching packages are installed, tell the user & quit.
     #
     if (( ${#PKG_LIST[@]} == 0 )); then
         __Display_Kernel_Files
         echo
-        echo "No kernel packages to remove !"
+        echo >&2 "No kernel packages to remove !"
         return
     fi
 
-    # One-by-one, assemble a single-line string of the packages:
+    # Otherwise, remove the set of packages we're obsoleting.
     #
-    PACKAGE_LIST=
-    for (( i=0; i<${#PKG_LIST[@]}; i+=1 )); do
+    sudo apt-get purge $( echo "${PKG_LIST[@]}" )
 
-        PACKAGE_LIST="${PACKAGE_LIST} ${PKG_LIST[i]}"
-    done
-
-    # Now as a unit, remove the obsolete packages:
-    #
-    sudo apt-get purge ${PACKAGE_LIST}
-
-    # Ubuntu has a tendency to leave behind detritus from removed kernels...
+    # Ubuntu has a tendency to leave behind detritus from removed kernels.
     #
     for KERNEL in "${KERNEL_LIST[@]}"; do
         sudo rm -rf /boot/*${KERNEL}*

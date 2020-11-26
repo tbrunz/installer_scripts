@@ -2,7 +2,7 @@
 README for MULTIBOOT_64
 ===============================================================================
 
-Updated 2018-1210
+Updated 2020-1126
 
 
 1. Bash files
@@ -17,10 +17,10 @@ Updated 2018-1210
    which should also be uncommented in this file.
    
    To use:
-   "bash_aliases" should be moved to "~/.bash_aliases". 
-   "bash_hosts" should be moved to "~/.bash_hosts".
-   Log out & log back in, open a new shell, or enter ". ~/.bash_aliases" to 
-   enable the functions.
+   "bash_aliases" should be copied as "~/.bash_aliases". 
+   "bash_hosts" should be copied as "~/.bash_hosts".
+   Log out & log back in, open a new shell, enter ". ~/.bash_aliases", or
+   run "./install-aliases.sh" to enable the functions.
    
    Enter 'alist' to get a synopsis of the most frequently used functions. 
    (Browse the file to see everything & read code comments.)

@@ -96,7 +96,7 @@ done
 # Don't forget to install a set for root.  Can't do it as part of the above
 # (due to limitations of 'sudo'), so copy the last regular user's set:
 #
-sudo mkdir -p "/root/${SCRIPT_DIR}/"
-sudo cp -rf "${SCRIPT_INSTALL_DIR}" "$( dirname /root/${SCRIPT_DIR} )"
+makdir "/root/${SCRIPT_DIR}/"
+copy "${SCRIPT_INSTALL_DIR}" "$( dirname /root/${SCRIPT_DIR} )"
 
 InstallComplete

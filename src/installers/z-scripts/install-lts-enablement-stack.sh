@@ -45,14 +45,14 @@ with the desktop X11 stack.  This script completes the transition from Server
 install to Desktop install.
 
 To install, run this script with the name of the desired 'interim' distro stack
-as the first parameter ('trusty', 'utopic', 'vivid', 'wily', 'xenial').  Note
-that this is NOT the name of the system's installed distro; it will typically
-be a later 'interim' distro.
+as the first parameter ('xenial','bionic','focal',etc.).  Note that this is NOT 
+the name of the system's installed distro; it will typically be the name of a 
+later 'interim' distro.
 
-For example, to install the Xenial Xerus stack (kernel 4.4) in a Trusty Tahr
-installation (which originally shipped with kernel 3.13), enter
+For example, to install the Focal Fossa stack (kernel 5.4) in a Bionic Beaver
+installation (which originally shipped with kernel 4.15), enter
 
-    ${APP_SCRIPT} xenial -n
+    ${APP_SCRIPT} focal -n
 
 https://wiki.ubuntu.com/Kernel/LTSEnablementStack
 "
@@ -71,9 +71,17 @@ GetOSversion
 Exit_if_OS_is_ChromeOS "${APP_SCRIPT}"
 Exit_if_OS_is_GalliumOS "${APP_SCRIPT}"
 
-if (( MINOR == 04 && (MAJOR == 18 || MAJOR == 20) )); then
+if (( MINOR == 04 && MAJOR == 18 )); then
     
     PACKAGE_SET="linux-generic-hwe-18.04  xserver-xorg-hwe-18.04  "
+    sudo apt-get install --install-recommends ${PACKAGE_SET}
+    
+    exit $?
+fi
+
+if (( MINOR == 04 && MAJOR == 20 )); then
+    
+    PACKAGE_SET="linux-generic-hwe-20.04  xserver-xorg-hwe-20.04  "
     sudo apt-get install --install-recommends ${PACKAGE_SET}
     
     exit $?

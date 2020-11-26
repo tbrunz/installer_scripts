@@ -1,9 +1,18 @@
 #! /usr/bin/env bash
 #
+# $Id: vms-backup.sh 133 2015-10-17 18:04:51Z tbrunzie $
+# vim:ai:et:ts=4:sts=4:sw=4:tw=78:ft=sh
+#
 # ----------------------------------------------------------------------------
 # Query disk SMART test data for one or a range of drives
 # ----------------------------------------------------------------------------
+# Created  : Sun 09 Jun 2013 10:28:46 AM PDT
+# Modified : Sun 09 Jun 2013 10:30:55 AM PDT
 #
+# Report any bugs, changes, improvements, etc. to
+# "Ted Brunzie" <ted.brunzie@jpl.nasa.gov>
+#
+VERSION=1.1
 
 
 ###############################################################################
@@ -21,6 +30,7 @@ SMART_TESTS=(
    "Spin_Up_Time"
    "Reallocated_Sector_Ct"
    "Power_On_Hours"
+   "Hours Powered Up"
    "Spin_Retry_Count"
    "Runtime_Bad_Block"
    "Reported_Uncorrect"
@@ -141,7 +151,7 @@ Check_My_Drives () {
       DRIVE_LETTER=${LOCAL_DRIVES[ ${IDX} ]}
 
       sudo smartctl -x /dev/sd${DRIVE_LETTER} | \
-      egrep "${TEST_TYPE}" | \
+      egrep -i "${TEST_TYPE}" | \
       awk \
          -v TestType="${TEST_TYPE}" \
          -v Drive="${DRIVE_LETTER}" \

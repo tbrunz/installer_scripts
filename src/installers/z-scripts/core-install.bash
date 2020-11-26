@@ -1943,8 +1943,13 @@ if [[ -n "${INSTALL}" && -n "${PACKAGE_SET}" ]]; then
     QualifySudo
     sudo apt-get install -y ${PACKAGE_SET}
 
-    (( $? > 0 )) && ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
+    if (( $? > 0 )); then
+        echo
+        echo "${PACKAGE_SET}"
+        echo
+        ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
             "Could not install the repository package set !"
+    fi
 fi
 
 #

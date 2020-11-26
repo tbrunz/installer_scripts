@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 #
 
-SUGGEST_VERSION=1.0.0
+SUGGEST_VERSION=1.5.3
 
 #
 # Source our includes, get our script name, etc. -- The usual...
@@ -326,6 +326,7 @@ sudo ln -sf "${APP_DIR_PATH}" "${APP_ALIASED_PATH}"
 (( $? == 0 )) || ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
     "Could not link to '${APP_DIR_PATH}' in '${APP_BASE_DIR_PATH}' ! "
 
+makdir "${PATH_SEARCH_DIR}"
 sudo rm -f "${APP_SEARCH_PATH}"
 sudo ln -sf "${ALIASED_FILE_PATH}" "${APP_SEARCH_PATH}"
 

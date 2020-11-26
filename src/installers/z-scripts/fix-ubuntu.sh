@@ -106,7 +106,7 @@ Get_YesNo_Defaulted 'y' \
     "Do you want to throttle the use of swap?"
 
 if (( $? == 0 )); then
-    sudo cp -f "${SYSTEM_CONTROL_FILE}" "${SYSTEM_CONTROL_FILE}".bak
+    copy "${SYSTEM_CONTROL_FILE}" "${SYSTEM_CONTROL_FILE}".bak
 
     sudo sed -i -r -e 's|^(vm.swappiness)[[:space:]]*=.*$|\1=10|' \
             "${SYSTEM_CONTROL_FILE}"

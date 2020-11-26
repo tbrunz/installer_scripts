@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------
 #
 
-SUGGEST_VERSION=6.3
+SUGGEST_VERSION=7.0
 
 INSTALLED_DPKG_GREP="libreoffice.*core"
 APT_PKG_LOCATIONS="/etc/apt/sources.list /etc/apt/sources.list.d"
@@ -201,7 +201,7 @@ echo    "${INSTALLED_MAJOR}.${INSTALLED_MINOR} PPA repository/installation. "
 echo "The PPA purge will downgrade LibreOffice to the repo version. "
 echo
 
-echo -n "Next, use ' sudo rm -rf ${APT_SOURCES_DIR}/libreoffice.*${DISTRO} ' "
+echo -n "Next, use ' sudo rm -rf ${APT_SOURCES_DIR}/libreoffice*${DISTRO}* ' "
 echo "to remove the PPA. "
 echo "Then use ' sudo apt-get purge libreoffice* ' to remove the repo version. "
 echo

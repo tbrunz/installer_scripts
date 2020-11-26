@@ -10,7 +10,7 @@ PHARO_DOCS_FILES=(
     readme/Pharo-Tips-n-Tricks.txt
     
     tutorials/Pharo-Trifold-Brochure.pdf
-    tutorials/Pharo-getting-started.txt
+    tutorials/Pharo-Getting-Started-Notes.txt
     tutorials/Pharo-ProfStef-Notes.txt
     tutorials/TerseGuideToPharo.st
 )
@@ -148,7 +148,7 @@ APP_PKG_FILE=${FILE_LIST}
 
 # Create the destination directory, as needed...
 #
-mkdir -p "${ICON_DIR_PATH}"
+makdir "${ICON_DIR_PATH}" 755 $(whoami)
 
 (( $? == 0 )) || ThrowError "${ERR_FILEIO}" "${APP_SCRIPT}" \
     "Could not locate/create '${ICON_DIR_PATH}' !"

@@ -196,7 +196,7 @@ GetOSversion
 
 if (( MAJOR > 18 )); then
     ThrowError "${ERR_CMDFAIL}" "${APP_SCRIPT}" \
-        "Cannot install in 20.04+; Python 2/3 issues! "
+        "Not for 20.04++; this functonality is already in Gedit 3.36++ "
 fi
 
 #
