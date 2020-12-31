@@ -36,8 +36,14 @@ https://launchpad.net/grub-customizer
 SET_NAME="GRUB Customizer"
 PACKAGE_SET="grub-customizer  ppa-purge  "
 
-REPO_NAME="${SET_NAME} (PPA)"
-REPO_URL="ppa:danielrichter2007/grub-customizer"
-REPO_GREP="grub-customizer.*${DISTRO}"
+if (( MAJOR < 19 )); then
+    #
+    # Ubuntu 19.10 and later *finally* has this in the repos...
+    # For Bionic & earlier, need to get it from the PPA.
+    #
+    REPO_NAME="${SET_NAME} (PPA)"
+    REPO_URL="ppa:danielrichter2007/grub-customizer"
+    REPO_GREP="grub-customizer.*${DISTRO}"
+fi
 
 PerformAppInstallation "$@"

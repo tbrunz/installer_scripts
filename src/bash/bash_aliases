@@ -16,8 +16,8 @@ source ~/.bash_hosts
 #
 __alist_version() {
 echo
-echo "Last update 13 NOV 2020 "
-echo "This update 15 NOV 2020 "
+echo "Last update 19 DEC 2020 "
+echo "This update 26 DEC 2020 "
 }
 
 __alist_linux_1() {
@@ -671,6 +671,82 @@ dlymnt() {
 
 ################################################################################
 #
+# SHow information about the system
+#
+about () {
+    if [[ -e /etc/rpi-issue ]]; then
+        echo "- Original Installation"
+        cat /etc/rpi-issue
+    fi
+
+    if [[ -e /usr/bin/lsb_release ]]; then
+        echo "- Current OS"
+        lsb_release -irdc
+    fi
+
+    echo "- Kernel"
+    uname -r
+
+    if [[ -e /proc/device-tree/model ]]; then
+        echo "- Model"
+        cat /proc/device-tree/model && echo
+    fi
+
+    echo "- hostname"
+    hostname
+
+    if [[ -e /opt/vc/bin/vcgencmd ]]; then
+        echo "- Firmware"
+        /opt/vc/bin/vcgencmd version
+    fi
+}
+
+################################################################################
+#
+# Display the ARM CPU and GPU temperatures
+#
+pitemp () {
+	if [[ ! -e /sys/class/thermal/thermal_zone0/temp || \
+		  ! -e /opt/vc/bin/vcgencmd ]]; then
+		echo 2>&1 "This command only works on a Raspbian Pi system! "
+        return 1
+	fi
+	
+    local CPU=$(</sys/class/thermal/thermal_zone0/temp)
+    local CPU_FULL=$(( CPU/1000 ))
+	local CPU_FRAC=0
+	local CPU_MILLI=$(( CPU - CPU_FULL*1000 ))
+
+	case ${#CPU_MILLI} in
+	2)
+		CPU_INCR=${CPU_MILLI:0:1}
+		;;
+	3)
+		CPU_FRAC=${CPU_MILLI:0:1}
+		CPU_INCR=${CPU_MILLI:1:1}
+		;;
+	*)
+		CPU_FRAC=0
+		CPU_INCR=0
+	esac
+
+	if (( CPU_INCR > 4 )); then
+		if (( CPU_FRAC == 9 )); then
+			CPU_FRAC=0
+			CPU_FULL=$(( CPU_FULL++ ))
+		else
+			CPU_FRAC=$(( CPU_FRAC++ ))
+		fi
+	fi
+
+	#echo "$(date) @ $(hostname)"
+	#echo "-------------------------------------------"
+	echo "GPU: $( /opt/vc/bin/vcgencmd measure_temp )"
+	echo "CPU: temp=${CPU_FULL}.${CPU_FRAC}'C"
+}
+
+################################################################################
+#
 # bw:     Display the activity of each NIC in the system
 # wazzup: Display the up/down state of each NIC in the system
 #
@@ -710,13 +786,7 @@ fm() {
 # Ubuntu 18.04++ uses snaps mounted as loop devices; fix 'df' to not display
 #
 dfh() {
-    df -hT | grep -v '/snap/' | \
-    awk '{
-        rank = $6
-        sub( "%", "", rank )
-        printf "%03d %s \n", rank, $0
-        }' | \
-    sort | awk '{ print substr( $0, 5 ) }'
+    df -hT | egrep -v '/snap/|tmpfs' | sort -n -k 6
 }
 
 ################################################################################
@@ -1260,18 +1330,29 @@ got() {
 
 gotker() {
    local VERS
+   local FIRST
+   local PKGS=""
+
    if [[ "${1}" =~ [[:digit:]][.][[:digit:]] ]]; then
       VERS=${1}
-   elif [[ "${1}" =~ [[:digit:]][[:digit:]] ]]; then
-      VERS="4.${1}"
+      shift
    elif [[ "${1}" =~ [[:digit:]] ]]; then
-      VERS="5.${1}"
+      FIRST=$( uname -r )
+      VERS="${FIRST%%.*}.${1}"
+      shift
    else
       VERS=$( uname -r | egrep -o "${XY_GREP}" 2>/dev/null )
+      (( $# > 1 )) && shift
    fi
-
    VERS="${VERS}.0"
-   got "linux-image-un" "${VERS}.*gen" | sort | egrep "${VERS}-[[:digit:]]+"
+
+   FIRST=${1:0:1}
+   [[ "${FIRST}" == "-" ]] && FIRST=${1:1:1}
+   [[ "${FIRST}" == "s" ]] && PKGS=Signed
+   [[ "${FIRST}" == "u" ]] && PKGS=unsigned
+
+   got "linux-image-" "${VERS}" "gen|oem" "${PKGS}" | \
+      sort | egrep "${VERS}-[[:digit:]]+"
 }
 
 ################################################################################

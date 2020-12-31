@@ -20,6 +20,9 @@ GetScriptName "${0}"
 GetOSversion
 
 USAGE="
+NOTE: You probably want to install Nvidia drivers using 'ubuntu-drivers',
+*not* this installer...
+
 This package installs the Nvidia graphics card drivers from the Ubuntu
 graphics drivers PPA repository.
 

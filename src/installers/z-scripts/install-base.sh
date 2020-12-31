@@ -64,7 +64,7 @@ mutt  bwm-ng  dconf-editor  atop  htop  iftop
 stow  gnome-tweaks  
 %%
 %CONVERTERS:%
-tofrodos  pyrenamer  nautilus-image-converter
+tofrodos  gprename  nautilus-image-converter
 pdftk  units
 %%
 %CD-DVD-ISO AUTHORING:%
